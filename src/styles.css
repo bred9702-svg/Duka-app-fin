@@ -1,0 +1,179 @@
+:root {
+  /* Base surfaces — warm near-black, not blue-tinted */
+  --bg-deep: #120F0A;
+  --bg-surface: #1D1810;
+  --bg-raised: #271F14;
+
+  /* Amber — primary accent, whisky-inspired */
+  --amber: #F0A93D;
+  --amber-light: #FFD98A;
+  --amber-dim: #B07F2A;
+  --amber-glow: rgba(240, 169, 61, 0.35);
+
+  /* Semantic colors — saturated, not pastel */
+  --green: #5FD97A;
+  --green-dim: #2E7A40;
+  --red: #FF6B5B;
+  --red-dim: #B33C2E;
+  --blue: #5B9FF0;
+
+  /* Text */
+  --text-hi: #FBF6E9;
+  --text-mid: #B5AC95;
+  --text-low: #7A715A;
+
+  /* Lines */
+  --line: #3D3520;
+  --line-soft: rgba(255, 255, 255, 0.08);
+
+  /* Glass */
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --glass-fill-soft: rgba(255, 255, 255, 0.045);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-hi);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 3px var(--amber-glow);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+@keyframes tapBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+}
+
+@keyframes floatBlob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(8px, -10px) scale(1.06); }
+}
+
+@keyframes pulseBorder {
+  0%, 100% { border-color: rgba(240, 169, 61, 0.45); }
+  50% { border-color: rgba(240, 169, 61, 0.85); }
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 240; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* ── App shell ──────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--bg-deep);
+  overflow: hidden;
+  position: relative;
+}
+
+@media (min-width: 431px) {
+  body {
+    background: #0A0805;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .app-shell {
+    height: calc(100vh - 40px);
+    border-radius: 28px;
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 80px -20px rgba(240, 169, 61, 0.15);
+  }
+}
+
+/* ── Shared utility classes ─────────────────────────────────── */
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(34px);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatBlob 9s ease-in-out infinite;
+}
+
+.glass-card {
+  background: var(--glass-fill);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, var(--text-hi) 40%, var(--amber-light) 50%, var(--text-hi) 60%);
+  background-size: 200px 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.8s linear infinite;
+}
