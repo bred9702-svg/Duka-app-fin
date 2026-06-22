@@ -1,84 +1,113 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { INIT_TRANSACTIONS, INIT_CUSTOMERS } from '../data/mockData'
+import {
+  getTransactions,
+  addTransaction,
+  classifyTransaction,
+  getCustomers,
+  addDebtPayment,
+  increaseDebt,
+  addNewCustomer,
+  getProducts,
+  getTodayStats,
+} from '../lib/db'
 
-const useAppStore = create(
-  persist(
-    (set, get) => ({
-      transactions: INIT_TRANSACTIONS,
-      customers: INIT_CUSTOMERS,
+const useAppStore = create((set, get) => ({
+  // ── State ──────────────────────────────────────────────────
+  transactions: [],
+  customers: [],
+  products: [],
+  todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
+  loading: false,
+  error: null,
 
-      addTransaction: (txn) =>
-        set((s) => ({ transactions: [txn, ...s.transactions] })),
-
-      classifyTransaction: (id, classification) =>
-        set((s) => ({
-          transactions: s.transactions.map((t) =>
-            t.id === id ? { ...t, classified: true, classification } : t
-          ),
-        })),
-
-      addCustomer: (customer) =>
-        set((s) => ({ customers: [...s.customers, customer] })),
-
-      addDebtPayment: (customerId, amount, txnId) =>
-        set((s) => ({
-          customers: s.customers.map((c) =>
-            c.id === customerId
-              ? {
-                  ...c,
-                  totalOwed: Math.max(0, c.totalOwed - amount),
-                  payments: [
-                    ...c.payments,
-                    { date: new Date().toISOString(), amount, txnId },
-                  ],
-                }
-              : c
-          ),
-        })),
-
-      increaseDebt: (customerId, amount) =>
-        set((s) => ({
-          customers: s.customers.map((c) =>
-            c.id === customerId
-              ? { ...c, totalOwed: c.totalOwed + amount }
-              : c
-          ),
-        })),
-
-      getTodayStats: () => {
-        const { transactions } = get()
-        const today = transactions.filter(
-          (t) => Date.now() - t.ts < 86400000
-        )
-        const income = today
-          .filter(
-            (t) =>
-              t.direction === 'in' &&
-              t.classified &&
-              t.classification?.type !== 'debt'
-          )
-          .reduce((a, t) => a + t.amount, 0)
-        const expenses = today
-          .filter((t) => t.direction === 'out' && t.classified)
-          .reduce((a, t) => a + t.amount, 0)
-        return {
-          income,
-          expenses,
-          profit: income - expenses,
-          unclassifiedCount: transactions.filter((t) => !t.classified).length,
-        }
-      },
-
-      getTotalOwed: () => {
-        const { customers } = get()
-        return customers.reduce((a, c) => a + c.totalOwed, 0)
-      },
-    }),
-    {
-      name: 'duka-store',
+  // ── Bootstrap — charge tout au démarrage ──────────────────
+  bootstrap: async () => {
+    set({ loading: true, error: null })
+    try {
+      const [transactions, customers, products, todayStats] = await Promise.all([
+        getTransactions(50),
+        getCustomers(),
+        getProducts(),
+        getTodayStats(),
+      ])
+      set({ transactions, customers, products, todayStats, loading: false })
+    } catch (err) {
+      console.error('Bootstrap error:', err)
+      set({ error: err.message, loading: false })
     }
-  )
-)
+  },
+
+  // ── Transactions ──────────────────────────────────────────
+  addTransaction: async (txn) => {
+    try {
+      const saved = await addTransaction(txn)
+      set((s) => ({ transactions: [saved, ...s.transactions] }))
+      await get().refreshTodayStats()
+    } catch (err) {
+      console.error('Add transaction error:', err)
+    }
+  },
+
+  classifyTransaction: async (id, classification) => {
+    try {
+      const updated = await classifyTransaction(id, classification)
+      set((s) => ({
+        transactions: s.transactions.map((t) =>
+          t.id === id ? { ...t, ...updated } : t
+        ),
+      }))
+      await get().refreshTodayStats()
+    } catch (err) {
+      console.error('Classify error:', err)
+    }
+  },
+
+  // ── Customers ─────────────────────────────────────────────
+  addCustomer: async (customer) => {
+    try {
+      const saved = await addNewCustomer(customer.name, customer.phone)
+      set((s) => ({ customers: [...s.customers, saved] }))
+      return saved
+    } catch (err) {
+      console.error('Add customer error:', err)
+    }
+  },
+
+  addDebtPayment: async (customerId, amount, txnId) => {
+    try {
+      const updated = await addDebtPayment(customerId, amount)
+      set((s) => ({
+        customers: s.customers.map((c) =>
+          c.id === customerId ? { ...c, ...updated } : c
+        ),
+      }))
+    } catch (err) {
+      console.error('Debt payment error:', err)
+    }
+  },
+
+  increaseDebt: async (customerId, amount) => {
+    try {
+      const updated = await increaseDebt(customerId, amount)
+      set((s) => ({
+        customers: s.customers.map((c) =>
+          c.id === customerId ? { ...c, ...updated } : c
+        ),
+      }))
+    } catch (err) {
+      console.error('Increase debt error:', err)
+    }
+  },
+
+  // ── Stats ─────────────────────────────────────────────────
+  refreshTodayStats: async () => {
+    try {
+      const todayStats = await getTodayStats()
+      set({ todayStats })
+    } catch (err) {
+      console.error('Stats error:', err)
+    }
+  },
+}))
 
 export default useAppStore
