@@ -7,39 +7,14 @@ import ClassifyScreen from './screens/ClassifyScreen'
 import DebtsScreen from './screens/DebtsScreen'
 import CustomerDetailScreen from './screens/CustomerDetailScreen'
 import SettingsScreen from './screens/SettingsScreen'
+import AnalyticsScreen from './screens/AnalyticsScreen'
 import BottomNav from './components/BottomNav'
 
 function LoadingScreen() {
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-deep)',
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          border: '3px solid var(--line)',
-          borderTopColor: '#F0A93D',
-          animation: 'spin 0.8s linear infinite',
-        }}
-      />
-      <p
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 13,
-          color: 'var(--text-low)',
-          fontWeight: 500,
-        }}
-      >
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)', gap: 16 }}>
+      <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: '#F0A93D', animation: 'spin 0.8s linear infinite' }} />
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, color: 'var(--text-low)', fontWeight: 500 }}>
         Loading your shop...
       </p>
     </div>
@@ -51,20 +26,14 @@ export default function App() {
   const bootstrap = useAppStore((s) => s.bootstrap)
   const loading = useAppStore((s) => s.loading)
 
-  useEffect(() => {
-    bootstrap()
-  }, [])
+  useEffect(() => { bootstrap() }, [])
 
   const hideNav =
     location.pathname.startsWith('/classify') ||
     location.pathname.startsWith('/customer')
 
   if (loading) {
-    return (
-      <div className="app-shell">
-        <LoadingScreen />
-      </div>
-    )
+    return <div className="app-shell"><LoadingScreen /></div>
   }
 
   return (
@@ -76,6 +45,7 @@ export default function App() {
           <Route path="/classify/:id" element={<ClassifyScreen />} />
           <Route path="/debts" element={<DebtsScreen />} />
           <Route path="/customer/:id" element={<CustomerDetailScreen />} />
+          <Route path="/analytics" element={<AnalyticsScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
         </Routes>
       </div>
