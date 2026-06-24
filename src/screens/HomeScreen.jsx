@@ -64,8 +64,8 @@ export default function HomeScreen() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-          <StatCard label="Income" value={income.toLocaleString()} sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} transactions`}/>
-          <StatCard label="Expenses" value={expenses.toLocaleString()} sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} items`}/>
+          <StatCard label="Income" value={income.toLocaleString()} sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} transactions`} />
+          <StatCard label="Expenses" value={expenses.toLocaleString()} sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} items`} />
           <StatCard label="Debts owed" value={totalOwed.toLocaleString()} sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`} color="amber" delay={0.15} />
           <StatCard label="Unclassified" value={unclassifiedCount} sub={unclassifiedCount ? 'Needs review →' : 'All clear'} color={unclassifiedCount ? 'red' : 'green'} delay={0.2} />
         </div>
