@@ -1,18 +1,17 @@
 import { create } from 'zustand'
 import {
   getTransactions,
-  addTransaction,
-  classifyTransaction,
+  addTransaction as dbAddTransaction,
+  classifyTransaction as dbClassify,
   getCustomers,
-  addDebtPayment,
-  increaseDebt,
+  addDebtPayment as dbAddDebtPayment,
+  increaseDebt as dbIncreaseDebt,
   addNewCustomer,
   getProducts,
   getTodayStats,
 } from '../lib/db'
 
 const useAppStore = create((set, get) => ({
-  // ── State ──────────────────────────────────────────────────
   transactions: [],
   customers: [],
   products: [],
@@ -20,7 +19,6 @@ const useAppStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  // ── Bootstrap — charge tout au démarrage ──────────────────
   bootstrap: async () => {
     set({ loading: true, error: null })
     try {
@@ -37,10 +35,9 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  // ── Transactions ──────────────────────────────────────────
   addTransaction: async (txn) => {
     try {
-      const saved = await addTransaction(txn)
+      const saved = await dbAddTransaction(txn)
       set((s) => ({ transactions: [saved, ...s.transactions] }))
       await get().refreshTodayStats()
     } catch (err) {
@@ -50,7 +47,7 @@ const useAppStore = create((set, get) => ({
 
   classifyTransaction: async (id, classification) => {
     try {
-      const updated = await classifyTransaction(id, classification)
+      const updated = await dbClassify(id, classification)
       set((s) => ({
         transactions: s.transactions.map((t) =>
           t.id === id ? { ...t, ...updated } : t
@@ -62,7 +59,6 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  // ── Customers ─────────────────────────────────────────────
   addCustomer: async (customer) => {
     try {
       const saved = await addNewCustomer(customer.name, customer.phone)
@@ -73,9 +69,9 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  addDebtPayment: async (customerId, amount, txnId) => {
+  addDebtPayment: async (customerId, amount) => {
     try {
-      const updated = await addDebtPayment(customerId, amount)
+      const updated = await dbAddDebtPayment(customerId, amount)
       set((s) => ({
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updated } : c
@@ -88,7 +84,7 @@ const useAppStore = create((set, get) => ({
 
   increaseDebt: async (customerId, amount) => {
     try {
-      const updated = await increaseDebt(customerId, amount)
+      const updated = await dbIncreaseDebt(customerId, amount)
       set((s) => ({
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updated } : c
@@ -99,7 +95,6 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  // ── Stats ─────────────────────────────────────────────────
   refreshTodayStats: async () => {
     try {
       const todayStats = await getTodayStats()
