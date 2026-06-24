@@ -223,15 +223,30 @@ export async function getTodayStats() {
     .gte('created_at', today.toISOString())
   if (error) throw error
 
+  // Revenus = uniquement les ventes classifiées (direction in, type sale)
   const income = data
-    .filter(t => t.direction === 'in' && t.classified && t.operation_type !== 'debt')
+    .filter(t => 
+      t.direction === 'in' && 
+      t.classified && 
+      t.operation_type === 'sale'
+    )
     .reduce((a, t) => a + t.amount, 0)
+
+  // Dépenses = uniquement les sorties classifiées comme expense
   const expenses = data
-    .filter(t => t.direction === 'out' && t.classified)
+    .filter(t => 
+      t.direction === 'out' && 
+      t.classified && 
+      t.operation_type === 'expense'
+    )
     .reduce((a, t) => a + t.amount, 0)
+
+  // Profit = somme des profits calculés sur les ventes
   const profit = data
-    .filter(t => t.profit)
-    .reduce((a, t) => a + t.profit, 0)
+    .filter(t => t.profit !== null && t.operation_type === 'sale')
+    .reduce((a, t) => a + (t.profit || 0), 0)
+
+  // Non classifiées = toutes directions confondues
   const unclassified = data.filter(t => !t.classified).length
 
   return { income, expenses, profit, unclassified }
