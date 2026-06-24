@@ -5,7 +5,7 @@ import BackButton from '../components/ui/BackButton'
 import Button from '../components/ui/Button'
 import Icon from '../components/ui/Icon'
 import Avatar from '../components/ui/Avatar'
-import { fmtKES, fmtTime, newId } from '../utils/formatters'
+import { fmtKES, fmtTime } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../data/mockData'
 
 const TYPE_OPTS = [
@@ -15,14 +15,9 @@ const TYPE_OPTS = [
 ]
 
 const CATEGORIES = {
-  beer: '🍺 Beer',
-  whisky: '🥃 Whisky',
-  gin: '🍸 Gin',
-  vodka: '🍹 Vodka',
-  cognac: '🥂 Cognac',
-  wine: '🍷 Wine',
-  liqueur: '🍶 Liqueur',
-  rum: '🍾 Rum',
+  beer: '🍺 Beer', whisky: '🥃 Whisky', gin: '🍸 Gin',
+  vodka: '🍹 Vodka', cognac: '🥂 Cognac', wine: '🍷 Wine',
+  liqueur: '🍶 Liqueur', rum: '🍾 Rum',
 }
 
 export default function ClassifyScreen() {
@@ -50,23 +45,21 @@ export default function ClassifyScreen() {
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Filtre les produits selon la recherche
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Suggestion automatique basée sur le montant
   useEffect(() => {
     if (type === 'sale' && txn && products.length > 0) {
       const match = products.find(
-        (p) => Math.abs(p.unit_price - txn.amount) < p.unit_price * 0.1
+        (p) => Math.abs(p.unit_price - txn.amount) < p.unit_price * 0.15
       )
       if (match) {
         setSelectedProduct(match)
         setSearch(match.name)
       }
     }
-  }, [type, txn, products])
+  }, [type])
 
   if (!txn) {
     return (
@@ -86,7 +79,8 @@ export default function ClassifyScreen() {
   async function confirm() {
     setSaving(true)
     try {
-      let cls = {
+      // Construit le bon objet pour Supabase
+      const cls = {
         type,
         product_id: selectedProduct?.id || null,
         quantity: parseInt(qty) || 1,
@@ -95,15 +89,16 @@ export default function ClassifyScreen() {
         unit_price: selectedProduct?.unit_price || null,
       }
 
+      // Gestion client (debt)
       if (type === 'debt' && addingNew && newName.trim()) {
         const newCust = await addCustomer({
           name: newName.trim(),
-          phone: newPhone.trim(),
+          phone: newPhone.trim() || null,
         })
         cls.customer_id = newCust?.id || null
       } else if (type === 'debt' && customerId) {
         if (txn.direction === 'in') {
-          await addDebtPayment(customerId, txn.amount, txn.id)
+          await addDebtPayment(customerId, txn.amount)
         } else {
           await increaseDebt(customerId, txn.amount)
         }
@@ -113,83 +108,39 @@ export default function ClassifyScreen() {
       setDone(true)
       setTimeout(() => navigate('/inbox'), 700)
     } catch (err) {
-      console.error(err)
+      console.error('Classify error:', err)
       setSaving(false)
     }
   }
 
   if (done) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: 'rgba(95,217,122,0.18)',
-            border: '1px solid rgba(95,217,122,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 14,
-            animation: 'popIn 0.4s ease-out',
-          }}
-        >
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(95,217,122,0.18)', border: '1px solid rgba(95,217,122,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, animation: 'popIn 0.4s ease-out' }}>
           <Icon name="check" size={32} color="#5FD97A" />
         </div>
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-hi)' }}>
-          Classified!
-        </p>
-        <p style={{ fontSize: 13, color: 'var(--text-low)', marginTop: 4 }}>
-          Transaction saved
-        </p>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-hi)' }}>Classified!</p>
+        <p style={{ fontSize: 13, color: 'var(--text-low)', marginTop: 4 }}>Transaction saved</p>
       </div>
     )
   }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 8px', position: 'relative' }}>
-      <div
-        className="bg-blob"
-        style={{ width: 130, height: 130, top: 40, right: -40, background: 'rgba(240,169,61,0.2)' }}
-      />
+      <div className="bg-blob" style={{ width: 130, height: 130, top: 40, right: -40, background: 'rgba(240,169,61,0.2)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <BackButton to="/inbox" />
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 19,
-            fontWeight: 700,
-            color: 'var(--text-hi)',
-            letterSpacing: '-0.02em',
-            marginBottom: 14,
-          }}
-        >
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', marginBottom: 14 }}>
           Classify
         </h1>
 
         {/* Transaction card */}
-        <div
-          className="glass-card"
-          style={{ textAlign: 'center', padding: 16, marginBottom: 16 }}
-        >
+        <div className="glass-card" style={{ textAlign: 'center', padding: 16, marginBottom: 16 }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#FFD98A', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
-            {(txn.source === 'mpesa' ? 'M-Pesa' : 'Cash') + ' · ' + fmtTime(txn.ts || txn.created_at)}
+            {(txn.source === 'mpesa' ? 'M-Pesa' : 'Cash') + ' · ' + fmtTime(txn.created_at || txn.ts)}
           </p>
-          <p
-            className="shimmer-text"
-            style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: '5px 0' }}
-          >
+          <p className="shimmer-text" style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', margin: '5px 0' }}>
             {(txn.direction === 'in' ? '+' : '-') + fmtKES(txn.amount)}
           </p>
           {txn.mpesa_sender_name && (
@@ -223,18 +174,11 @@ export default function ClassifyScreen() {
                   WebkitBackdropFilter: 'blur(10px)',
                   border: selected ? `1.5px solid ${o.color}99` : '1px solid var(--glass-border)',
                   boxShadow: selected ? `0 4px 16px -4px ${o.color}55` : 'none',
-                  borderRadius: 12,
-                  padding: '12px 6px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
+                  borderRadius: 12, padding: '12px 6px',
+                  textAlign: 'center', cursor: 'pointer',
                 }}
               >
-                <Icon
-                  name={o.icon}
-                  size={20}
-                  color={selected ? o.color : 'var(--text-mid)'}
-                  style={{ display: 'block', margin: '0 auto 5px' }}
-                />
+                <Icon name={o.icon} size={20} color={selected ? o.color : 'var(--text-mid)'} style={{ display: 'block', margin: '0 auto 5px' }} />
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
                   {o.label}
                 </span>
@@ -243,145 +187,58 @@ export default function ClassifyScreen() {
           })}
         </div>
 
-        {/* SALE — catalogue produits */}
+        {/* SALE */}
         {type === 'sale' && (
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 6 }}>
               Product
-              {selectedProduct && (
-                <span style={{ color: '#5FD97A', marginLeft: 6, fontWeight: 600 }}>
-                  ✓ {selectedProduct.name}
-                </span>
-              )}
+              {selectedProduct && <span style={{ color: '#5FD97A', marginLeft: 6, fontWeight: 600 }}>✓ {selectedProduct.name}</span>}
             </p>
-
-            {/* Barre de recherche */}
             <div style={{ position: 'relative', marginBottom: 10 }}>
               <input
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value)
-                  setSelectedProduct(null)
-                }}
+                onChange={(e) => { setSearch(e.target.value); setSelectedProduct(null) }}
                 placeholder="Search product..."
                 style={{ ...inputStyle, paddingLeft: 36 }}
               />
-              <Icon
-                name="search"
-                size={15}
-                color="var(--text-low)"
-                style={{ position: 'absolute', left: 11, top: 11 }}
-              />
+              <Icon name="search" size={15} color="var(--text-low)" style={{ position: 'absolute', left: 11, top: 11 }} />
             </div>
-
-            {/* Liste produits filtrés */}
             {search.length > 0 && !selectedProduct && (
-              <div
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  marginBottom: 10,
-                  maxHeight: 200,
-                  overflowY: 'auto',
-                }}
-              >
-                {filteredProducts.length === 0 ? (
-                  <p style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-low)' }}>
-                    No product found
-                  </p>
-                ) : (
-                  filteredProducts.map((p) => (
-                    <div
-                      key={p.id}
-                      onClick={() => {
-                        setSelectedProduct(p)
-                        setSearch(p.name)
-                      }}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '10px 14px',
-                        borderBottom: '1px solid var(--line)',
-                        cursor: 'pointer',
-                      }}
-                    >
+              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--glass-border)', borderRadius: 10, overflow: 'hidden', marginBottom: 10, maxHeight: 200, overflowY: 'auto' }}>
+                {filteredProducts.length === 0
+                  ? <p style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-low)' }}>No product found</p>
+                  : filteredProducts.map((p) => (
+                    <div key={p.id} onClick={() => { setSelectedProduct(p); setSearch(p.name) }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--line)', cursor: 'pointer' }}>
                       <div>
                         <p style={{ fontSize: 12, color: 'var(--text-hi)', fontWeight: 500 }}>{p.name}</p>
-                        <p style={{ fontSize: 10, color: 'var(--text-low)' }}>
-                          {CATEGORIES[p.category] || p.category} · Stock: {p.stock_current}
-                        </p>
+                        <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{CATEGORIES[p.category] || p.category} · Stock: {p.stock_current}</p>
                       </div>
-                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D' }}>
-                        {fmtKES(p.unit_price)}
-                      </p>
+                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D' }}>{fmtKES(p.unit_price)}</p>
                     </div>
                   ))
-                )}
+                }
               </div>
             )}
-
-            {/* Quantité */}
             {selectedProduct && (
               <div>
-                <div
-                  style={{
-                    background: 'rgba(240,169,61,0.1)',
-                    border: '1px solid rgba(240,169,61,0.3)',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    marginBottom: 10,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
+                <div style={{ background: 'rgba(240,169,61,0.1)', border: '1px solid rgba(240,169,61,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontSize: 12, color: 'var(--text-hi)', fontWeight: 500 }}>{selectedProduct.name}</p>
                     <p style={{ fontSize: 10, color: 'var(--text-low)' }}>
-                      Stock restant : {selectedProduct.stock_current}
-                      {selectedProduct.stock_current <= selectedProduct.stock_alert && (
-                        <span style={{ color: '#FF6B5B', marginLeft: 6 }}>⚠ Stock bas</span>
-                      )}
+                      Stock: {selectedProduct.stock_current}
+                      {selectedProduct.stock_current <= selectedProduct.stock_alert && <span style={{ color: '#FF6B5B', marginLeft: 6 }}>⚠ Low</span>}
                     </p>
                   </div>
-                  <button
-                    onClick={() => { setSelectedProduct(null); setSearch('') }}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: 18 }}
-                  >
-                    ×
-                  </button>
+                  <button onClick={() => { setSelectedProduct(null); setSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: 18 }}>×</button>
                 </div>
-
                 <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 6 }}>Quantity</p>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                  <button
-                    onClick={() => setQty(q => String(Math.max(1, parseInt(q) - 1)))}
-                    style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >−</button>
-                  <input
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))}
-                    style={{ ...inputStyle, textAlign: 'center', flex: 1 }}
-                  />
-                  <button
-                    onClick={() => setQty(q => String(parseInt(q) + 1))}
-                    style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >+</button>
+                  <button onClick={() => setQty(q => String(Math.max(1, parseInt(q) - 1)))} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <input value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))} style={{ ...inputStyle, textAlign: 'center', flex: 1 }} />
+                  <button onClick={() => setQty(q => String(parseInt(q) + 1))} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                 </div>
-
-                <div
-                  style={{
-                    background: 'var(--glass-fill-soft)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
+                <div style={{ background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
                   <p style={{ fontSize: 11, color: 'var(--text-low)' }}>Total</p>
                   <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: '#5FD97A' }}>
                     {fmtKES(selectedProduct.unit_price * (parseInt(qty) || 1))} KES
@@ -400,30 +257,16 @@ export default function ClassifyScreen() {
               {EXPENSE_CATEGORIES.map((c) => {
                 const selected = category === c.id
                 return (
-                  <div
-                    key={c.id}
-                    onClick={() => setCategory(c.id)}
+                  <div key={c.id} onClick={() => setCategory(c.id)}
                     style={{
                       background: selected ? 'rgba(91,159,240,0.18)' : 'var(--glass-fill-soft)',
-                      backdropFilter: 'blur(10px)',
-                      WebkitBackdropFilter: 'blur(10px)',
+                      backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
                       border: selected ? '1.5px solid rgba(91,159,240,0.7)' : '1px solid var(--glass-border)',
-                      borderRadius: 11,
-                      padding: 10,
-                      textAlign: 'center',
-                      cursor: 'pointer',
+                      borderRadius: 11, padding: 10, textAlign: 'center', cursor: 'pointer',
                       gridColumn: c.id === 'other' ? '1 / -1' : 'auto',
-                    }}
-                  >
-                    <Icon
-                      name={c.icon}
-                      size={18}
-                      color={selected ? '#5B9FF0' : 'var(--text-mid)'}
-                      style={{ display: 'block', margin: '0 auto 3px' }}
-                    />
-                    <span style={{ fontSize: 11, color: selected ? '#5B9FF0' : 'var(--text-hi)', fontWeight: selected ? 600 : 400 }}>
-                      {c.label}
-                    </span>
+                    }}>
+                    <Icon name={c.icon} size={18} color={selected ? '#5B9FF0' : 'var(--text-mid)'} style={{ display: 'block', margin: '0 auto 3px' }} />
+                    <span style={{ fontSize: 11, color: selected ? '#5B9FF0' : 'var(--text-hi)', fontWeight: selected ? 600 : 400 }}>{c.label}</span>
                   </div>
                 )
               })}
@@ -440,23 +283,14 @@ export default function ClassifyScreen() {
             {customers.map((c) => {
               const selected = customerId === c.id
               return (
-                <div
-                  key={c.id}
-                  onClick={() => { setCustomerId(c.id); setAddingNew(false) }}
+                <div key={c.id} onClick={() => { setCustomerId(c.id); setAddingNew(false) }}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '9px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
                     background: selected ? 'rgba(91,159,240,0.16)' : 'var(--glass-fill-soft)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
+                    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
                     border: selected ? '1.5px solid rgba(91,159,240,0.7)' : '1px solid var(--glass-border)',
-                    borderRadius: 11,
-                    marginBottom: 8,
-                    cursor: 'pointer',
-                  }}
-                >
+                    borderRadius: 11, marginBottom: 8, cursor: 'pointer',
+                  }}>
                   <Avatar name={c.name} color="blue" size={32} />
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{c.name}</p>
@@ -466,39 +300,14 @@ export default function ClassifyScreen() {
                 </div>
               )
             })}
-            <div
-              onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
-              style={{
-                border: '1px dashed var(--text-low)',
-                borderRadius: 11,
-                padding: 10,
-                textAlign: 'center',
-                fontSize: 12,
-                color: 'var(--text-low)',
-                cursor: 'pointer',
-                marginBottom: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4,
-              }}
-            >
+            <div onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
+              style={{ border: '1px dashed var(--text-low)', borderRadius: 11, padding: 10, textAlign: 'center', fontSize: 12, color: 'var(--text-low)', cursor: 'pointer', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
               <Icon name="plus" size={14} /> New customer
             </div>
             {addingNew && (
               <div>
-                <input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Customer name"
-                  style={{ ...inputStyle, marginBottom: 8 }}
-                />
-                <input
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="Phone (optional)"
-                  style={inputStyle}
-                />
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Customer name" style={{ ...inputStyle, marginBottom: 8 }} />
+                <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone (optional)" style={inputStyle} />
               </div>
             )}
           </div>
