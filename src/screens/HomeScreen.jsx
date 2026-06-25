@@ -189,6 +189,10 @@ export default function HomeScreen() {
   delay={0.2}
 />
 
+</div>
+
+{/* Quick insights */}
+
         {/* Quick insights */}
         {(topProduct || topCustomer || lowStock.length > 0) && (
           <div style={{ marginBottom: 14 }}>
