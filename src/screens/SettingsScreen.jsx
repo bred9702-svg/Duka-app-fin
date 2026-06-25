@@ -7,7 +7,7 @@ export default function SettingsScreen() {
   const setTheme = useAppStore((s) => s.setTheme)
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 8px', position: 'relative' }}>
+<div style={{ flex: 1, padding: '14px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 120, height: 120, top: -20, right: -30, background: 'rgba(240,169,61,0.18)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
