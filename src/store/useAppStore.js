@@ -18,9 +18,21 @@ const useAppStore = create((set, get) => ({
   todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
   loading: false,
   error: null,
+  theme: localStorage.getItem('duka-theme') || 'dark',
 
-  bootstrap: async () => {
-    set({ loading: true, error: null })
+setTheme: (theme) => {
+  localStorage.setItem('duka-theme', theme)
+  document.documentElement.setAttribute('data-theme', theme)
+  set({ theme })
+},
+
+bootstrap: async () => {
+  // Applique le thème sauvegardé
+  const savedTheme = localStorage.getItem('duka-theme') || 'dark'
+  document.documentElement.setAttribute('data-theme', savedTheme)
+  set({ theme: savedTheme })
+  // ... reste du code bootstrap    
+  set({ loading: true, error: null })
     try {
       const [transactions, customers, products, todayStats] = await Promise.all([
         getTransactions(50),
