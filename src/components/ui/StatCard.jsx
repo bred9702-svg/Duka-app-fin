@@ -52,18 +52,12 @@ export default function StatCard({
       style={{
         position: 'relative',
         overflow: 'hidden',
-
-        padding: '14px',
-
+        padding: '12px',
         background: theme.background,
-
         border: `1px solid ${theme.border}`,
-
         boxShadow:
           '0 10px 30px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.10)',
-
         animation: 'slideUp .45s ease-out backwards',
-
         animationDelay: `${delay}s`,
       }}
     >
@@ -71,21 +65,16 @@ export default function StatCard({
         <div
           style={{
             position: 'absolute',
-
-            right: -18,
-
-            bottom: -18,
-
-            opacity: .05,
-
+            right: -14,
+            bottom: -14,
+            opacity: 0.05,
             transform: 'rotate(-8deg)',
-
             pointerEvents: 'none',
           }}
         >
           <Icon
             name={icon}
-            size={72}
+            size={60}
             color={theme.color}
           />
         </div>
@@ -93,22 +82,13 @@ export default function StatCard({
 
       <p
         style={{
-          fontSize: 10,
-
-          letterSpacing: '.12em',
-
-          textTransform: 'uppercase',
-
+          fontSize: 9,
+          fontWeight: 500,
           color: 'var(--text-low)',
-
-          opacity: .75,
-
-          marginBottom: 6,
-
-          fontWeight: 600,
-
+          opacity: 0.85,
+          marginBottom: 5,
+          letterSpacing: '-0.01em',
           position: 'relative',
-
           zIndex: 2,
         }}
       >
@@ -118,20 +98,14 @@ export default function StatCard({
       <p
         style={{
           fontFamily: 'var(--font-display)',
-
-          fontSize: 21,
-
-          fontWeight: 800,
-
-          letterSpacing: '-.04em',
-
+          fontSize: 17,
+          fontWeight: 700,
+          letterSpacing: '-0.015em',
           color: theme.color,
-
           marginBottom: 8,
-
           position: 'relative',
-
           zIndex: 2,
+          lineHeight: 1.15,
         }}
       >
         {value}
@@ -141,33 +115,29 @@ export default function StatCard({
         <div
           style={{
             display: 'flex',
-
             alignItems: 'center',
-
-            gap: 6,
-
+            gap: 5,
             position: 'relative',
-
             zIndex: 2,
           }}
         >
           <div
             style={{
-              width: 6,
-
-              height: 6,
-
+              width: 5,
+              height: 5,
               borderRadius: '50%',
-
               background: theme.color,
+              opacity: 0.9,
             }}
           />
 
           <span
             style={{
-              fontSize: 10,
-
+              fontSize: 9,
+              fontWeight: 500,
               color: 'var(--text-low)',
+              opacity: 0.7,
+              letterSpacing: '-0.01em',
             }}
           >
             {sub}
