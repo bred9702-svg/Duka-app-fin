@@ -154,39 +154,94 @@ export default function ClassifyScreen() {
         <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
           What is this?
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-          {TYPE_OPTS.map((o) => {
-            const selected = type === o.id
-            return (
-              <div
-                key={o.id}
-                onClick={() => {
-                  setType(o.id)
-                  setCategory(null)
-                  setCustomerId(null)
-                  setSelectedProduct(null)
-                  setSearch('')
-                  setAddingNew(false)
-                }}
-                style={{
-                  background: selected ? `${o.color}26` : 'var(--glass-fill-soft)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: selected ? `1.5px solid ${o.color}99` : '1px solid var(--glass-border)',
-                  boxShadow: selected ? `0 4px 16px -4px ${o.color}55` : 'none',
-                  borderRadius: 12, padding: '12px 6px',
-                  textAlign: 'center', cursor: 'pointer',
-                }}
-              >
-                <Icon name={o.icon} size={20} color={selected ? o.color : 'var(--text-mid)'} style={{ display: 'block', margin: '0 auto 5px' }} />
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
-                  {o.label}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+        <div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 1fr',
+    gap: 8,
+    marginBottom: 16,
+  }}
+>
+  {TYPE_OPTS.map((o) => {
+    const selected = type === o.id
 
+    return (
+      <div
+        key={o.id}
+        onClick={() => {
+          setType(o.id)
+          setCategory(null)
+          setCustomerId(null)
+          setSelectedProduct(null)
+          setSearch('')
+          setAddingNew(false)
+        }}
+        style={{
+          background: selected
+            ? `${o.color}26`
+            : 'var(--glass-fill-soft)',
+
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+
+          border: selected
+            ? `1.5px solid ${o.color}99`
+            : '1px solid var(--glass-border)',
+
+          transform: selected
+            ? 'translateY(-3px) scale(1.03)'
+            : 'scale(1)',
+
+          transition:
+            'all .25s cubic-bezier(.2,.8,.2,1)',
+
+          boxShadow: selected
+            ? `0 14px 30px -10px ${o.color}55`
+            : '0 3px 10px rgba(0,0,0,.08)',
+
+          borderRadius: 12,
+          padding: '12px 6px',
+          textAlign: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <Icon
+          name={o.icon}
+          size={22}
+          color={
+            selected
+              ? o.color
+              : 'var(--text-mid)'
+          }
+          style={{
+            display: 'block',
+            margin: '0 auto 5px',
+
+            transform: selected
+              ? 'scale(1.18)'
+              : 'scale(1)',
+
+            transition:
+              'transform .25s cubic-bezier(.2,.8,.2,1)',
+          }}
+        />
+
+        <span
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 10,
+            fontWeight: 600,
+            color: selected
+              ? o.color
+              : 'var(--text-mid)',
+          }}
+        >
+          {o.label}
+        </span>
+      </div>
+    )
+  })}
+</div>
         {/* SALE */}
         {type === 'sale' && (
           <div>
@@ -208,14 +263,76 @@ export default function ClassifyScreen() {
                 {filteredProducts.length === 0
                   ? <p style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-low)' }}>No product found</p>
                   : filteredProducts.map((p) => (
-                    <div key={p.id} onClick={() => { setSelectedProduct(p); setSearch(p.name) }}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid var(--line)', cursor: 'pointer' }}>
+  <div
+    key={p.id}
+    onClick={() => {
+      setSelectedProduct(p)
+      setSearch(p.name)
+    }}
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+
+      padding: '12px 14px',
+
+      margin: '6px',
+
+      borderRadius: 12,
+
+      cursor: 'pointer',
+
+      background:
+        'linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02))',
+
+      border: '1px solid rgba(255,255,255,.05)',
+
+      transition: 'all .22s',
+
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px)'
+      e.currentTarget.style.border =
+        '1px solid rgba(240,169,61,.35)'
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)'
+      e.currentTarget.style.border =
+        '1px solid rgba(255,255,255,.05)'
+    }}
+  >
                       <div>
                         <p style={{ fontSize: 12, color: 'var(--text-hi)', fontWeight: 500 }}>{p.name}</p>
                         <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{CATEGORIES[p.category] || p.category} · Stock: {p.stock_current}</p>
                       </div>
-                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D' }}>{fmtKES(p.unit_price)}</p>
-                    </div>
+                      <div
+  style={{
+    textAlign: 'right',
+  }}
+>
+  <p
+    style={{
+      fontFamily: 'var(--font-display)',
+      fontSize: 14,
+      fontWeight: 700,
+      color: '#F0A93D',
+      marginBottom: 2,
+    }}
+  >
+    {fmtKES(p.unit_price)}
+  </p>
+
+  <p
+    style={{
+      fontSize: 9,
+      color: 'var(--text-low)',
+    }}
+  >
+    per bottle
+  </p>
+</div>
                   ))
                 }
               </div>
@@ -229,15 +346,97 @@ export default function ClassifyScreen() {
                       Stock: {selectedProduct.stock_current}
                       {selectedProduct.stock_current <= selectedProduct.stock_alert && <span style={{ color: '#FF6B5B', marginLeft: 6 }}>⚠ Low</span>}
                     </p>
-                  </div>
-                  <button onClick={() => { setSelectedProduct(null); setSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: 18 }}>×</button>
-                </div>
-                <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 6 }}>Quantity</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                  <button onClick={() => setQty(q => String(Math.max(1, parseInt(q) - 1)))} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-                  <input value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))} style={{ ...inputStyle, textAlign: 'center', flex: 1 }} />
-                  <button onClick={() => setQty(q => String(parseInt(q) + 1))} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', color: 'var(--text-hi)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                </div>
+                 <div
+  style={{
+    display: 'flex',
+    gap: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  }}
+>
+  {/* Minus */}
+
+  <button
+    onClick={() =>
+      setQty((q) =>
+        String(Math.max(1, (parseInt(q) || 1) - 1))
+      )
+    }
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      border: '1px solid rgba(255,255,255,.08)',
+      background:
+        'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))',
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      transition: 'all .22s',
+      boxShadow:
+        '0 8px 18px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.08)',
+    }}
+  >
+    <Icon
+      name="minus"
+      size={16}
+      color="var(--text-hi)"
+    />
+  </button>
+
+  {/* Quantity */}
+
+  <input
+    value={qty}
+    onChange={(e) =>
+      setQty(e.target.value.replace(/[^0-9]/g, ''))
+    }
+    style={{
+      ...inputStyle,
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 18,
+      fontWeight: 700,
+      borderRadius: 12,
+    }}
+  />
+
+  {/* Plus */}
+
+  <button
+    onClick={() =>
+      setQty((q) =>
+        String((parseInt(q) || 1) + 1)
+      )
+    }
+    style={{
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      border: '1px solid rgba(255,255,255,.08)',
+      background:
+        'linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))',
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      transition: 'all .22s',
+      boxShadow:
+        '0 8px 18px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.08)',
+    }}
+  >
+    <Icon
+      name="plus"
+      size={16}
+      color="var(--text-hi)"
+    />
+  </button>
+</div>
                 <div style={{ background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
                   <p style={{ fontSize: 11, color: 'var(--text-low)' }}>Total</p>
                   <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: '#5FD97A' }}>
@@ -283,21 +482,76 @@ export default function ClassifyScreen() {
             {customers.map((c) => {
               const selected = customerId === c.id
               return (
-                <div key={c.id} onClick={() => { setCustomerId(c.id); setAddingNew(false) }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
-                    background: selected ? 'rgba(91,159,240,0.16)' : 'var(--glass-fill-soft)',
-                    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-                    border: selected ? '1.5px solid rgba(91,159,240,0.7)' : '1px solid var(--glass-border)',
-                    borderRadius: 11, marginBottom: 8, cursor: 'pointer',
-                  }}>
-                  <Avatar name={c.name} color="blue" size={32} />
+              <div
+  key={c.id}
+  onClick={() => {
+    setCustomerId(c.id)
+    setAddingNew(false)
+  }}
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+
+    padding: '12px 14px',
+
+    marginBottom: 10,
+
+    borderRadius: 14,
+
+    cursor: 'pointer',
+
+    background: selected
+      ? 'rgba(91,159,240,.16)'
+      : 'linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))',
+
+    border: selected
+      ? '1.5px solid rgba(91,159,240,.65)'
+      : '1px solid rgba(255,255,255,.06)',
+
+    backdropFilter: 'blur(18px)',
+    WebkitBackdropFilter: 'blur(18px)',
+
+    transition: 'all .25s cubic-bezier(.2,.8,.2,1)',
+
+    transform: selected
+      ? 'translateY(-2px)'
+      : 'translateY(0)',
+
+    boxShadow: selected
+      ? '0 14px 30px rgba(91,159,240,.18)'
+      : '0 4px 12px rgba(0,0,0,.10)',
+  }}
+>
+                  <Avatar
+  name={c.name}
+  color="blue"
+  size={36}
+/>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{c.name}</p>
-                    <p style={{ fontSize: 10, color: '#FFD98A' }}>{fmtKES(c.total_owed)} KES owed</p>
+                    <p
+  style={{
+    fontSize: 10,
+    color: '#FFD98A',
+    marginTop: 2,
+    opacity: .85,
+  }}
+>{fmtKES(c.total_owed)} KES owed</p>
                   </div>
-                  {selected && <Icon name="circleCheck" size={18} color="#5B9FF0" />}
-                </div>
+                  {selected && (
+  <div
+    style={{
+      animation: 'popIn .25s',
+    }}
+  >
+    <Icon
+      name="circleCheck"
+      size={18}
+      color="#5B9FF0"
+    />
+  </div>
+)}
               )
             })}
             <div onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
