@@ -80,19 +80,19 @@ export default function TransactionRow({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '12px 14px',
-        marginBottom: 12,
-        borderRadius: 14,
-        cursor: onClick ? 'pointer' : 'default',
-        background: isClassified
-          ? 'var(--glass-fill-soft)'
-          : 'rgba(240,169,61,.06)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        border: isClassified
-          ? '1px solid var(--glass-border)'
-          : '1px solid rgba(240,169,61,.35)',
+      gap: 10,
+padding: '9px 11px',
+marginBottom: 6,
+borderRadius: 12,
+cursor: onClick ? 'pointer' : 'default',
+background: isClassified
+  ? 'var(--glass-fill-soft)'
+  : 'rgba(255,255,255,.035)',
+backdropFilter: 'blur(14px)',
+WebkitBackdropFilter: 'blur(14px)',
+border: isClassified
+  ? '1px solid var(--glass-border)'
+  : '1px solid rgba(240,169,61,.18)',
         animation: 'slideUp .35s ease-out backwards',
         animationDelay: `${delay}s`,
       }}
@@ -101,9 +101,10 @@ export default function TransactionRow({
 
       <div
         style={{
-          width: 4,
-          alignSelf: 'stretch',
-          borderRadius: 999,
+         width: 3,
+height: 34,
+alignSelf: 'center',
+borderRadius: 999,
           background: barColor,
           flexShrink: 0,
         }}
@@ -113,9 +114,9 @@ export default function TransactionRow({
 
       <div
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 11,
+          width: 30,
+height: 30,
+borderRadius: 9,
           background: iconBg,
           display: 'flex',
           alignItems: 'center',
@@ -125,7 +126,7 @@ export default function TransactionRow({
       >
         <Icon
           name={iconName}
-          size={16}
+         size={14}
           color={iconFg}
         />
       </div>
@@ -142,10 +143,10 @@ export default function TransactionRow({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            padding: '3px 8px',
-            borderRadius: 999,
-            marginBottom: 6,
-            fontSize: 9,
+            padding: '2px 7px',
+marginBottom: 4,
+fontSize: 8,
+letterSpacing: '.02em',
             fontWeight: 600,
             background:
               opType === 'sale'
@@ -178,7 +179,7 @@ export default function TransactionRow({
 
         <div
           style={{
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
             letterSpacing: '-.01em',
             color: 'var(--text-hi)',
@@ -194,11 +195,10 @@ export default function TransactionRow({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 5,
-            marginTop: 3,
-            fontSize: 9,
-            color: 'var(--text-low)',
-            opacity: .8,
+           gap: 4,
+marginTop: 2,
+fontSize: 8,
+opacity: .65,
           }}
         >
           <span>{subtitle}</span>
@@ -220,7 +220,7 @@ export default function TransactionRow({
         <div
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: 700,
             letterSpacing: '-.02em',
             color: isIn ? '#5FD97A' : '#FF6B5B',
@@ -232,9 +232,10 @@ export default function TransactionRow({
         {!isClassified && (
           <div
             style={{
-              marginTop: 4,
-              fontSize: 9,
-              fontWeight: 600,
+              marginTop: 2,
+fontSize: 8,
+fontWeight: 600,
+opacity: .8,
               color: '#F0A93D',
             }}
           >
