@@ -157,42 +157,37 @@ export default function HomeScreen() {
     marginBottom: 14,
   }}
 >
-  <StatCard
-    label="Money coming in"
-    value={fmtKES(income)}
-    sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
-    color="green"
-    icon="bottle"
-    delay={0.05}
-  />
+ <StatCard
+  label="Money in"
+  value={fmtKES(income)}
+  sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
+  color="green"
+  delay={0.05}
+/>
 
-  <StatCard
-    label="Money going out"
-    value={fmtKES(expenses)}
-    sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
-    color="red"
-    icon="receiptOff"
-    delay={0.10}
-  />
+<StatCard
+  label="Money out"
+  value={fmtKES(expenses)}
+  sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
+  color="red"
+  delay={0.1}
+/>
 
-  <StatCard
-    label="Customers owe you"
-    value={fmtKES(totalOwed)}
-    sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
-    color="amber"
-    icon="users"
-    delay={0.15}
-  />
+<StatCard
+  label="Customer debt"
+  value={fmtKES(totalOwed)}
+  sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
+  color="amber"
+  delay={0.15}
+/>
 
-  <StatCard
-    label="Needs attention"
-    value={unclassifiedCount}
-    sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
-    color="blue"
-    icon="alertTriangle"
-    delay={0.20}
-  />
-</div>
+<StatCard
+  label="Needs review"
+  value={unclassifiedCount}
+  sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
+  color={unclassifiedCount ? 'red' : 'green'}
+  delay={0.2}
+/>
 
         {/* Quick insights */}
         {(topProduct || topCustomer || lowStock.length > 0) && (
