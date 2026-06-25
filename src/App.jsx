@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/inbox" element={<TransactionsScreen />} />
