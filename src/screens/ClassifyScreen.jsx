@@ -137,7 +137,7 @@ export default function ClassifyScreen() {
   }
 
   return (
-    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
+    <div style={{ flex: 1, padding: '14px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 130, height: 130, top: 40, right: -40, background: 'rgba(240,169,61,0.2)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
