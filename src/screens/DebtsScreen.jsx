@@ -1,3 +1,6 @@
+import DebtHero from '../components/debts/DebtHero'
+import SmartInsight from '../components/debts/SmartInsight'
+import DebtCard from '../components/debts/DebtCard'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import Card from '../components/ui/Card'
@@ -17,87 +20,151 @@ export default function DebtsScreen() {
     .sort((a, b) => b.total_owed - a.total_owed)
   const cleared = customers.filter((c) => (c.total_owed || 0) === 0)
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
+  const overdue = active.filter(c => (c.total_owed || 0) > 5000).length
 
-  return (
-   <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
-      <div className="bg-blob" style={{ width: 130, height: 130, top: -30, left: -30, background: 'rgba(91,159,240,0.15)' }} />
+return (
+  <div
+    style={{
+      flex: 1,
+      width: '100%',
+      padding: '16px 14px 8px',
+      position: 'relative',
+    }}
+  >
+    <div
+      className="bg-blob"
+      style={{
+        width: 130,
+        height: 130,
+        top: -30,
+        left: -30,
+        background: 'rgba(91,159,240,.15)',
+      }}
+    />
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 21, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em' }}>
-            Debts
-          </h1>
-          {total > 0 && (
-            <span style={{ background: 'rgba(255,107,91,0.18)', color: '#FF6B5B', fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 10 }}>
-              {fmtKES(total)} KES total
-            </span>
-          )}
-        </div>
+    <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {customers.length === 0 && (
-          <Card style={{ textAlign: 'center', padding: 24 }}>
-            <Icon name="users" size={32} color="var(--text-low)" style={{ display: 'block', margin: '0 auto 8px' }} />
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600, color: 'var(--text-hi)', marginBottom: 4 }}>
-              No customers yet
-            </p>
-            <p style={{ fontSize: 12, color: 'var(--text-low)' }}>
-              Add customers when classifying transactions as debts
-            </p>
-          </Card>
-        )}
+      <h1
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 700,
+          color: 'var(--text-hi)',
+          marginBottom: 4,
+        }}
+      >
+        Debts
+      </h1>
 
-        {active.length > 0 && (
-          <div>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Active debts
-            </p>
-            {active.map((c, i) => (
-              <div
-                key={c.id}
-                onClick={() => navigate(`/customer/${c.id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, marginBottom: 8, cursor: 'pointer', animation: 'slideUp 0.4s ease-out backwards', animationDelay: `${i * 0.05}s` }}
-              >
-                <Avatar name={c.name} color={AVATAR_COLORS[i % AVATAR_COLORS.length]} size={36} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-hi)' }}>{c.name}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-low)' }}>
-                    {(c.payments || []).length} payment{(c.payments || []).length !== 1 ? 's' : ''} recorded
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#FF6B5B' }}>
-                    {fmtKES(c.total_owed)}
-                  </p>
-                  <p style={{ fontSize: 9, color: 'var(--text-low)' }}>owed</p>
-                </div>
-                <Icon name="chevronRight" size={16} color="var(--text-low)" />
-              </div>
-            ))}
-          </div>
-        )}
+      <p
+        style={{
+          color: 'var(--text-low)',
+          fontSize: 12,
+          marginBottom: 18,
+        }}
+      >
+        Recover your money faster.
+      </p>
 
-        {cleared.length > 0 && (
-          <div>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', margin: '12px 0 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Cleared
-            </p>
-            {cleared.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => navigate(`/customer/${c.id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, marginBottom: 8, cursor: 'pointer', opacity: 0.6 }}
-              >
-                <Avatar name={c.name} color="green" size={36} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-hi)' }}>{c.name}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-low)' }}>Fully paid</p>
-                </div>
-                <Icon name="chevronRight" size={16} color="var(--text-low)" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <DebtHero
+        total={total}
+        customers={active.length}
+        overdue={overdue}
+      />
+
+      <SmartInsight customers={customers} />
+
+      <p
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 10,
+          fontWeight: 600,
+          color: 'var(--text-low)',
+          textTransform: 'uppercase',
+          letterSpacing: '.08em',
+          marginBottom: 10,
+        }}
+      >
+        Customers
+      </p>
+
+      {customers.length === 0 && (
+        <Card
+          style={{
+            textAlign: 'center',
+            padding: 24,
+          }}
+        >
+          <Icon
+            name="users"
+            size={34}
+            color="var(--text-low)"
+            style={{
+              display: 'block',
+              margin: '0 auto 10px',
+            }}
+          />
+
+          <p
+            style={{
+              fontWeight: 600,
+              marginBottom: 5,
+            }}
+          >
+            No customers yet
+          </p>
+
+          <p
+            style={{
+              color: 'var(--text-low)',
+              fontSize: 12,
+            }}
+          >
+            Debts will appear here.
+          </p>
+        </Card>
+      )}
+
+      {active.map((customer, index) => (
+        <DebtCard
+          key={customer.id}
+          customer={customer}
+          color={AVATAR_COLORS[index % AVATAR_COLORS.length]}
+          delay={index * .05}
+          onClick={() => navigate(`/customer/${customer.id}`)}
+        />
+      ))}
+
+      {cleared.length > 0 && (
+        <>
+          <p
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 10,
+              fontWeight: 600,
+              color: 'var(--text-low)',
+              marginTop: 22,
+              marginBottom: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '.08em',
+            }}
+          >
+            Paid customers
+          </p>
+
+          {cleared.map((customer, index) => (
+            <DebtCard
+              key={customer.id}
+              customer={customer}
+              color="green"
+              delay={index * .03}
+              onClick={() => navigate(`/customer/${customer.id}`)}
+            />
+          ))}
+        </>
+      )}
+
     </div>
-  )
+  </div>
+)
 }
