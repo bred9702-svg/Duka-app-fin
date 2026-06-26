@@ -95,7 +95,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <div style={{ flex: 1, padding: '14px 14px 8px', position: 'relative' }}>
+    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 150, height: 150, top: -40, right: -40, background: 'rgba(240,169,61,0.25)' }} />
       <div className="bg-blob" style={{ width: 120, height: 120, bottom: 200, left: -40, background: 'rgba(95,217,122,0.12)', animationDelay: '2s' }} />
 
@@ -108,7 +108,7 @@ export default function HomeScreen() {
               {fmtDateLong(Date.now())}
             </p>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {getGreeting()} 👋
+              {getGreeting()} 
             </h1>
             {income > 0 ? (
               <p style={{ fontSize: 12, color: 'var(--text-mid)', marginTop: 3 }}>
