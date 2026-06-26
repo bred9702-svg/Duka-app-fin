@@ -65,8 +65,9 @@ body {
   color: var(--text-hi);
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease;
-}
 
+  overflow-y: scroll;
+}
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
 
