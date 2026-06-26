@@ -19,12 +19,12 @@ export default function BottomNav() {
   return (
     <div style={{
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
-      margin: '0 12px 12px', padding: '10px 4px',
-      background: 'rgba(255,255,255,0.07)',
-      backdropFilter: 'blur(22px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(22px) saturate(180%)',
-      border: '1px solid rgba(255,255,255,0.14)',
-      borderRadius: 18,
+      margin: '0', padding: '10px 4px',
+background: 'rgba(255,255,255,0.07)',
+backdropFilter: 'blur(22px) saturate(180%)',
+WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+border: '1px solid rgba(255,255,255,0.14)',
+borderRadius: 0,
       boxShadow: '0 10px 30px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.18)',
       position: 'relative', zIndex: 10, flexShrink: 0,
     }}>
