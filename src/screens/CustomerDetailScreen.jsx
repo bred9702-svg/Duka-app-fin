@@ -106,47 +106,102 @@ export default function CustomerDetailScreen() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <BackButton to="/debts" />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <Avatar name={customer.name} color="blue" size={44} />
-          <div>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-hi)' }}>
-              {customer.name}
-            </p>
-            {customer.phone && (
-              <p style={{ fontSize: 12, color: 'var(--text-low)' }}>{customer.phone}</p>
-            )}
-          </div>
-        </div>
+        <Card style={HEADER}>
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+    }}
+  >
+    <Avatar
+      name={customer.name}
+      color="blue"
+      size={60}
+    />
 
-        <div
-          className="glass-card"
+    <div style={{ flex: 1 }}>
+      <h2
+        style={{
+          margin: 0,
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 700,
+          color: 'var(--text-hi)',
+        }}
+      >
+        {customer.name}
+      </h2>
+
+      {customer.phone && (
+        <p
           style={{
-            marginBottom: 14,
-            textAlign: 'center',
-            padding: 16,
-            borderColor: customer.totalOwed > 0 ? 'rgba(255,107,91,0.35)' : 'rgba(95,217,122,0.35)',
+            marginTop: 4,
+            fontSize: 13,
+            color: 'var(--text-low)',
           }}
         >
-          <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 4 }}>
-            Current balance
-          </p>
-          <p
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 26,
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              color: customer.totalOwed > 0 ? '#FF6B5B' : '#5FD97A',
-            }}
-          >
-            {fmtKES(customer.totalOwed)}
-          </p>
-          {customer.totalOwed === 0 && (
-            <p style={{ fontSize: 12, color: '#5FD97A', marginTop: 4, fontWeight: 500 }}>
-              Fully paid
-            </p>
-          )}
-        </div>
+          {customer.phone}
+        </p>
+      )}
+
+      <div
+        style={{
+          marginTop: 10,
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '4px 10px',
+          borderRadius: 999,
+          background:
+            customer.totalOwed > 0
+              ? 'rgba(255,107,91,.15)'
+              : 'rgba(95,217,122,.15)',
+          color:
+            customer.totalOwed > 0
+              ? '#FF6B5B'
+              : '#5FD97A',
+          fontSize: 11,
+          fontWeight: 600,
+        }}
+      >
+        {customer.totalOwed > 0 ? 'Active debt' : 'Paid'}
+      </div>
+    </div>
+  </div>
+
+  <div
+    style={{
+      marginTop: 22,
+      paddingTop: 18,
+      borderTop: '1px solid rgba(255,255,255,.08)',
+    }}
+  >
+    <p
+      style={{
+        fontSize: 11,
+        color: 'var(--text-low)',
+        marginBottom: 6,
+      }}
+    >
+      Outstanding balance
+    </p>
+
+    <h1
+      style={{
+        margin: 0,
+        fontFamily: 'var(--font-display)',
+        fontSize: 34,
+        fontWeight: 700,
+        color:
+          customer.totalOwed > 0
+            ? '#FF6B5B'
+            : '#5FD97A',
+      }}
+    >
+      {fmtKES(customer.totalOwed)}
+    </h1>
+  </div>
+</Card>
 
         {customer.totalOwed > 0 && (
           <div style={{ marginBottom: 16 }}>
