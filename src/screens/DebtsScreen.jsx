@@ -19,7 +19,7 @@ export default function DebtsScreen() {
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
 
   return (
-   <div style={{ flex: 1, padding: '16px 14px 8px', position: 'relative' }}>
+   <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 130, height: 130, top: -30, left: -30, background: 'rgba(91,159,240,0.15)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
