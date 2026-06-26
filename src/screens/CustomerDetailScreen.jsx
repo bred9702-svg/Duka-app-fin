@@ -49,7 +49,7 @@ export default function CustomerDetailScreen() {
   }
 
   return (
-    <div style={{ flex: 1, padding: '14px 14px 8px', position: 'relative' }}>
+    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div
         className="bg-blob"
         style={{ width: 120, height: 120, top: 20, right: -30, background: 'rgba(91,159,240,0.15)' }}
