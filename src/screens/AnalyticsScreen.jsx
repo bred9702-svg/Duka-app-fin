@@ -171,7 +171,7 @@ export default function AnalyticsScreen() {
     }
   }
 
-  return (<div style={{ flex: 1, padding: '16px 14px 8px', position: 'relative' }}>
+  return (<div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -30, background: 'rgba(240,169,61,0.2)' }} />
       <div className="bg-blob" style={{ width: 110, height: 110, bottom: 100, left: -30, background: 'rgba(91,159,240,0.15)', animationDelay: '3s' }} />
 
