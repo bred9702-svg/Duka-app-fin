@@ -37,27 +37,26 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-     <div
-  style={{
-    flex: 1,
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    overflowY: 'auto',
-  }}
->
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/inbox" element={<TransactionsScreen />} />
-          <Route path="/classify/:id" element={<ClassifyScreen />} />
-          <Route path="/debts" element={<DebtsScreen />} />
-          <Route path="/customer/:id" element={<CustomerDetailScreen />} />
-          <Route path="/analytics" element={<AnalyticsScreen />} />
-          <Route path="/settings" element={<SettingsScreen />} />
-        </Routes>
-      </div>
-      {!hideNav && <BottomNav />}
-    </div>
-  )
-}
+   <div className="app-shell">
+  <div
+    style={{
+      flex: 1,
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
+    }}
+  >
+    <Routes>
+      <Route path="/" element={<HomeScreen />} />
+      <Route path="/inbox" element={<TransactionsScreen />} />
+      <Route path="/classify/:id" element={<ClassifyScreen />} />
+      <Route path="/debts" element={<DebtsScreen />} />
+      <Route path="/customer/:id" element={<CustomerDetailScreen />} />
+      <Route path="/analytics" element={<AnalyticsScreen />} />
+      <Route path="/settings" element={<SettingsScreen />} />
+    </Routes>
+  </div>
+
+  {!hideNav && <BottomNav />}
+</div>
