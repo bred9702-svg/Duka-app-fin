@@ -60,4 +60,5 @@ export default function App() {
 
   {!hideNav && <BottomNav />}
 </div>
+    )
     }
