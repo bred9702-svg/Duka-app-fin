@@ -120,9 +120,6 @@ button:active { transform: scale(0.97); }
   position: relative;
   transition: background 0.3s ease;
 }
-.app-shell > div {
-  width: 100%;
-}
 
 @media (min-width: 431px) {
   body {
