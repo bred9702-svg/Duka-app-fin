@@ -83,7 +83,10 @@ export async function classifyTransaction(id, classification) {
   let total_price = null
   let stock_after = null
 
-  if (classification.type === 'sale' && classification.product_id) {
+if (
+  (classification.type === 'sale' || classification.type === 'debt') &&
+  classification.product_id
+) {
     const { data: product } = await supabase
       .from('products')
       .select('unit_price, cost_price, stock_current')
@@ -111,6 +114,11 @@ export async function classifyTransaction(id, classification) {
       total_price,
       profit,
       stock_after,
+      is_debt: classification.type === 'debt',
+remaining_amount:
+  classification.type === 'debt'
+    ? total_price ?? txn.amount
+    : 0,
     })
     .eq('id', id)
     .select()
