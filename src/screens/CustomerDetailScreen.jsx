@@ -30,10 +30,14 @@ const products = useAppStore((s) => s.products)
   )
   .map((t) => ({
     ...t,
-    product: products.find((p) => p.id === t.product_id),
-  }))
-  .sort((a, b) => b.ts - a.ts)
-
+    const debts = transactions
+  .filter(
+    (t) =>
+      t.customer_id === customer?.id &&
+      t.is_debt &&
+      (t.remaining_amount || 0) > 0
+  )
+  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
   if (!customer) {
     return (
       <div style={{ flex: 1, padding: 24 }}>
