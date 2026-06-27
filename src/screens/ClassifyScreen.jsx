@@ -212,8 +212,8 @@ export default function ClassifyScreen() {
           })}
         </div>
 
-        {/* SALE */}
-        {type === 'sale' && (
+        {/* SALE + DEBT */}
+{(type === 'sale' || type === 'debt') && (
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 6 }}>
               Product
