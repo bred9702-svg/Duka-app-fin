@@ -3,59 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import BackButton from '../components/ui/BackButton'
 import Card from '../components/ui/Card'
-import Avatar from '../components/ui/Avatar'
 import { fmtKES, fmtShortDate, newId } from '../utils/formatters'
 import CustomerHeader from '../components/customer/CustomerHeader'
 import CustomerStats from '../components/customer/CustomerStats'
 
-{/* Customer summary */}
-
-<Card style={{ marginBottom: 14 }}>
-  <div style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  }}>
-
-    <div>
-      <p style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: 18,
-        fontWeight: 700,
-        color: 'var(--text-hi)'
-      }}>
-        {customer.name}
-      </p>
-
-      <p style={{
-        marginTop: 4,
-        fontSize: 12,
-        color: 'var(--text-low)'
-      }}>
-        {customer.phone || 'No phone number'}
-      </p>
-    </div>
-
-    <div style={{ textAlign: 'right' }}>
-      <p style={{
-        fontSize: 11,
-        color: 'var(--text-low)'
-      }}>
-        Current debt
-      </p>
-
-      <p style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: 20,
-        fontWeight: 700,
-        color: customer.total_owed > 0 ? '#FF6B5B' : '#5FD97A'
-      }}>
-        {fmtKES(customer.total_owed || 0)}
-      </p>
-    </div>
-
-  </div>
-</Card>
 
 export default function CustomerDetailScreen() {
   const { id } = useParams()
@@ -111,7 +62,7 @@ export default function CustomerDetailScreen() {
         <CustomerHeader customer={customer} />
  <CustomerStats customer={customer} />
 
-        {customer.totalOwed > 0 && (
+        customer.total_owed
           <div style={{ marginBottom: 16 }}>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 8 }}>
               Record payment
