@@ -8,6 +8,7 @@ import CustomerHeader from '../components/customer/CustomerHeader'
 import CustomerStats from '../components/customer/CustomerStats'
 import PaymentInput from '../components/customer/PaymentInput'
 import ActiveDebts from '../components/customer/ActiveDebts'
+import PaymentTimeline from '../components/customer/PaymentTimeline'
 
 
 export default function CustomerDetailScreen() {
@@ -91,30 +92,9 @@ const products = useAppStore((s) => s.products)
   setAmount={setAmount}
   onRecord={recordPayment}
 />
-        {customer.payments.length > 0 ? (
-          <div>
-            <p
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 10,
-                fontWeight: 600,
-                color: 'var(--text-low)',
-                marginBottom: 8,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
-              Payment history
-            </p>
-            {customer.payments.map((p, i) => (
-              <Card
-                key={i}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 6,
-                }}
+        <PaymentTimeline
+    payments={customer.payments || []}
+/>
               >
                 <p style={{ fontSize: 12, color: 'var(--text-low)' }}>
                   {fmtShortDate(p.date)}
