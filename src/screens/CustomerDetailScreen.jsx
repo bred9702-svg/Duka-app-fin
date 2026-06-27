@@ -20,14 +20,7 @@ const products = useAppStore((s) => s.products)
   const addDebtPayment = useAppStore((s) => s.addDebtPayment)
   const [amount, setAmount] = useState('')
 
-  const customer = customers.find((c) => c.id === id)
-  const debts = transactions
-  .filter(
-    (t) =>
-      t.customer_id === customer?.id &&
-      t.is_debt &&
-      (t.remaining_amount || 0) > 0
-  )
+
   const debts = transactions
   .filter(
     (t) =>
