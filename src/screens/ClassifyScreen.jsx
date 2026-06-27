@@ -110,7 +110,10 @@ export default function ClassifyScreen() {
           if (txn.direction === 'in') {
             await addDebtPayment(customerId, txn.amount)
           } else {
-            await increaseDebt(customerId, txn.amount)
+            await increaseDebt(
+  customerId,
+  selectedProduct.unit_price * parsedQty
+)
           }
         }
       }
