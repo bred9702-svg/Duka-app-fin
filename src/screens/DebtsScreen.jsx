@@ -66,12 +66,9 @@ return (
         Recover your money faster.
       </p>
 
-      <DebtHero
-        total={total}
-        customers={active.length}
-        overdue={overdue}
-      />
-
+<Card>
+  TEST
+</Card>
       <SmartInsight customers={customers} />
 
       <p
