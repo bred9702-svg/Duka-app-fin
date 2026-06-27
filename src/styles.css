@@ -109,7 +109,6 @@ button:active { transform: scale(0.97); }
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  max-width: 430px;
   max-width: 400px;
   margin: 0 auto;
   background: var(--bg-deep);
