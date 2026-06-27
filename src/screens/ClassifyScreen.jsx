@@ -74,10 +74,16 @@ export default function ClassifyScreen() {
   const parsedQty = Math.max(1, parseInt(qty) || 1) // FIX: qty "0" → 1, centralisé
 
   const canConfirm =
-    type &&
-    ((type === 'sale' && selectedProduct) ||
-      (type === 'expense' && category) ||
-      (type === 'debt' && (customerId || newName.trim())))
+  type &&
+  (
+    (type === 'sale' && selectedProduct) ||
+    (type === 'expense' && category) ||
+    (
+      type === 'debt' &&
+      selectedProduct &&
+      (customerId || newName.trim())
+    )
+  )
 
   async function confirm() {
     setSaving(true)
