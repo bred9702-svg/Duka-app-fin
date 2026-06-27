@@ -7,9 +7,12 @@ import { fmtKES, fmtShortDate, newId } from '../utils/formatters'
 import CustomerHeader from '../components/customer/CustomerHeader'
 import CustomerStats from '../components/customer/CustomerStats'
 import PaymentInput from '../components/customer/PaymentInput'
+import ActiveDebts from '../components/customer/ActiveDebts'
 
 
 export default function CustomerDetailScreen() {
+  const transactions = useAppStore((s) => s.transactions)
+const products = useAppStore((s) => s.products)
   const { id } = useParams()
   const navigate = useNavigate()
   const customers = useAppStore((s) => s.customers)
@@ -18,6 +21,18 @@ export default function CustomerDetailScreen() {
   const [amount, setAmount] = useState('')
 
   const customer = customers.find((c) => c.id === id)
+  const debts = transactions
+  .filter(
+    (t) =>
+      t.customer_id === customer?.id &&
+      t.is_debt &&
+      (t.remaining_amount || 0) > 0
+  )
+  .map((t) => ({
+    ...t,
+    product: products.find((p) => p.id === t.product_id),
+  }))
+  .sort((a, b) => b.ts - a.ts)
 
   if (!customer) {
     return (
@@ -27,6 +42,9 @@ export default function CustomerDetailScreen() {
       </div>
     )
   }
+  function handleRecordPayment(debt) {
+  console.log(debt)
+}
 
   function recordPayment() {
     const amt = parseInt(amount, 10)
@@ -62,6 +80,10 @@ export default function CustomerDetailScreen() {
         <BackButton to="/debts" />
         <CustomerHeader customer={customer} />
  <CustomerStats customer={customer} />
+        <ActiveDebts
+  debts={debts}
+  onRecordPayment={handleRecordPayment}
+/>
 
         <PaymentInput
   customer={customer}
