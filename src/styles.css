@@ -83,13 +83,7 @@ button:active { transform: scale(0.97); }
 ::-webkit-scrollbar { width: 0; height: 0; }
 
 /* ── Animations ─────────────────────────────────────────── */
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
-@keyframes floatBlob { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(8px, -10px) scale(1.06); } }
-@keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
-@keyframes slideOutFade {
-  0% {
+@@ -92,51 +93,51 @@ button:active { transform: scale(0.97); }
     opacity: 1;
     transform: translateX(0) scale(1);
     max-height: 80px;
@@ -116,6 +110,7 @@ button:active { transform: scale(0.97); }
   height: 100vh;
   width: 100%;
   max-width: 430px;
+  max-width: 400px;
   margin: 0 auto;
   background: var(--bg-deep);
   overflow: hidden;
