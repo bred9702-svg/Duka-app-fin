@@ -95,29 +95,8 @@ const products = useAppStore((s) => s.products)
         <PaymentTimeline
     payments={customer.payments || []}
 />
-              >
-                <p style={{ fontSize: 12, color: 'var(--text-low)' }}>
-                  {fmtShortDate(p.date)}
-                </p>
-                <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A' }}>
-                  +{fmtKES(p.amount)}
-                </p>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <p
-            style={{
-              fontSize: 12,
-              color: 'var(--text-low)',
-              textAlign: 'center',
-              padding: '16px 0',
-            }}
-          >
-            No payments yet
-          </p>
-        )}
-      </div>
+
+        </div>
     </div>
   )
 }
