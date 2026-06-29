@@ -59,6 +59,10 @@ html, body, #root {
   height: 100%;
 }
 
+#root {
+  width: min(100%, 390px);
+}
+
 body {
   font-family: var(--font-body);
   background: var(--bg-deep);
@@ -114,7 +118,7 @@ button:active { transform: scale(0.97); }
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  max-width: 430px;
+  max-width: 390px;
   margin: 0 auto;
   background: var(--bg-deep);
   overflow: hidden;

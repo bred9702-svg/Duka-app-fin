@@ -56,6 +56,21 @@ export default function TransactionRow({
       iconFg = '#5B9FF0'
       barColor = '#5B9FF0'
     }
+
+    if (opType === 'debt_payment') {
+      const cust =
+        txn.customer?.name ||
+        customers?.find((c) => c.id === txn.customer_id)?.name ||
+        'Customer'
+
+      title = cust
+      subtitle = `Debt payment · ${fmtKES(txn.amount)}`
+      iconName = 'userDollar'
+      iconBg = 'rgba(95,217,122,.14)'
+      iconFg = '#5FD97A'
+      barColor = '#5FD97A'
+    }
+
   } else {
     title =
       txn.mpesa_sender_name ||
@@ -171,6 +186,8 @@ letterSpacing: '.02em',
               ? 'Sale'
               : opType === 'expense'
               ? 'Expense'
+              : opType === 'debt_payment'
+              ? 'Payment'
               : 'Debt'
             : isMpesa
             ? 'M-Pesa'
