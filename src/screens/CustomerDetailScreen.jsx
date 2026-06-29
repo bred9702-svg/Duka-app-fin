@@ -117,21 +117,27 @@ export default function CustomerDetailScreen() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <BackButton to="/debts" />
 
-        <CustomerHeader customer={customer} />
+<CustomerHeader
+  customer={customer}
+/>
 
-        <CustomerStats
+<CustomerStats
   customer={customer}
   lastPaymentLabel={lastPaymentLabel}
   activeDebtCount={debts.length}
 />
 
-     <CustomerTimeline
+<ActiveDebts
+  debts={debts}
+  onRecordPayment={handleRecordPayment}
+/>
+
+<CustomerTimeline
   debts={debts}
   payments={paymentHistory}
 />
 
 <PaymentInput
-  customer={customer}
   amount={amount}
   setAmount={setAmount}
   onRecord={recordPayment}
