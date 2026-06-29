@@ -47,6 +47,8 @@ export default function DebtCard({
   color,
   onClick,
   delay = 0,
+  activeDebtCount = 0,
+  lastPaymentLabel = 'Never',
 }) {
   const status = getStatus(customer)
 
@@ -102,35 +104,45 @@ export default function DebtCard({
           {customer.name}
         </p>
 
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-
-            padding: '4px 8px',
-
-            borderRadius: 999,
-
-            background: status.bg,
-          }}
-        >
-          <Icon
-            name={status.icon}
-            size={11}
-            color={status.color}
-          />
-
-          <span
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <div
             style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: status.color,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+
+              padding: '4px 8px',
+
+              borderRadius: 999,
+
+              background: status.bg,
             }}
           >
-            {status.label}
+            <Icon
+              name={status.icon}
+              size={11}
+              color={status.color}
+            />
+
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: status.color,
+              }}
+            >
+              {status.label}
+            </span>
+          </div>
+
+          <span style={{ fontSize: 10, color: 'var(--text-low)' }}>
+            {activeDebtCount} active
           </span>
         </div>
+
+        <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 6 }}>
+          Last payment · {lastPaymentLabel}
+        </p>
       </div>
 
       <div

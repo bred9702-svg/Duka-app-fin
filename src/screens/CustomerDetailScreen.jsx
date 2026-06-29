@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import BackButton from '../components/ui/BackButton'
 import { newId } from '../utils/formatters'
+import { fmtRelativeDay, getLastPaymentDate } from '../utils/debtInsights'
 import CustomerHeader from '../components/customer/CustomerHeader'
 import CustomerStats from '../components/customer/CustomerStats'
 import PaymentInput from '../components/customer/PaymentInput'
@@ -21,6 +22,11 @@ export default function CustomerDetailScreen() {
 
   // ← C'était cette ligne qui avait disparu
   const customer = customers.find((c) => c.id === id)
+
+  const lastPaymentLabel = fmtRelativeDay(
+    getLastPaymentDate(customer, transactions),
+    'Never'
+  )
 
   const debts = transactions
     .filter(
@@ -100,7 +106,10 @@ export default function CustomerDetailScreen() {
 
         <CustomerHeader customer={customer} />
 
-        <CustomerStats customer={customer} />
+        <CustomerStats
+          customer={customer}
+          lastPaymentLabel={lastPaymentLabel}
+        />
 
         <ActiveDebts
           debts={debts}
