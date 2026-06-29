@@ -6,6 +6,12 @@ export default function CustomerStats({
   lastPaymentLabel = 'Never',
   activeDebtCount = 0,
 }) {
+  if (!customer) {
+    return null
+  }
+
+  const totalOwed = customer?.total_owed ?? 0
+
   return (
     <div
       style={{
@@ -37,13 +43,10 @@ export default function CustomerStats({
             fontFamily: 'var(--font-display)',
             fontSize: 18,
             fontWeight: 700,
-            color:
-              (customer.total_owed || 0) > 0
-                ? '#FF6B5B'
-                : '#5FD97A',
+            color: totalOwed > 0 ? '#FF6B5B' : '#5FD97A',
           }}
         >
-          {fmtKES(customer.total_owed || 0)}
+          {fmtKES(totalOwed)}
         </p>
       </Card>
 
@@ -69,10 +72,7 @@ export default function CustomerStats({
             fontFamily: 'var(--font-display)',
             fontSize: 20,
             fontWeight: 700,
-            color:
-              activeDebtCount > 0
-                ? '#F0A93D'
-                : '#5FD97A',
+            color: activeDebtCount > 0 ? '#F0A93D' : '#5FD97A',
           }}
         >
           {activeDebtCount}
@@ -90,8 +90,7 @@ export default function CustomerStats({
           style={{
             fontSize: 10,
             color: 'var(--text-low)',
-            marginBottom: 6
-            
+            marginBottom: 6,
           }}
         >
           Last Payment
