@@ -3,9 +3,7 @@ import SmartInsight from '../components/debts/SmartInsight'
 import DebtCard from '../components/debts/DebtCard'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
-import Card from '../components/ui/Card'
-import Avatar from '../components/ui/Avatar'
-import Icon from '../components/ui/Icon'
+import Card from '../components/ui/Card
 import { fmtKES } from '../utils/formatters'
 import { fmtRelativeDay, getActiveDebtCount, getLastPaymentDate } from '../utils/debtInsights'
 
@@ -72,9 +70,10 @@ return (
 <DebtHero
   total={total}
   customers={active.length}
-  activeDebts={transactions.filte
+  activeDebts={activeDebts}
 />
-      <SmartInsight
+
+<SmartInsight
   customers={customers}
   transactions={transactions}
 />
