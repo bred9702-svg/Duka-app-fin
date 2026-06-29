@@ -47,15 +47,17 @@ export function fmtDueStatus(debt) {
 }
 
 export function getDebtOriginalAmount(debt) {
-  const original =
+  const recordedOriginal =
     debt.original_amount ??
     debt.initial_amount ??
     debt.total_price ??
-    debt.amount ??
-    debt.remaining_amount ??
-    0
+    debt.amount
 
-  return Number(original) || 0
+  const remaining = Number(debt.remaining_amount) || 0
+  const paid = Number(debt.paid_amount) || 0
+  const original = recordedOriginal ?? (paid + remaining)
+
+  return Math.max(0, Number(original) || 0)
 }
 
 export function getDebtRemainingAmount(debt) {
@@ -66,6 +68,12 @@ export function getDebtRemainingAmount(debt) {
 export function getDebtPaidAmount(debt) {
   const original = getDebtOriginalAmount(debt)
   const remaining = getDebtRemainingAmount(debt)
+  const recordedPaid = debt.paid_amount
+
+  if (recordedPaid !== null && recordedPaid !== undefined) {
+    return Math.max(0, Math.min(original, Number(recordedPaid) || 0))
+  }
+
   return Math.max(0, original - remaining)
 }
 

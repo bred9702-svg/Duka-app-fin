@@ -28,6 +28,14 @@ export default function CustomerDetailScreen() {
     'Never'
   )
 
+  const paymentHistory = transactions
+    .filter((t) =>
+      (t.customer_id === customer?.id || t.classification?.customerId === customer?.id) &&
+      t.direction === 'in' &&
+      (t.operation_type === 'debt_payment' || t.classification?.type === 'debt')
+    )
+    .sort((a, b) => new Date(b.created_at || b.ts) - new Date(a.created_at || a.ts))
+
   const debts = transactions
     .filter(
       (t) =>
@@ -55,7 +63,7 @@ export default function CustomerDetailScreen() {
     console.log(debt)
   }
 
-  function recordPayment() {
+  async function recordPayment() {
     const amt = parseInt(amount, 10)
 
     if (!amt || amt <= 0) return
@@ -67,6 +75,10 @@ export default function CustomerDetailScreen() {
       direction: 'in',
       ts: Date.now(),
       classified: true,
+      operation_type: 'debt_payment',
+      customer_id: customer.id,
+      is_debt: false,
+      remaining_amount: 0,
       classification: {
         type: 'debt',
         customerId: customer.id,
@@ -76,8 +88,8 @@ export default function CustomerDetailScreen() {
       },
     }
 
-    addTransaction(txn)
-    addDebtPayment(customer.id, amt, txn.id)
+    const saved = await addTransaction(txn)
+    await addDebtPayment(customer.id, amt, saved?.id || txn.id)
 
     setAmount('')
   }
@@ -124,7 +136,7 @@ export default function CustomerDetailScreen() {
         />
 
         <PaymentTimeline
-          payments={customer.payments || []}
+          payments={paymentHistory}
         />
       </div>
     </div>
