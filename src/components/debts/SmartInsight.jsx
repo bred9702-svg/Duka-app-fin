@@ -39,7 +39,7 @@ export default function SmartInsight({
           }}
         >
           <Icon
-            name={insight.icon}
+            name={insight.bell}
             size={18}
             color={insight.color}
           />
