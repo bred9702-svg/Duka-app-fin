@@ -119,9 +119,10 @@ export default function CustomerDetailScreen() {
         <CustomerHeader customer={customer} />
 
         <CustomerStats
-          customer={customer}
-          lastPaymentLabel={lastPaymentLabel}
-        />
+  customer={customer}
+  lastPaymentLabel={lastPaymentLabel}
+  activeDebtCount={debts.length}
+/>
 
         <ActiveDebts
           debts={debts}
