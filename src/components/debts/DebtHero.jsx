@@ -10,21 +10,14 @@ export default function DebtHero({
       style={{
         position: 'relative',
         overflow: 'hidden',
-
         background:
           'linear-gradient(135deg, rgba(255,107,91,.18), rgba(240,169,61,.10))',
-
         border: '1px solid rgba(255,255,255,.10)',
-
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
-
         borderRadius: 18,
-
         padding: 20,
-
         marginBottom: 16,
-
         boxShadow:
           '0 18px 45px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08)',
       }}
@@ -129,7 +122,7 @@ export default function DebtHero({
               marginBottom: 4,
             }}
           >
-            Overdue
+            Active Debts
           </p>
 
           <p
@@ -137,10 +130,10 @@ export default function DebtHero({
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
               fontSize: 18,
-              color: overdue > 0 ? '#FF6B5B' : '#5FD97A',
+              color: activeDebts > 0 ? '#F0A93D' : '#5FD97A',
             }}
           >
-            {overdue}
+            {activeDebts}
           </p>
         </div>
       </div>
