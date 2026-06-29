@@ -3,7 +3,7 @@ import { fmtKES } from '../../utils/formatters'
 export default function DebtHero({
   total = 0,
   customers = 0,
-  overdue = 0,
+  activeDebts = 0,
 }) {
   return (
     <div
