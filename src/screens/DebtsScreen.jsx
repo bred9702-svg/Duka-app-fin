@@ -22,8 +22,9 @@ export default function DebtsScreen() {
     .sort((a, b) => b.total_owed - a.total_owed)
   const cleared = customers.filter((c) => (c.total_owed || 0) === 0)
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
-  const overdue = active.filter(c => (c.total_owed || 0) > 5000).length
-
+  const activeDebts = transactions.filter(
+  t => t.is_debt && (t.remaining_amount || 0) > 0
+).length
 return (
   <div
     style={{
@@ -71,9 +72,7 @@ return (
 <DebtHero
   total={total}
   customers={active.length}
-  activeDebts={transactions.filter(
-    t => t.is_debt && (t.remaining_amount || 0) > 0
-  ).length}
+  activeDebts={transactions.filte
 />
       <SmartInsight
   customers={customers}
