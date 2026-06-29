@@ -73,7 +73,10 @@ return (
   customers={active.length}
   overdue={overdue}
 />
-      <SmartInsight customers={customers} />
+      <SmartInsight
+  customers={customers}
+  transactions={transactions}
+/>
 
       <p
         style={{
