@@ -71,7 +71,9 @@ return (
 <DebtHero
   total={total}
   customers={active.length}
-  overdue={overdue}
+  activeDebts={transactions.filter(
+    t => t.is_debt && (t.remaining_amount || 0) > 0
+  ).length}
 />
       <SmartInsight
   customers={customers}
