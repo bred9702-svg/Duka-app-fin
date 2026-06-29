@@ -3,10 +3,9 @@ import SmartInsight from '../components/debts/SmartInsight'
 import DebtCard from '../components/debts/DebtCard'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
-import Card from '../components/ui/Card
-import { fmtKES } from '../utils/formatters'
+import Card from '../components/ui/Card'
+import Icon from '../components/ui/Icon'
 import { fmtRelativeDay, getActiveDebtCount, getLastPaymentDate } from '../utils/debtInsights'
-
 const AVATAR_COLORS = ['blue', 'amber', 'red', 'purple', 'green']
 
 export default function DebtsScreen() {
