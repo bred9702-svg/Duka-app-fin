@@ -124,21 +124,17 @@ export default function CustomerDetailScreen() {
   activeDebtCount={debts.length}
 />
 
-        <ActiveDebts
-          debts={debts}
-          onRecordPayment={handleRecordPayment}
-        />
+     <CustomerTimeline
+  debts={debts}
+  payments={paymentHistory}
+/>
 
-        <PaymentInput
-          customer={customer}
-          amount={amount}
-          setAmount={setAmount}
-          onRecord={recordPayment}
-        />
-
-        <PaymentTimeline
-          payments={paymentHistory}
-        />
+<PaymentInput
+  customer={customer}
+  amount={amount}
+  setAmount={setAmount}
+  onRecord={recordPayment}
+/>
       </div>
     </div>
   )
