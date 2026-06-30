@@ -158,3 +158,45 @@ export function getDeadStock(
       !sold.has(p.id)
   )
 }
+
+export function getRestockSuggestions(
+  products = [],
+  transactions = []
+) {
+  const sales = {}
+
+  transactions
+    .filter(t => t.operation_type === 'sale')
+    .forEach(t => {
+      if (!t.product_id) return
+
+      sales[t.product_id] =
+        (sales[t.product_id] || 0) +
+        (t.quantity || 1)
+    })
+
+  return products
+    .filter(p => (p.stock_current ?? 0) <= (p.stock_alert ?? 5))
+    .map(product => {
+      const sold = sales[product.id] || 0
+
+      const recommended =
+        Math.max(
+          (product.stock_alert ?? 5) * 2,
+          sold
+        ) - (product.stock_current ?? 0)
+
+      return {
+        ...product,
+        sold,
+        recommended: Math.max(
+          0,
+          Math.round(recommended)
+        ),
+      }
+    })
+    .filter(p => p.recommended > 0)
+    .sort(
+      (a, b) => b.recommended - a.recommended
+    )
+}
