@@ -32,10 +32,7 @@ export default function InventoryInsightsScreen() {
   const lowStock = getLowStock(products)
   const outOfStock = getOutOfStock(products)
 
-  const deadStock = getDeadStock(
-    products,
-    transactions
-  )
+  const deadStock = getDeadStock(products, transactions)
 
   const suggestions = getRestockSuggestions(
     products,
@@ -52,85 +49,91 @@ export default function InventoryInsightsScreen() {
     suggestions,
   })
 
-  <>
-  <h1
-    style={{
-      fontFamily: 'var(--font-display)',
-      fontSize: 22,
-      fontWeight: 700,
-      color: 'var(--text-hi)',
-      marginBottom: 4,
-    }}
-  >
-    Inventory Intelligence
-  </h1>
+  return (
+    <div
+      style={{
+        flex: 1,
+        width: '100%',
+        padding: '16px 14px 24px',
+      }}
+    >
+      <h1
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 700,
+          color: 'var(--text-hi)',
+          marginBottom: 4,
+        }}
+      >
+        Inventory Intelligence
+      </h1>
 
-  <p
-    style={{
-      color: 'var(--text-low)',
-      fontSize: 12,
-      marginBottom: 22,
-    }}
-  >
-    AI powered inventory management.
-  </p>
+      <p
+        style={{
+          color: 'var(--text-low)',
+          fontSize: 12,
+          marginBottom: 20,
+        }}
+      >
+        AI powered inventory management.
+      </p>
 
-  <HealthScoreCard health={health} />
+      <HealthScoreCard health={health} />
 
-  <div
-    style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 16,
-      marginBottom: 16,
-    }}
-  >
-    <BestSellersCard
-      bestSeller={bestSeller}
-    />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <BestSellersCard
+          bestSeller={bestSeller}
+        />
 
-    <HighestProfitCard
-      highestProfit={highestProfit}
-    />
-  </div>
+        <HighestProfitCard
+          highestProfit={highestProfit}
+        />
+      </div>
 
-  <AIAdvisorCard insights={insights} />
+      <AIAdvisorCard insights={insights} />
 
-  <div
-    style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 16,
-      marginBottom: 16,
-    }}
-  >
-    <DeadStockCard
-      deadStock={deadStock}
-    />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <DeadStockCard
+          deadStock={deadStock}
+        />
 
-    <RestockSuggestionsCard
-      suggestions={suggestions}
-    />
-  </div>
+        <RestockSuggestionsCard
+          suggestions={suggestions}
+        />
+      </div>
 
-  <InventorySummaryCard
-    totalProducts={products.length}
-    lowStock={lowStock}
-    outOfStock={outOfStock}
-  />
+      <InventorySummaryCard
+        totalProducts={products.length}
+        lowStock={lowStock}
+        outOfStock={outOfStock}
+      />
 
-  <AIInsightsCard
-    bestSeller={bestSeller}
-    highestProfit={highestProfit}
-    lowStock={lowStock}
-    outOfStock={outOfStock}
-  />
+      <AIInsightsCard
+        bestSeller={bestSeller}
+        highestProfit={highestProfit}
+        lowStock={lowStock}
+        outOfStock={outOfStock}
+      />
 
-  <RecommendationCard
-    lowStock={lowStock}
-    outOfStock={outOfStock}
-  />
-</>
+      <RecommendationCard
+        lowStock={lowStock}
+        outOfStock={outOfStock}
+      />
     </div>
   )
 }
