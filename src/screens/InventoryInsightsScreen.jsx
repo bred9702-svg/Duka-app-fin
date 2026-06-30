@@ -1,3 +1,4 @@
+import BestSellersCard from '../components/inventory/BestSellersCard'
 import RecommendationCard from '../components/inventory/RecommendationCard'
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard'
 import AIInsightsCard from '../components/inventory/AIInsightsCard'
@@ -59,6 +60,9 @@ export default function InventoryInsightsScreen() {
     totalProducts={products.length}
     lowStock={lowStock}
     outOfStock={outOfStock}
+/>
+      <BestSellersCard
+    bestSeller={bestSeller}
 />
 
 <AIInsightsCard
