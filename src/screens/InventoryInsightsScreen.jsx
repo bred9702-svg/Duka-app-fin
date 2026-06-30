@@ -18,6 +18,7 @@ import {
   getDeadStock,
   getRestockSuggestions,
 } from '../utils/inventoryEngine'
+
 export default function InventoryInsightsScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
