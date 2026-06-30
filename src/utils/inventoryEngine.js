@@ -137,3 +137,24 @@ export function getOutOfStock(products = []) {
     p => (p.stock_current ?? 0) <= 0
   )
 }
+
+export function getDeadStock(
+  products = [],
+  transactions = []
+) {
+  const sold = new Set()
+
+  transactions
+    .filter(t => t.operation_type === 'sale')
+    .forEach(t => {
+      if (t.product_id) {
+        sold.add(t.product_id)
+      }
+    })
+
+  return products.filter(
+    p =>
+      (p.stock_current ?? 0) > 0 &&
+      !sold.has(p.id)
+  )
+}
