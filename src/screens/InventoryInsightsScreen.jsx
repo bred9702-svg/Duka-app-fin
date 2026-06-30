@@ -1,3 +1,4 @@
+import InventorySummaryCard from '../components/inventory/InventorySummaryCard'
 import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import Card from '../components/ui/Card'
@@ -84,6 +85,11 @@ export default function InventoryInsightsScreen() {
   highestProfit={highestProfit}
   lowStock={lowStock}
   outOfStock={outOfStock}
+/>
+      <InventorySummaryCard
+    totalProducts={products.length}
+    lowStock={lowStock}
+    outOfStock={outOfStock}
 />
     </div>
   )
