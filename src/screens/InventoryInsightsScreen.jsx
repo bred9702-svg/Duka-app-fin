@@ -1,3 +1,4 @@
+import HighestProfitCard from '../components/inventory/HighestProfitCard'
 import BestSellersCard from '../components/inventory/BestSellersCard'
 import RecommendationCard from '../components/inventory/RecommendationCard'
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard'
@@ -63,6 +64,9 @@ export default function InventoryInsightsScreen() {
 />
       <BestSellersCard
     bestSeller={bestSeller}
+/>
+      <HighestProfitCard
+    highestProfit={highestProfit}
 />
 
 <AIInsightsCard
