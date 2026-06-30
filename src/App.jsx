@@ -7,9 +7,9 @@ import TransactionsScreen from './screens/TransactionsScreen'
 import ClassifyScreen from './screens/ClassifyScreen'
 import DebtsScreen from './screens/DebtsScreen'
 import CustomerDetailScreen from './screens/CustomerDetailScreen'
-import SettingsScreen from './screens/SettingsScreen'
 import AnalyticsScreen from './screens/AnalyticsScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
+import MeScreen from './screens/MeScreen'
 
 import BottomNav from './components/BottomNav'
 
@@ -33,7 +33,7 @@ function LoadingScreen() {
           borderRadius: '50%',
           border: '3px solid var(--line)',
           borderTopColor: '#F0A93D',
-          animation: 'spin 0.8s linear infinite',
+          animation: 'spin .8s linear infinite',
         }}
       />
 
@@ -87,11 +87,20 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeScreen />} />
 
-          <Route path="/inbox" element={<TransactionsScreen />} />
+          <Route
+            path="/inbox"
+            element={<TransactionsScreen />}
+          />
 
-          <Route path="/classify/:id" element={<ClassifyScreen />} />
+          <Route
+            path="/classify/:id"
+            element={<ClassifyScreen />}
+          />
 
-          <Route path="/debts" element={<DebtsScreen />} />
+          <Route
+            path="/debts"
+            element={<DebtsScreen />}
+          />
 
           <Route
             path="/customer/:id"
@@ -109,8 +118,8 @@ export default function App() {
           />
 
           <Route
-            path="/settings"
-            element={<SettingsScreen />}
+            path="/me"
+            element={<MeScreen />}
           />
         </Routes>
       </div>
