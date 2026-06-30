@@ -1,72 +1,100 @@
-import ScreenContainer from '../components/layout/ScreenContainer'
+import Card from '../components/ui/Card'
 
 export default function InventoryInsightsScreen() {
   return (
-    <ScreenContainer>
-      <div
+    <div
+      style={{
+        flex: 1,
+        width: '100%',
+        padding: '16px 14px 20px',
+      }}
+    >
+      <h1
         style={{
-          padding: '16px 14px 24px',
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 700,
+          color: 'var(--text-hi)',
+          marginBottom: 4,
         }}
       >
-        <h1
+        Inventory Intelligence
+      </h1>
+
+      <p
+        style={{
+          color: 'var(--text-low)',
+          fontSize: 12,
+          marginBottom: 20,
+        }}
+      >
+        AI powered inventory management.
+      </p>
+
+      <Card style={{ marginBottom: 16 }}>
+        <p
           style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 22,
-            fontWeight: 700,
-            color: 'var(--text-hi)',
-            marginBottom: 4,
+            fontSize: 11,
+            color: 'var(--text-low)',
+            marginBottom: 8,
           }}
         >
-          Inventory Intelligence
+          INVENTORY HEALTH
+        </p>
+
+        <h1
+          style={{
+            fontSize: 42,
+            margin: 0,
+            color: '#5FD97A',
+          }}
+        >
+          94%
         </h1>
 
         <p
           style={{
-            color: 'var(--text-low)',
-            fontSize: 12,
-            marginBottom: 22,
+            color: '#5FD97A',
+            fontWeight: 600,
           }}
         >
-          AI powered inventory analysis.
+          Excellent
         </p>
+      </Card>
 
-        <div
-          className="glass-card"
-          style={{
-            padding: 24,
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 52,
-              marginBottom: 10,
-            }}
-          >
-            🧠
-          </div>
+      <Card style={{ marginBottom: 16 }}>
+        <h3>🧠 AI Insights</h3>
 
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 20,
-              marginBottom: 10,
-            }}
-          >
-            Coming Soon
-          </h2>
+        <p>🔥 Best seller: --</p>
 
-          <p
-            style={{
-              color: 'var(--text-low)',
-              lineHeight: 1.6,
-            }}
-          >
-            Inventory Health, AI Insights, Best Sellers,
-            Dead Stock, Restock Suggestions and much more.
-          </p>
-        </div>
-      </div>
-    </ScreenContainer>
+        <p>💰 Highest profit: --</p>
+
+        <p>⚠ Low stock: --</p>
+
+        <p>📦 Out of stock: --</p>
+
+        <p>😴 Dead stock: --</p>
+      </Card>
+
+      <Card style={{ marginBottom: 16 }}>
+        <h3>📦 Inventory Summary</h3>
+
+        <p>Total products : --</p>
+
+        <p>Low stock : --</p>
+
+        <p>Out of stock : --</p>
+
+        <p>Dead stock : --</p>
+      </Card>
+
+      <Card>
+        <h3>🤖 AI Recommendation</h3>
+
+        <p>
+          Your recommendations will appear here automatically.
+        </p>
+      </Card>
+    </div>
   )
 }
