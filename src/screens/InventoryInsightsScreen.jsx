@@ -6,6 +6,12 @@ import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import Card from '../components/ui/Card'
 import useAppStore from '../store/useAppStore'
+import DeadStockCard from '../components/inventory/DeadStockCard'
+
+import {
+  ...
+  getDeadStock,
+} from '../utils/inventoryEngine'
 
 import {
   getInventoryHealth,
@@ -24,6 +30,10 @@ export default function InventoryInsightsScreen() {
   const highestProfit = getHighestProfit(products, transactions)
   const lowStock = getLowStock(products)
   const outOfStock = getOutOfStock(products)
+  const deadStock = getDeadStock(
+  products,
+  transactions
+)
 
   return (
     <div
@@ -67,6 +77,9 @@ export default function InventoryInsightsScreen() {
 />
       <HighestProfitCard
     highestProfit={highestProfit}
+/>
+      <DeadStockCard
+    deadStock={deadStock}
 />
 
 <AIInsightsCard
