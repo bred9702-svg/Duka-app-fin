@@ -1,7 +1,11 @@
 export function generateInventoryAlerts(products = [], transactions = []) {
   const alerts = []
+  const now = Date.now()
+  const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30
 
+  // =========================
   // LOW STOCK
+  // =========================
   products
     .filter(p => (p.stock_current ?? p.stock ?? 0) > 0)
     .filter(p => (p.stock_current ?? p.stock ?? 0) <= (p.stock_alert ?? 5))
@@ -15,7 +19,9 @@ export function generateInventoryAlerts(products = [], transactions = []) {
       })
     })
 
+  // =========================
   // OUT OF STOCK
+  // =========================
   products
     .filter(p => (p.stock_current ?? p.stock ?? 0) === 0)
     .forEach(product => {
@@ -28,34 +34,35 @@ export function generateInventoryAlerts(products = [], transactions = []) {
       })
     })
 
-  // SALES ONLY
+  // =========================
+  // SALES
+  // =========================
   const sales = transactions.filter(
     t => t.classified && t.operation_type === 'sale'
   )
 
+  // =========================
   // BEST SELLER
+  // =========================
   const sold = {}
 
   sales.forEach(sale => {
     if (!sale.product_id) return
-
     sold[sale.product_id] =
       (sold[sale.product_id] || 0) +
       (sale.quantity || 1)
   })
 
-  let bestId = null
-  let bestQty = 0
+  let bestSeller = null
 
   Object.entries(sold).forEach(([id, qty]) => {
-    if (qty > bestQty) {
-      bestQty = qty
-      bestId = id
+    if (!bestSeller || qty > bestSeller.qty) {
+      bestSeller = { id, qty }
     }
   })
 
-  if (bestId) {
-    const product = products.find(p => p.id === bestId)
+  if (bestSeller) {
+    const product = products.find(p => p.id === bestSeller.id)
 
     if (product) {
       alerts.unshift({
@@ -63,45 +70,73 @@ export function generateInventoryAlerts(products = [], transactions = []) {
         type: 'success',
         icon: 'trendingUp',
         title: 'Best Seller',
-        message: `${product.name} sold ${bestQty} units.`,
+        message: `${product.name} sold ${bestSeller.qty} units.`,
       })
     }
   }
 
+  // =========================
   // HIGHEST PROFIT
+  // =========================
   const profits = {}
 
   sales.forEach(sale => {
     if (!sale.product_id) return
-
     profits[sale.product_id] =
       (profits[sale.product_id] || 0) +
       (sale.profit || 0)
   })
 
-  let profitId = null
-  let maxProfit = 0
+  let highestProfit = null
 
-  Object.entries(profits).forEach(([id, value]) => {
-    if (value > maxProfit) {
-      maxProfit = value
-      profitId = id
+  Object.entries(profits).forEach(([id, profit]) => {
+    if (!highestProfit || profit > highestProfit.profit) {
+      highestProfit = { id, profit }
     }
   })
 
-  if (profitId) {
-    const product = products.find(p => p.id === profitId)
+  if (highestProfit) {
+    const product = products.find(p => p.id === highestProfit.id)
 
     if (product) {
       alerts.unshift({
-        id: 'profit',
+        id: 'highest-profit',
         type: 'info',
         icon: 'coins',
         title: 'Highest Profit',
-        message: `${product.name} generated KES ${maxProfit.toLocaleString()}.`,
+        message: `${product.name} generated KES ${highestProfit.profit.toLocaleString()}.`,
       })
     }
   }
+
+  // =========================
+  // NO SALES IN 30 DAYS
+  // =========================
+  products.forEach(product => {
+    const lastSale = sales
+      .filter(s => s.product_id === product.id)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at || b.ts) -
+          new Date(a.created_at || a.ts)
+      )[0]
+
+    if (!lastSale) return
+
+    const lastSaleTime = new Date(
+      lastSale.created_at || lastSale.ts
+    ).getTime()
+
+    if (now - lastSaleTime > THIRTY_DAYS) {
+      alerts.push({
+        id: `nosale-${product.id}`,
+        type: 'warning',
+        icon: 'barChart',
+        title: 'Slow Moving',
+        message: `${product.name} hasn't sold in over 30 days.`,
+      })
+    }
+  })
 
   return alerts
 }
