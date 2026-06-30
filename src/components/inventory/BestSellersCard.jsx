@@ -1,29 +1,21 @@
-import Card from '../ui/Card'
+import SectionCard from './SectionCard'
 
 export default function BestSellersCard({
   bestSeller,
+  compact = false,
 }) {
   return (
-    <Card style={{ marginBottom: 16 }}>
-      <p
-        style={{
-          fontSize: 11,
-          color: 'var(--text-low)',
-          marginBottom: 12,
-          textTransform: 'uppercase',
-          letterSpacing: '.08em',
-          fontWeight: 600,
-        }}
-      >
-        Best Seller
-      </p>
-
+    <SectionCard
+      title="🔥 Best Seller"
+      height={compact ? 190 : 260}
+    >
       {bestSeller ? (
         <>
           <h2
             style={{
               margin: 0,
               color: 'var(--text-hi)',
+              fontSize: compact ? 18 : 24,
             }}
           >
             {bestSeller.name}
@@ -31,27 +23,41 @@ export default function BestSellersCard({
 
           <p
             style={{
-              marginTop: 8,
+              marginTop: 12,
               color: '#5FD97A',
               fontWeight: 700,
+              fontSize: compact ? 14 : 16,
             }}
           >
-            🔥 {bestSeller.sold} units sold
+            {bestSeller.sold} sold
           </p>
 
-          <p
+          <div
             style={{
-              marginTop: 8,
-              color: 'var(--text-low)',
-              fontSize: 12,
+              marginTop: 18,
             }}
           >
-            Category: {bestSeller.category}
-          </p>
+            <small
+              style={{
+                color: 'var(--text-low)',
+              }}
+            >
+              Category
+            </small>
+
+            <p
+              style={{
+                margin: '6px 0 0',
+                fontWeight: 600,
+              }}
+            >
+              {bestSeller.category}
+            </p>
+          </div>
         </>
       ) : (
-        <p>No sales data available.</p>
+        <p>No sales yet.</p>
       )}
-    </Card>
+    </SectionCard>
   )
 }
