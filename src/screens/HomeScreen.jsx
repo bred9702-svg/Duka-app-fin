@@ -8,7 +8,7 @@ import TransactionRow from '../components/transactions/TransactionRow'
 import ContextualMessage from '../components/ContextualMessage'
 import { fmtKES, fmtDateLong } from '../utils/formatters'
 import { getTopProducts } from '../lib/db'
-import SmartInventoryAlerts from '../components/SmartInventoryAlerts'
+import SmartInventoryAlerts from '../components/products/SmartInventoryAlerts'
 import { generateInventoryAlerts } from '../utils/inventoryInsights'
 
 const MPESA_AMOUNTS = [500, 800, 1000, 1500, 2000, 2500]
