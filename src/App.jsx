@@ -7,8 +7,10 @@ import TransactionsScreen from './screens/TransactionsScreen'
 import ClassifyScreen from './screens/ClassifyScreen'
 import DebtsScreen from './screens/DebtsScreen'
 import CustomerDetailScreen from './screens/CustomerDetailScreen'
+
 import AnalyticsScreen from './screens/AnalyticsScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
+import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
 
 import BottomNav from './components/BottomNav'
@@ -105,6 +107,11 @@ export default function App() {
           <Route
             path="/customer/:id"
             element={<CustomerDetailScreen />}
+          />
+
+          <Route
+            path="/insights"
+            element={<InsightsScreen />}
           />
 
           <Route
