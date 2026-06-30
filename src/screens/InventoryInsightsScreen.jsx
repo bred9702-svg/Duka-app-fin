@@ -1,6 +1,24 @@
 import Card from '../components/ui/Card'
+import useAppStore from '../store/useAppStore'
+
+import {
+  getInventoryHealth,
+  getBestSeller,
+  getHighestProfit,
+  getLowStock,
+  getOutOfStock,
+} from '../utils/inventoryEngine'
 
 export default function InventoryInsightsScreen() {
+  const products = useAppStore((s) => s.products)
+  const transactions = useAppStore((s) => s.transactions)
+
+  const health = getInventoryHealth(products)
+  const bestSeller = getBestSeller(products, transactions)
+  const highestProfit = getHighestProfit(products, transactions)
+  const lowStock = getLowStock(products)
+  const outOfStock = getOutOfStock(products)
+
   return (
     <div
       style={{
@@ -44,56 +62,84 @@ export default function InventoryInsightsScreen() {
 
         <h1
           style={{
-            fontSize: 42,
+            fontSize: 44,
             margin: 0,
-            color: '#5FD97A',
+            color: health.color,
           }}
         >
-          94%
+          {health.score}%
         </h1>
 
         <p
           style={{
-            color: '#5FD97A',
-            fontWeight: 600,
+            color: health.color,
+            fontWeight: 700,
           }}
         >
-          Excellent
+          {health.status}
         </p>
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
         <h3>🧠 AI Insights</h3>
 
-        <p>🔥 Best seller: --</p>
+        <p>
+          🔥 Best Seller:{' '}
+          {bestSeller
+            ? `${bestSeller.name} (${bestSeller.sold} sold)`
+            : 'No data'}
+        </p>
 
-        <p>💰 Highest profit: --</p>
+        <p>
+          💰 Highest Profit:{' '}
+          {highestProfit
+            ? `${highestProfit.name} (KES ${highestProfit.profit.toFixed(0)})`
+            : 'No data'}
+        </p>
 
-        <p>⚠ Low stock: --</p>
+        <p>
+          ⚠ Low Stock: {lowStock.length}
+        </p>
 
-        <p>📦 Out of stock: --</p>
-
-        <p>😴 Dead stock: --</p>
+        <p>
+          📦 Out of Stock: {outOfStock.length}
+        </p>
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
         <h3>📦 Inventory Summary</h3>
 
-        <p>Total products : --</p>
+        <p>Total products : {products.length}</p>
 
-        <p>Low stock : --</p>
+        <p>Low stock : {lowStock.length}</p>
 
-        <p>Out of stock : --</p>
+        <p>Out of stock : {outOfStock.length}</p>
 
-        <p>Dead stock : --</p>
+        <p>Healthy products : {products.length - lowStock.length - outOfStock.length}</p>
       </Card>
 
       <Card>
         <h3>🤖 AI Recommendation</h3>
 
-        <p>
-          Your recommendations will appear here automatically.
-        </p>
+        {outOfStock.length > 0 && (
+          <p>
+            Restock {outOfStock.length} products immediately.
+          </p>
+        )}
+
+        {outOfStock.length === 0 &&
+          lowStock.length > 0 && (
+            <p>
+              Plan a purchase order soon. {lowStock.length} products are running low.
+            </p>
+          )}
+
+        {outOfStock.length === 0 &&
+          lowStock.length === 0 && (
+            <p>
+              Excellent. Your inventory is healthy.
+            </p>
+          )}
       </Card>
     </div>
   )
