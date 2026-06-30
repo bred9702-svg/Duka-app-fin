@@ -8,6 +8,8 @@ import TransactionRow from '../components/transactions/TransactionRow'
 import ContextualMessage from '../components/ContextualMessage'
 import { fmtKES, fmtDateLong } from '../utils/formatters'
 import { getTopProducts } from '../lib/db'
+import SmartInventoryAlerts from '../components/SmartInventoryAlerts'
+import { generateInventoryAlerts } from '../utils/inventoryInsights'
 
 const MPESA_AMOUNTS = [500, 800, 1000, 1500, 2000, 2500]
 
@@ -60,6 +62,7 @@ export default function HomeScreen() {
     .sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0))[0] || null
 
   const lowStock = products.filter(p => p.stock_current <= p.stock_alert && p.stock_current > 0)
+  const smartAlerts = generateInventoryAlerts(products, transactions)
 
   useEffect(() => {
     getTopProducts(7).then(data => {
@@ -132,6 +135,9 @@ export default function HomeScreen() {
           topCustomer={topCustomer}
           lowStock={lowStock}
         />
+        <SmartInventoryAlerts
+  alerts={smartAlerts}
+/>
 
         {/* Profit ring */}
         <div style={{ marginBottom: 6 }}>
