@@ -8,6 +8,9 @@ import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import Card from '../components/ui/Card'
 import useAppStore from '../store/useAppStore'
 import DeadStockCard from '../components/inventory/DeadStockCard'
+import AIAdvisorCard from '../components/inventory/AIAdvisorCard'
+
+import { generateBusinessInsights } from '../utils/aiAdvisor'
 
 import {
   getInventoryHealth,
@@ -33,6 +36,15 @@ export default function InventoryInsightsScreen() {
     products,
     transactions
   )
+  const insights = generateBusinessInsights({
+  health,
+  bestSeller,
+  highestProfit,
+  lowStock,
+  outOfStock,
+  deadStock,
+  suggestions,
+})
   const deadStock = getDeadStock(
   products,
   transactions
@@ -69,6 +81,7 @@ export default function InventoryInsightsScreen() {
       </p>
 
     <HealthScoreCard health={health} />
+      <AIAdvisorCard insights={insights} />
 
       <InventorySummaryCard
     totalProducts={products.length}
