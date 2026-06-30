@@ -54,42 +54,17 @@ export default function InventoryInsightsScreen() {
 
     <HealthScoreCard health={health} />
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3>🧠 AI Insights</h3>
-
-        <p>
-          🔥 Best Seller:{' '}
-          {bestSeller
-            ? `${bestSeller.name} (${bestSeller.sold} sold)`
-            : 'No data'}
-        </p>
-
-        <p>
-          💰 Highest Profit:{' '}
-          {highestProfit
-            ? `${highestProfit.name} (KES ${highestProfit.profit.toFixed(0)})`
-            : 'No data'}
-        </p>
-
-        <p>
-          ⚠ Low Stock: {lowStock.length}
-        </p>
-
-        <p>
-          📦 Out of Stock: {outOfStock.length}
-        </p>
-      </Card>
+      <InventorySummaryCard
+    totalProducts={products.length}
+    lowStock={lowStock}
+    outOfStock={outOfStock}
+/>
 
 <AIInsightsCard
   bestSeller={bestSeller}
   highestProfit={highestProfit}
   lowStock={lowStock}
   outOfStock={outOfStock}
-/>
-      <InventorySummaryCard
-    totalProducts={products.length}
-    lowStock={lowStock}
-    outOfStock={outOfStock}
 />
     </div>
   )
