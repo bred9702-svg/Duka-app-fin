@@ -1,3 +1,4 @@
+import RestockSuggestionsCard from '../components/inventory/RestockSuggestionsCard'
 import HighestProfitCard from '../components/inventory/HighestProfitCard'
 import BestSellersCard from '../components/inventory/BestSellersCard'
 import RecommendationCard from '../components/inventory/RecommendationCard'
@@ -30,6 +31,11 @@ export default function InventoryInsightsScreen() {
   const highestProfit = getHighestProfit(products, transactions)
   const lowStock = getLowStock(products)
   const outOfStock = getOutOfStock(products)
+  const suggestions =
+  getRestockSuggestions(
+    products,
+    transactions
+  )
   const deadStock = getDeadStock(
   products,
   transactions
@@ -80,6 +86,9 @@ export default function InventoryInsightsScreen() {
 />
       <DeadStockCard
     deadStock={deadStock}
+/>
+      <RestockSuggestionsCard
+    suggestions={suggestions}
 />
 
 <AIInsightsCard
