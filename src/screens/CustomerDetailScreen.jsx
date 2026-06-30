@@ -138,6 +138,7 @@ export default function CustomerDetailScreen() {
 />
 
 <PaymentInput
+  customer={customer}
   amount={amount}
   setAmount={setAmount}
   onRecord={recordPayment}
