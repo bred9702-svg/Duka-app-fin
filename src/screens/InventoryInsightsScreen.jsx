@@ -1,3 +1,4 @@
+import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import Card from '../components/ui/Card'
 import useAppStore from '../store/useAppStore'
@@ -78,41 +79,12 @@ export default function InventoryInsightsScreen() {
         </p>
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3>📦 Inventory Summary</h3>
-
-        <p>Total products : {products.length}</p>
-
-        <p>Low stock : {lowStock.length}</p>
-
-        <p>Out of stock : {outOfStock.length}</p>
-
-        <p>Healthy products : {products.length - lowStock.length - outOfStock.length}</p>
-      </Card>
-
-      <Card>
-        <h3>🤖 AI Recommendation</h3>
-
-        {outOfStock.length > 0 && (
-          <p>
-            Restock {outOfStock.length} products immediately.
-          </p>
-        )}
-
-        {outOfStock.length === 0 &&
-          lowStock.length > 0 && (
-            <p>
-              Plan a purchase order soon. {lowStock.length} products are running low.
-            </p>
-          )}
-
-        {outOfStock.length === 0 &&
-          lowStock.length === 0 && (
-            <p>
-              Excellent. Your inventory is healthy.
-            </p>
-          )}
-      </Card>
+<AIInsightsCard
+  bestSeller={bestSeller}
+  highestProfit={highestProfit}
+  lowStock={lowStock}
+  outOfStock={outOfStock}
+/>
     </div>
   )
 }
