@@ -52,73 +52,85 @@ export default function InventoryInsightsScreen() {
     suggestions,
   })
 
-  return (
-    <div
-      style={{
-        flex: 1,
-        width: '100%',
-        padding: '16px 14px 20px',
-      }}
-    >
-      <h1
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 22,
-          fontWeight: 700,
-          color: 'var(--text-hi)',
-          marginBottom: 4,
-        }}
-      >
-        Inventory Intelligence
-      </h1>
+  <>
+  <h1
+    style={{
+      fontFamily: 'var(--font-display)',
+      fontSize: 22,
+      fontWeight: 700,
+      color: 'var(--text-hi)',
+      marginBottom: 4,
+    }}
+  >
+    Inventory Intelligence
+  </h1>
 
-      <p
-        style={{
-          color: 'var(--text-low)',
-          fontSize: 12,
-          marginBottom: 20,
-        }}
-      >
-        AI powered inventory management.
-      </p>
+  <p
+    style={{
+      color: 'var(--text-low)',
+      fontSize: 12,
+      marginBottom: 22,
+    }}
+  >
+    AI powered inventory management.
+  </p>
 
-      <HealthScoreCard health={health} />
+  <HealthScoreCard health={health} />
 
-      <AIAdvisorCard insights={insights} />
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 16,
+      marginBottom: 16,
+    }}
+  >
+    <BestSellersCard
+      bestSeller={bestSeller}
+    />
 
-      <InventorySummaryCard
-        totalProducts={products.length}
-        lowStock={lowStock}
-        outOfStock={outOfStock}
-      />
+    <HighestProfitCard
+      highestProfit={highestProfit}
+    />
+  </div>
 
-      <BestSellersCard
-        bestSeller={bestSeller}
-      />
+  <AIAdvisorCard insights={insights} />
 
-      <HighestProfitCard
-        highestProfit={highestProfit}
-      />
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 16,
+      marginBottom: 16,
+    }}
+  >
+    <DeadStockCard
+      deadStock={deadStock}
+    />
 
-      <DeadStockCard
-        deadStock={deadStock}
-      />
+    <RestockSuggestionsCard
+      suggestions={suggestions}
+    />
+  </div>
 
-      <RestockSuggestionsCard
-        suggestions={suggestions}
-      />
+  <InventorySummaryCard
+    totalProducts={products.length}
+    lowStock={lowStock}
+    outOfStock={outOfStock}
+  />
 
-      <AIInsightsCard
-        bestSeller={bestSeller}
-        highestProfit={highestProfit}
-        lowStock={lowStock}
-        outOfStock={outOfStock}
-      />
+  <AIInsightsCard
+    bestSeller={bestSeller}
+    highestProfit={highestProfit}
+    lowStock={lowStock}
+    outOfStock={outOfStock}
+  />
 
-      <RecommendationCard
-        lowStock={lowStock}
-        outOfStock={outOfStock}
-      />
+  <RecommendationCard
+    lowStock={lowStock}
+    outOfStock={outOfStock}
+  />
+</>
     </div>
   )
 }
