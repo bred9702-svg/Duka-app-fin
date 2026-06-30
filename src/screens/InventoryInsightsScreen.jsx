@@ -1,3 +1,4 @@
+import RecommendationCard from '../components/inventory/RecommendationCard'
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard'
 import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
@@ -63,6 +64,10 @@ export default function InventoryInsightsScreen() {
 <AIInsightsCard
   bestSeller={bestSeller}
   highestProfit={highestProfit}
+  lowStock={lowStock}
+  outOfStock={outOfStock}
+/>
+      <RecommendationCard
   lowStock={lowStock}
   outOfStock={outOfStock}
 />
