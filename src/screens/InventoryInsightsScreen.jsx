@@ -1,3 +1,4 @@
+import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import Card from '../components/ui/Card'
 import useAppStore from '../store/useAppStore'
 
@@ -49,36 +50,7 @@ export default function InventoryInsightsScreen() {
         AI powered inventory management.
       </p>
 
-      <Card style={{ marginBottom: 16 }}>
-        <p
-          style={{
-            fontSize: 11,
-            color: 'var(--text-low)',
-            marginBottom: 8,
-          }}
-        >
-          INVENTORY HEALTH
-        </p>
-
-        <h1
-          style={{
-            fontSize: 44,
-            margin: 0,
-            color: health.color,
-          }}
-        >
-          {health.score}%
-        </h1>
-
-        <p
-          style={{
-            color: health.color,
-            fontWeight: 700,
-          }}
-        >
-          {health.status}
-        </p>
-      </Card>
+    <HealthScoreCard health={health} />
 
       <Card style={{ marginBottom: 16 }}>
         <h3>🧠 AI Insights</h3>
