@@ -90,8 +90,9 @@ export default function InventoryInsightsScreen() {
         }}
       >
         <BestSellersCard
-          bestSeller={bestSeller}
-        />
+  bestSeller={bestSeller}
+  compact
+/>
 
         <HighestProfitCard
           highestProfit={highestProfit}
