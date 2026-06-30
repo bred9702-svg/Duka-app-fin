@@ -10,7 +10,6 @@ import useAppStore from '../store/useAppStore'
 import DeadStockCard from '../components/inventory/DeadStockCard'
 
 import {
-  ...
   getDeadStock,
 } from '../utils/inventoryEngine'
 
@@ -20,8 +19,9 @@ import {
   getHighestProfit,
   getLowStock,
   getOutOfStock,
+  getDeadStock,
+  getRestockSuggestions,
 } from '../utils/inventoryEngine'
-
 export default function InventoryInsightsScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
