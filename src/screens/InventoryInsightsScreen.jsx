@@ -10,10 +10,6 @@ import useAppStore from '../store/useAppStore'
 import DeadStockCard from '../components/inventory/DeadStockCard'
 
 import {
-  getDeadStock,
-} from '../utils/inventoryEngine'
-
-import {
   getInventoryHealth,
   getBestSeller,
   getHighestProfit,
