@@ -17,7 +17,7 @@ const TABS = [
   },
   {
     id: 'insights',
-    path: '/inventory',
+    path: '/insights',
     icon: 'pieChart',
     label: 'Insights',
   },
