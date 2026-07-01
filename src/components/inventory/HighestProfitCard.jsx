@@ -8,60 +8,75 @@ export default function HighestProfitCard({
   return (
     <SectionCard
       title="Highest Profit"
-      height={compact ? 185 : 250}
+      height={compact ? 108 : 170}
     >
       {!highestProfit ? (
-        <p>No data available.</p>
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--text-low)',
+            margin: '8px 0 0',
+          }}
+        >
+          No data available
+        </p>
       ) : (
         <>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: 'flex-start',
+              marginBottom: 10,
             }}
           >
             <div
               style={{
-                fontSize: 42,
+                fontSize: 20,
               }}
             >
               💰
             </div>
 
             <Badge variant="warn">
-              PROFIT
+              TOP
             </Badge>
           </div>
 
-          <h2
+          <h3
             style={{
-              margin: '18px 0 8px',
-              fontSize: compact ? 20 : 24,
+              margin: 0,
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-hi)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {highestProfit.name}
-          </h2>
+          </h3>
 
-          <div
+          <p
             style={{
-              fontSize: compact ? 26 : 34,
-              fontWeight: 800,
+              margin: '6px 0 2px',
+              fontSize: 20,
+              fontWeight: 700,
               color: '#F0A93D',
               lineHeight: 1,
             }}
           >
-            KES {Math.round(highestProfit.profit).toLocaleString()}
-          </div>
+            {Math.round(highestProfit.profit).toLocaleString()}
+          </p>
 
           <p
             style={{
-              marginTop: 8,
+              margin: 0,
+              fontSize: 10,
               color: 'var(--text-low)',
-              fontSize: 12,
             }}
           >
-            total profit
+            KES profit
           </p>
         </>
       )}
