@@ -1,66 +1,77 @@
 import SectionCard from './SectionCard'
+import Badge from '../ui/Badge'
 
 export default function DeadStockCard({
   deadStock = [],
   compact = false,
 }) {
-  const items = compact
-    ? deadStock.slice(0, 3)
-    : deadStock
+  const count = deadStock.length
 
   return (
     <SectionCard
-      title="😴 Dead Stock"
-      height={compact ? 190 : 260}
+      title="Dead Stock"
+      height={compact ? 108 : 170}
     >
-      {items.length === 0 ? (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: 10,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 20,
+          }}
+        >
+          😴
+        </div>
+
+        <Badge
+          variant={count === 0 ? 'ok' : 'warn'}
+        >
+          {count === 0 ? 'GOOD' : 'ACTION'}
+        </Badge>
+      </div>
+
+      <h3
+        style={{
+          margin: 0,
+          fontSize: 20,
+          fontWeight: 700,
+          color:
+            count === 0
+              ? '#5FD97A'
+              : '#F0A93D',
+        }}
+      >
+        {count}
+      </h3>
+
+      <p
+        style={{
+          margin: '4px 0 0',
+          fontSize: 11,
+          color: 'var(--text-low)',
+        }}
+      >
+        {count === 1
+          ? 'product inactive'
+          : 'products inactive'}
+      </p>
+
+      {count > 0 && (
         <p
           style={{
-            color: '#5FD97A',
-            margin: 0,
+            marginTop: 10,
+            fontSize: 10,
+            color: '#F0A93D',
             fontWeight: 600,
           }}
         >
-          ✅ No dead stock
+          View details →
         </p>
-      ) : (
-        <>
-          {items.map((product) => (
-            <div
-              key={product.id}
-              style={{
-                padding: '8px 0',
-                borderBottom:
-                  '1px solid rgba(255,255,255,.08)',
-              }}
-            >
-              <strong>{product.name}</strong>
-
-              <p
-                style={{
-                  margin: '4px 0 0',
-                  fontSize: 12,
-                  color: 'var(--text-low)',
-                }}
-              >
-                {product.stock_current} in stock
-              </p>
-            </div>
-          ))}
-
-          {compact &&
-            deadStock.length > 3 && (
-              <p
-                style={{
-                  marginTop: 12,
-                  color: '#F0A93D',
-                  fontWeight: 600,
-                }}
-              >
-                +{deadStock.length - 3} more
-              </p>
-            )}
-        </>
       )}
     </SectionCard>
   )
