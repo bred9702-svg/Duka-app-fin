@@ -110,9 +110,10 @@ export default function InventoryInsightsScreen() {
           marginBottom: 16,
         }}
       >
-        <DeadStockCard
-          deadStock={deadStock}
-        />
+       <DeadStockCard
+    deadStock={deadStock}
+    compact
+/>
 
         <RestockSuggestionsCard
           suggestions={suggestions}
