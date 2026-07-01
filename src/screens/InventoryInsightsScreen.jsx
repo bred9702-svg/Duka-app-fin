@@ -95,8 +95,9 @@ export default function InventoryInsightsScreen() {
 />
 
         <HighestProfitCard
-          highestProfit={highestProfit}
-        />
+    highestProfit={highestProfit}
+    compact
+/>
       </div>
 
       <AIAdvisorCard insights={insights} />
