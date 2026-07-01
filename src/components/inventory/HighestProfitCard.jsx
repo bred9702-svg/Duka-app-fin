@@ -1,4 +1,5 @@
 import SectionCard from './SectionCard'
+import Badge from '../ui/Badge'
 
 export default function HighestProfitCard({
   highestProfit,
@@ -6,57 +7,63 @@ export default function HighestProfitCard({
 }) {
   return (
     <SectionCard
-      title="💰 Highest Profit"
-      height={compact ? 190 : 260}
+      title="Highest Profit"
+      height={compact ? 185 : 250}
     >
-      {highestProfit ? (
+      {!highestProfit ? (
+        <p>No data available.</p>
+      ) : (
         <>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 42,
+              }}
+            >
+              💰
+            </div>
+
+            <Badge variant="warn">
+              PROFIT
+            </Badge>
+          </div>
+
           <h2
             style={{
-              margin: 0,
-              color: 'var(--text-hi)',
-              fontSize: compact ? 18 : 24,
+              margin: '18px 0 8px',
+              fontSize: compact ? 20 : 24,
             }}
           >
             {highestProfit.name}
           </h2>
 
-          <p
+          <div
             style={{
-              marginTop: 12,
-              color: '#5FD97A',
-              fontWeight: 700,
-              fontSize: compact ? 14 : 16,
+              fontSize: compact ? 26 : 34,
+              fontWeight: 800,
+              color: '#F0A93D',
+              lineHeight: 1,
             }}
           >
             KES {Math.round(highestProfit.profit).toLocaleString()}
-          </p>
+          </div>
 
-          <div
+          <p
             style={{
-              marginTop: 18,
+              marginTop: 8,
+              color: 'var(--text-low)',
+              fontSize: 12,
             }}
           >
-            <small
-              style={{
-                color: 'var(--text-low)',
-              }}
-            >
-              Category
-            </small>
-
-            <p
-              style={{
-                margin: '6px 0 0',
-                fontWeight: 600,
-              }}
-            >
-              {highestProfit.category}
-            </p>
-          </div>
+            total profit
+          </p>
         </>
-      ) : (
-        <p>No profit data available.</p>
       )}
     </SectionCard>
   )
