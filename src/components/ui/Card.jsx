@@ -1,23 +1,21 @@
-export default function Card({ children, style = {}, onClick, glass = true }) {
-  const base = glass
-    ? {
-        background: 'var(--glass-fill-soft)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        border: '1px solid var(--glass-border)',
-      }
-    : {
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--line)',
-      }
+import { UI, colors, radius, shadows } from '../../theme'
+
+export default function Card({
+  children,
+  style = {},
+  onClick,
+}) {
   return (
     <div
       onClick={onClick}
       style={{
-        borderRadius: 'var(--radius-lg)',
-        padding: '12px 14px',
-        cursor: onClick ? 'pointer' : 'default',
-        ...base,
+        background: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: radius.lg ?? UI.radius,
+        padding: UI.cardPadding,
+        boxShadow: shadows.card,
+        transition:
+          'transform .18s ease, box-shadow .18s ease',
         ...style,
       }}
     >
