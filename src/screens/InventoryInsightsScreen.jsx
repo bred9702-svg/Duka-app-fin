@@ -49,95 +49,147 @@ export default function InventoryInsightsScreen() {
     suggestions,
   })
 
-  return (
-    <div
+ return (
+  <div
+    style={{
+      flex: 1,
+      width: '100%',
+      padding: '16px 14px 24px',
+    }}
+  >
+    <h1
       style={{
-        flex: 1,
-        width: '100%',
-        padding: '16px 14px 24px',
+        fontFamily: 'var(--font-display)',
+        fontSize: 22,
+        fontWeight: 700,
+        color: 'var(--text-hi)',
+        marginBottom: 4,
       }}
     >
-      <h1
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 22,
-          fontWeight: 700,
-          color: 'var(--text-hi)',
-          marginBottom: 4,
-        }}
-      >
-        Inventory Intelligence
-      </h1>
+      Inventory Intelligence
+    </h1>
 
-      <p
-        style={{
-          color: 'var(--text-low)',
-          fontSize: 12,
-          marginBottom: 20,
-        }}
-      >
-        AI powered inventory management.
-      </p>
+    <p
+      style={{
+        color: 'var(--text-low)',
+        fontSize: 12,
+        marginBottom: 16,
+      }}
+    >
+      AI powered inventory management.
+    </p>
 
-      <HealthScoreCard health={health} />
+    <HealthScoreCard health={health} />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
-        <BestSellersCard
-  bestSeller={bestSeller}
-  compact
-/>
+    <p
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      Performance
+    </p>
 
-        <HighestProfitCard
-    highestProfit={highestProfit}
-    compact
-/>
-      </div>
-
-      <AIAdvisorCard insights={insights} />
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
-       <DeadStockCard
-    deadStock={deadStock}
-    compact
-/>
-
-       <RestockSuggestionsCard
-    suggestions={suggestions}
-    compact
-/>
-      </div>
-
-      <InventorySummaryCard
-        totalProducts={products.length}
-        lowStock={lowStock}
-        outOfStock={outOfStock}
-      />
-
-      <AIInsightsCard
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 12,
+        marginBottom: 16,
+      }}
+    >
+      <BestSellersCard
         bestSeller={bestSeller}
-        highestProfit={highestProfit}
-        lowStock={lowStock}
-        outOfStock={outOfStock}
+        compact
       />
 
-      <RecommendationCard
-        lowStock={lowStock}
-        outOfStock={outOfStock}
+      <HighestProfitCard
+        highestProfit={highestProfit}
+        compact
       />
     </div>
-  )
+
+    <p
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      Inventory
+    </p>
+
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 12,
+        marginBottom: 16,
+      }}
+    >
+      <DeadStockCard
+        deadStock={deadStock}
+        compact
+      />
+
+      <RestockSuggestionsCard
+        suggestions={suggestions}
+        compact
+      />
+    </div>
+
+    <p
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      AI Assistant
+    </p>
+
+    <AIAdvisorCard insights={insights} />
+
+    <AIInsightsCard
+      bestSeller={bestSeller}
+      highestProfit={highestProfit}
+      lowStock={lowStock}
+      outOfStock={outOfStock}
+    />
+
+    <p
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      Summary
+    </p>
+
+    <InventorySummaryCard
+      totalProducts={products.length}
+      lowStock={lowStock}
+      outOfStock={outOfStock}
+    />
+
+    <RecommendationCard
+      lowStock={lowStock}
+      outOfStock={outOfStock}
+    />
+  </div>
+)
 }
