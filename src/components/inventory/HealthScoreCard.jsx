@@ -2,9 +2,7 @@ import Card from '../ui/Card'
 import Badge from '../ui/Badge'
 import ProgressBar from '../ui/ProgressBar'
 
-export default function HealthScoreCard({
-  health,
-}) {
+export default function HealthScoreCard({ health }) {
   const color =
     health.score >= 85
       ? '#5FD97A'
@@ -15,8 +13,8 @@ export default function HealthScoreCard({
   return (
     <Card
       style={{
-        marginBottom: 22,
-        padding: 24,
+        marginBottom: 16,
+        padding: 16,
       }}
     >
       <div
@@ -24,17 +22,17 @@ export default function HealthScoreCard({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          marginBottom: 24,
+          marginBottom: 14,
         }}
       >
         <div>
           <p
             style={{
               margin: 0,
-              fontSize: 11,
-              letterSpacing: '.08em',
-              textTransform: 'uppercase',
+              fontSize: 10,
               color: 'var(--text-low)',
+              textTransform: 'uppercase',
+              letterSpacing: '.08em',
               fontWeight: 600,
             }}
           >
@@ -43,10 +41,12 @@ export default function HealthScoreCard({
 
           <h1
             style={{
-              margin: '8px 0 0',
-              fontSize: 58,
+              margin: '4px 0 2px',
+              fontSize: 32,
+              fontWeight: 700,
               lineHeight: 1,
               color,
+              fontFamily: 'var(--font-display)',
             }}
           >
             {health.score}%
@@ -54,10 +54,10 @@ export default function HealthScoreCard({
 
           <p
             style={{
-              marginTop: 10,
-              fontSize: 16,
-              fontWeight: 600,
-              color: 'var(--text-hi)',
+              margin: 0,
+              fontSize: 13,
+              color: 'var(--text-mid)',
+              fontWeight: 500,
             }}
           >
             {health.label}
@@ -77,73 +77,83 @@ export default function HealthScoreCard({
         </Badge>
       </div>
 
-      <ProgressBar
-        value={health.score}
-        color={color}
-      />
+      <div
+        style={{
+          marginBottom: 14,
+        }}
+      >
+        <ProgressBar
+          value={health.score}
+          color={color}
+          height={6}
+        />
+      </div>
 
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3,1fr)',
-          gap: 18,
-          marginTop: 22,
+          gap: 8,
         }}
       >
-        <div>
-          <small
-            style={{
-              color: 'var(--text-low)',
-            }}
-          >
-            Low Stock
-          </small>
+        <Metric
+          label="Low"
+          value={health.lowStock}
+          color="#F0A93D"
+        />
 
-          <h3
-            style={{
-              margin: '6px 0 0',
-            }}
-          >
-            {health.lowStock}
-          </h3>
-        </div>
+        <Metric
+          label="Out"
+          value={health.outOfStock}
+          color="#FF6B5B"
+        />
 
-        <div>
-          <small
-            style={{
-              color: 'var(--text-low)',
-            }}
-          >
-            Out of Stock
-          </small>
-
-          <h3
-            style={{
-              margin: '6px 0 0',
-            }}
-          >
-            {health.outOfStock}
-          </h3>
-        </div>
-
-        <div>
-          <small
-            style={{
-              color: 'var(--text-low)',
-            }}
-          >
-            Dead Stock
-          </small>
-
-          <h3
-            style={{
-              margin: '6px 0 0',
-            }}
-          >
-            {health.inactive}
-          </h3>
-        </div>
+        <Metric
+          label="Dead"
+          value={health.inactive}
+          color="#5B9FF0"
+        />
       </div>
     </Card>
+  )
+}
+
+function Metric({
+  label,
+  value,
+  color,
+}) {
+  return (
+    <div
+      style={{
+        background: 'rgba(255,255,255,.03)',
+        border: '1px solid rgba(255,255,255,.06)',
+        borderRadius: 10,
+        padding: '8px 10px',
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: 9,
+          color: 'var(--text-low)',
+          textTransform: 'uppercase',
+          letterSpacing: '.05em',
+        }}
+      >
+        {label}
+      </p>
+
+      <p
+        style={{
+          margin: '5px 0 0',
+          fontSize: 18,
+          fontWeight: 700,
+          color,
+        }}
+      >
+        {value}
+      </p>
+    </div>
   )
 }
