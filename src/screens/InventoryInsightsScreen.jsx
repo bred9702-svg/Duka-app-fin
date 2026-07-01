@@ -115,9 +115,10 @@ export default function InventoryInsightsScreen() {
     compact
 />
 
-        <RestockSuggestionsCard
-          suggestions={suggestions}
-        />
+       <RestockSuggestionsCard
+    suggestions={suggestions}
+    compact
+/>
       </div>
 
       <InventorySummaryCard
