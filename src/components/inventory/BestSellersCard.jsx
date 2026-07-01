@@ -1,4 +1,5 @@
 import SectionCard from './SectionCard'
+import Badge from '../ui/Badge'
 
 export default function BestSellersCard({
   bestSeller,
@@ -6,57 +7,78 @@ export default function BestSellersCard({
 }) {
   return (
     <SectionCard
-      title="🔥 Best Seller"
-      height={compact ? 190 : 260}
+      title="Best Seller"
+      height={compact ? 108 : 170}
     >
-      {bestSeller ? (
+      {!bestSeller ? (
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--text-low)',
+            margin: '8px 0 0',
+          }}
+        >
+          No sales yet
+        </p>
+      ) : (
         <>
-          <h2
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              marginBottom: 10,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 20,
+              }}
+            >
+              🔥
+            </div>
+
+            <Badge variant="ok">
+              TOP
+            </Badge>
+          </div>
+
+          <h3
             style={{
               margin: 0,
+              fontSize: 14,
+              fontWeight: 600,
               color: 'var(--text-hi)',
-              fontSize: compact ? 18 : 24,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {bestSeller.name}
-          </h2>
+          </h3>
 
           <p
             style={{
-              marginTop: 12,
-              color: '#5FD97A',
+              margin: '6px 0 2px',
+              fontSize: 20,
               fontWeight: 700,
-              fontSize: compact ? 14 : 16,
+              color: '#5FD97A',
+              lineHeight: 1,
             }}
           >
-            {bestSeller.sold} sold
+            {bestSeller.sold}
           </p>
 
-          <div
+          <p
             style={{
-              marginTop: 18,
+              margin: 0,
+              fontSize: 10,
+              color: 'var(--text-low)',
             }}
           >
-            <small
-              style={{
-                color: 'var(--text-low)',
-              }}
-            >
-              Category
-            </small>
-
-            <p
-              style={{
-                margin: '6px 0 0',
-                fontWeight: 600,
-              }}
-            >
-              {bestSeller.category}
-            </p>
-          </div>
+            units sold
+          </p>
         </>
-      ) : (
-        <p>No sales yet.</p>
       )}
     </SectionCard>
   )
