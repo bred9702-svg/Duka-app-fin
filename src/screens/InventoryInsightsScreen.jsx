@@ -1,7 +1,6 @@
 import RestockSuggestionsCard from '../components/inventory/RestockSuggestionsCard'
 import HighestProfitCard from '../components/inventory/HighestProfitCard'
 import BestSellersCard from '../components/inventory/BestSellersCard'
-import RecommendationCard from '../components/inventory/RecommendationCard'
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard'
 import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
@@ -186,10 +185,6 @@ export default function InventoryInsightsScreen() {
       outOfStock={outOfStock}
     />
 
-    <RecommendationCard
-      lowStock={lowStock}
-      outOfStock={outOfStock}
-    />
   </div>
 )
 }
