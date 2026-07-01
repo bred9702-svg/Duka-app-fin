@@ -1,85 +1,67 @@
-import Card from '../ui/Card'
+import SectionCard from './SectionCard'
 
 export default function RestockSuggestionsCard({
   suggestions = [],
+  compact = false,
 }) {
-  return (
-    <Card style={{ marginBottom: 16 }}>
-      <p
-        style={{
-          fontSize: 11,
-          color: 'var(--text-low)',
-          marginBottom: 12,
-          textTransform: 'uppercase',
-          letterSpacing: '.08em',
-          fontWeight: 600,
-        }}
-      >
-        Restock Suggestions
-      </p>
+  const items = compact
+    ? suggestions.slice(0, 3)
+    : suggestions
 
-      {suggestions.length === 0 ? (
+  return (
+    <SectionCard
+      title="📦 Restock"
+      height={compact ? 190 : 260}
+    >
+      {items.length === 0 ? (
         <p
           style={{
-            margin: 0,
             color: '#5FD97A',
+            margin: 0,
             fontWeight: 600,
           }}
         >
-          ✅ No products need restocking.
+          ✅ Nothing to reorder
         </p>
       ) : (
-        suggestions.map(product => (
-          <div
-            key={product.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '10px 0',
-              borderBottom:
-                '1px solid rgba(255,255,255,.08)',
-            }}
-          >
-            <div>
+        <>
+          {items.map((product) => (
+            <div
+              key={product.id}
+              style={{
+                padding: '8px 0',
+                borderBottom:
+                  '1px solid rgba(255,255,255,.08)',
+              }}
+            >
               <strong>{product.name}</strong>
 
               <p
                 style={{
-                  marginTop: 4,
+                  margin: '4px 0 0',
+                  color: '#F0A93D',
                   fontSize: 12,
-                  color: 'var(--text-low)',
                 }}
               >
-                Current: {product.stock_current}
+                Order +{product.recommended}
               </p>
             </div>
+          ))}
 
-            <div
-              style={{
-                textAlign: 'right',
-              }}
-            >
-              <strong
-                style={{
-                  color: '#F0A93D',
-                }}
-              >
-                +{product.recommended}
-              </strong>
-
+          {compact &&
+            suggestions.length > 3 && (
               <p
                 style={{
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: 'var(--text-low)',
+                  marginTop: 12,
+                  color: '#F0A93D',
+                  fontWeight: 600,
                 }}
               >
-                Order
+                +{suggestions.length - 3} more
               </p>
-            </div>
-          </div>
-        ))
+            )}
+        </>
       )}
-    </Card>
+    </SectionCard>
   )
 }
