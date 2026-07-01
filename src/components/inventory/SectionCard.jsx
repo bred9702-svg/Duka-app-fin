@@ -3,7 +3,7 @@ import Card from '../ui/Card'
 export default function SectionCard({
   title,
   children,
-  height = 220,
+  height = 170,
 }) {
   return (
     <Card
@@ -11,13 +11,15 @@ export default function SectionCard({
         height,
         display: 'flex',
         flexDirection: 'column',
+        padding: 14,
       }}
     >
       <p
         style={{
-          fontSize: 11,
+          margin: 0,
+          marginBottom: 10,
+          fontSize: 10,
           color: 'var(--text-low)',
-          marginBottom: 14,
           textTransform: 'uppercase',
           letterSpacing: '.08em',
           fontWeight: 600,
@@ -29,8 +31,9 @@ export default function SectionCard({
       <div
         style={{
           flex: 1,
-          overflowY: 'auto',
-          paddingRight: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
         }}
       >
         {children}
