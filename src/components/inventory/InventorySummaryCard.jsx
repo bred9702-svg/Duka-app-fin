@@ -12,7 +12,12 @@ export default function InventorySummaryCard({
     <Card
       style={{
         marginBottom: 16,
-        padding: 14,
+        padding: 12,
+        background: 'rgba(255,255,255,.02)',
+        border: '1px solid rgba(255,255,255,.10)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: 'none',
       }}
     >
       <p
@@ -72,19 +77,26 @@ function Stat({
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,.03)',
-        border: '1px solid rgba(255,255,255,.06)',
+        background:
+          'linear-gradient(180deg, rgba(28,28,28,.65) 0%, rgba(18,18,18,.72) 100%)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        border: '1px solid rgba(255,255,255,.08)',
         borderRadius: 10,
         padding: '10px 12px',
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px -6px rgba(0,0,0,.45)',
       }}
     >
       <p
         style={{
           margin: 0,
           fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
           color: 'var(--text-low)',
-          textTransform: 'uppercase',
-          letterSpacing: '.05em',
+          opacity: 0.85,
+          lineHeight: 1,
         }}
       >
         {label}
@@ -92,10 +104,13 @@ function Stat({
 
       <p
         style={{
-          margin: '6px 0 0',
-          fontSize: 20,
+          margin: '8px 0 0',
+          fontFamily: 'var(--font-display)',
+          fontSize: 13,
           fontWeight: 700,
+          letterSpacing: '-0.015em',
           color,
+          lineHeight: 1.15,
         }}
       >
         {value}
