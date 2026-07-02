@@ -45,8 +45,8 @@ export default function AIAdvisorCard({
           style={{
             margin: 0,
             fontSize: 12,
-            color: 'var(--text-mid)',
-            lineHeight: 1.5,
+            fontWeight: 600,
+            color: 'var(--text-hi)',
           }}
         >
           No recommendation available.
@@ -57,8 +57,8 @@ export default function AIAdvisorCard({
             style={{
               margin: 0,
               fontSize: 12,
-              color: 'var(--text-mid)',
-              lineHeight: 1.5,
+              fontWeight: 600,
+              color: 'var(--text-hi)',
             }}
           >
             {current.title}
@@ -67,9 +67,9 @@ export default function AIAdvisorCard({
           <p
             style={{
               margin: '3px 0 0',
-              fontSize: 10,
-              lineHeight: 1.4,
-              color: 'var(--text-low)',
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-hi)',
             }}
           >
             {current.message}
