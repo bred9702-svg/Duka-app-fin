@@ -13,12 +13,12 @@ export default function Card({
         overflow: 'hidden',
 
         background:
-          'linear-gradient(180deg, rgba(28,28,28,.82) 0%, rgba(18,18,18,.88) 100%)',
+          'linear-gradient(180deg, rgba(28,28,28,.55) 0%, rgba(18,18,18,.62) 100%)',
 
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
 
-        border: '1px solid rgba(255,255,255,.06)',
+        border: '1px solid rgba(255,255,255,.05)',
 
         borderRadius: radius.lg ?? UI.radius,
 
