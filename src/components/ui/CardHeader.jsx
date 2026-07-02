@@ -17,12 +17,11 @@ export default function CardHeader({
       <p
         style={{
           margin: 0,
-          fontSize: 8,
+          fontSize: 9,
           fontWeight: 500,
-          letterSpacing: '.06em',
-          textTransform: 'uppercase',
+          letterSpacing: '-0.01em',
           color: 'var(--text-low)',
-          opacity: 0.75,
+          opacity: 0.85,
           lineHeight: 1,
         }}
       >
