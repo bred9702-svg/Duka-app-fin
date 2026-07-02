@@ -8,7 +8,7 @@ export default function BestSellersCard({
   return (
     <SectionCard
       title="Best Seller"
-      height={compact ? 108 : 170}
+      height={compact ? 94 : 150}
     >
       {!bestSeller ? (
         <p
@@ -32,7 +32,7 @@ export default function BestSellersCard({
           >
             <div
               style={{
-                fontSize: 20,
+                fontSize: 16,
               }}
             >
               🔥
@@ -46,7 +46,7 @@ export default function BestSellersCard({
           <h3
             style={{
               margin: 0,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: 600,
               color: 'var(--text-hi)',
               whiteSpace: 'nowrap',
@@ -60,7 +60,7 @@ export default function BestSellersCard({
           <p
             style={{
               margin: '6px 0 2px',
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: 700,
               color: '#5FD97A',
               lineHeight: 1,
