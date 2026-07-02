@@ -9,14 +9,15 @@ export default function CardBody({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
+        gap: 3,
         flex: 1,
       }}
     >
       <div
         style={{
-          fontSize: 18,
+          fontSize: 14,
           lineHeight: 1,
+          opacity: 0.85,
         }}
       >
         {icon}
@@ -24,7 +25,7 @@ export default function CardBody({
 
       <div
         style={{
-          fontSize: 16,
+          fontSize: 13,
           fontWeight: 600,
           color: valueColor,
           lineHeight: 1.15,
@@ -38,7 +39,7 @@ export default function CardBody({
 
       <div
         style={{
-          fontSize: 10,
+          fontSize: 9,
           color: 'var(--text-low)',
           lineHeight: 1.2,
         }}
