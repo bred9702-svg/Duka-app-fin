@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import Card from '../ui/Card'
-import Badge from '../ui/Badge'
 
 export default function AIAdvisorCard({
   insights = [],
@@ -21,90 +19,63 @@ export default function AIAdvisorCard({
     insights.length > 0 ? insights[index] : null
 
   return (
-    <Card
+    <div
       style={{
+        background: 'rgba(91,159,240,0.08)',
+        border: '1px solid rgba(91,159,240,0.25)',
+        borderRadius: 12,
+        padding: '10px 12px',
         marginBottom: 16,
-        padding: 14,
       }}
     >
-      <div
+      <p
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 10,
+          margin: 0,
+          marginBottom: 3,
+          fontSize: 9,
+          fontWeight: 600,
+          color: '#5B9FF0',
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            fontSize: 10,
-            color: 'var(--text-low)',
-            textTransform: 'uppercase',
-            letterSpacing: '.08em',
-            fontWeight: 600,
-          }}
-        >
-          Duka AI
-        </p>
-
-        <Badge variant="info">
-          LIVE
-        </Badge>
-      </div>
+        🤖 DUKA AI
+      </p>
 
       {!current ? (
         <p
           style={{
             margin: 0,
             fontSize: 12,
-            color: 'var(--text-low)',
+            fontWeight: 600,
+            color: 'var(--text-hi)',
           }}
         >
           No recommendation available.
         </p>
       ) : (
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
-        >
-          <div
+        <>
+          <p
             style={{
-              fontSize: 18,
-              flexShrink: 0,
+              margin: 0,
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-hi)',
             }}
           >
-            {current.icon}
-          </div>
+            {current.icon} {current.title}
+          </p>
 
-          <div style={{ flex: 1 }}>
-            <h4
-              style={{
-                margin: 0,
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-hi)',
-              }}
-            >
-              {current.title}
-            </h4>
-
-            <p
-              style={{
-                margin: '4px 0 0',
-                fontSize: 11,
-                lineHeight: 1.45,
-                color: 'var(--text-mid)',
-              }}
-            >
-              {current.message}
-            </p>
-          </div>
-        </div>
+          <p
+            style={{
+              margin: '3px 0 0',
+              fontSize: 10,
+              lineHeight: 1.4,
+              color: '#5B9FF0',
+            }}
+          >
+            {current.message}
+          </p>
+        </>
       )}
-    </Card>
+    </div>
   )
 }
