@@ -1,3 +1,15 @@
+const TAG_COLORS = {
+  warn: '#F0A93D',
+  ok: '#5FD97A',
+  info: '#5B9FF0',
+  red: '#FF6B5B',
+  gray: '#A8AFBC',
+}
+
+export function badgeToTagColor(variant) {
+  return TAG_COLORS[variant] || TAG_COLORS.gray
+}
+
 const VARIANTS = {
   warn: {
     background: 'rgba(240,169,61,.08)',
