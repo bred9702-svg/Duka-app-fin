@@ -22,7 +22,7 @@ export default function RestockSuggestionsCard({
       >
         <div
           style={{
-            fontSize: 13,
+            fontSize: 12,
           }}
         >
           📦
