@@ -49,103 +49,100 @@ export default function InventoryInsightsScreen() {
   })
 
 return (
-  <div
-    style={{
-      flex: 1,
-      width: '100%',
-      padding: '12px 10px 18px',
-    }}
-  >
-    {/* Header */}
-    <h1
-      style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: 20,
-        fontWeight: 700,
-        color: 'var(--text-hi)',
-        margin: 0,
-      }}
-    >
-      Inventory Intelligence
-    </h1>
+  <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
+    <div className="bg-blob" style={{ width: 150, height: 150, top: -40, right: -40, background: 'rgba(240,169,61,0.25)' }} />
+    <div className="bg-blob" style={{ width: 120, height: 120, bottom: 200, left: -40, background: 'rgba(95,217,122,0.12)', animationDelay: '2s' }} />
 
-    <p
-      style={{
-        margin: '2px 0 12px',
-        color: 'var(--text-low)',
-        fontSize: 11,
-      }}
-    >
-      AI powered inventory management
-    </p>
+    <div style={{ position: 'relative', zIndex: 1 }}>
 
-    {/* Hero */}
-    <HealthScoreCard health={health} />
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+            Inventory Intelligence
+          </h1>
+          <p style={{ fontSize: 12, color: 'var(--text-mid)', marginTop: 3 }}>
+            AI powered inventory management
+          </p>
+        </div>
+        <div className="glass-card" style={{ padding: '5px 12px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#5FD97A' }} />
+          <span style={{ fontSize: 10, fontWeight: 600, color: '#5FD97A' }}>LIVE</span>
+        </div>
+      </div>
 
-    {/* PERFORMANCE */}
-    <SectionTitle>Performance</SectionTitle>
+      {/* Hero */}
+      <div style={{ marginBottom: 6 }}>
+        <HealthScoreCard health={health} />
+      </div>
 
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 8,
-        marginBottom: 10,
-      }}
-    >
-      <BestSellersCard
+      {/* PERFORMANCE */}
+      <SectionTitle>Performance</SectionTitle>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 8,
+          marginBottom: 14,
+        }}
+      >
+        <BestSellersCard
+          bestSeller={bestSeller}
+          compact
+        />
+
+        <HighestProfitCard
+          highestProfit={highestProfit}
+          compact
+        />
+      </div>
+
+      {/* INVENTORY */}
+      <SectionTitle>Inventory</SectionTitle>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 8,
+          marginBottom: 14,
+        }}
+      >
+        <DeadStockCard
+          deadStock={deadStock}
+          compact
+        />
+
+        <RestockSuggestionsCard
+          suggestions={suggestions}
+          compact
+        />
+      </div>
+
+      {/* AI */}
+      <SectionTitle>AI Assistant</SectionTitle>
+
+      <div style={{ marginBottom: 14 }}>
+        <AIAdvisorCard insights={insights} />
+      </div>
+
+      <AIInsightsCard
         bestSeller={bestSeller}
-        compact
-      />
-
-      <HighestProfitCard
         highestProfit={highestProfit}
-        compact
+        lowStock={lowStock}
+        outOfStock={outOfStock}
+      />
+
+      {/* SUMMARY */}
+      <SectionTitle>Summary</SectionTitle>
+
+      <InventorySummaryCard
+        totalProducts={products.length}
+        lowStock={lowStock}
+        outOfStock={outOfStock}
       />
     </div>
-
-    {/* INVENTORY */}
-    <SectionTitle>Inventory</SectionTitle>
-
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 8,
-        marginBottom: 10,
-      }}
-    >
-      <DeadStockCard
-        deadStock={deadStock}
-        compact
-      />
-
-      <RestockSuggestionsCard
-        suggestions={suggestions}
-        compact
-      />
-    </div>
-
-    {/* AI */}
-    <SectionTitle>AI Assistant</SectionTitle>
-
-    <AIAdvisorCard insights={insights} />
-
-    <AIInsightsCard
-      bestSeller={bestSeller}
-      highestProfit={highestProfit}
-      lowStock={lowStock}
-      outOfStock={outOfStock}
-    />
-
-    {/* SUMMARY */}
-    <SectionTitle>Summary</SectionTitle>
-
-    <InventorySummaryCard
-      totalProducts={products.length}
-      lowStock={lowStock}
-      outOfStock={outOfStock}
-    />
   </div>
 )
 }
@@ -153,12 +150,13 @@ function SectionTitle({ children }) {
   return (
     <p
       style={{
-        margin: '10px 0 4px',
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: '.08em',
-        textTransform: 'uppercase',
+        fontFamily: 'var(--font-display)',
+        fontSize: 10,
+        fontWeight: 600,
         color: 'var(--text-low)',
+        margin: '10px 0 8px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
       }}
     >
       {children}
