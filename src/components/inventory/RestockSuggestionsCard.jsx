@@ -22,7 +22,7 @@ export default function RestockSuggestionsCard({
       >
         <div
           style={{
-            fontSize: 16,
+            fontSize: 13,
           }}
         >
           📦
@@ -38,7 +38,7 @@ export default function RestockSuggestionsCard({
       <h3
         style={{
           margin: 0,
-          fontSize: 16,
+          fontSize: 10,
           fontWeight: 700,
           color:
             count === 0
