@@ -1,5 +1,4 @@
 export default function CardBody({
-  icon,
   value,
   subtitle,
   valueColor = 'var(--text-hi)',
@@ -11,18 +10,9 @@ export default function CardBody({
         flexDirection: 'column',
         gap: 3,
         flex: 1,
+        justifyContent: 'flex-end',
       }}
     >
-      <div
-        style={{
-          fontSize: 14,
-          lineHeight: 1,
-          opacity: 0.85,
-        }}
-      >
-        {icon}
-      </div>
-
       <div
         style={{
           fontSize: 13,
