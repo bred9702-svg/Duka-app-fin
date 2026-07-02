@@ -48,21 +48,22 @@ export default function InventoryInsightsScreen() {
     suggestions,
   })
 
- return (
+return (
   <div
     style={{
       flex: 1,
       width: '100%',
-      padding: '14px 12px 20px',
+      padding: '12px 10px 18px',
     }}
   >
+    {/* Header */}
     <h1
       style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 700,
         color: 'var(--text-hi)',
-        marginBottom: 4,
+        margin: 0,
       }}
     >
       Inventory Intelligence
@@ -70,35 +71,26 @@ export default function InventoryInsightsScreen() {
 
     <p
       style={{
+        margin: '2px 0 12px',
         color: 'var(--text-low)',
-        fontSize: 12,
-        marginBottom: 12,
+        fontSize: 11,
       }}
     >
-      AI powered inventory management.
+      AI powered inventory management
     </p>
 
+    {/* Hero */}
     <HealthScoreCard health={health} />
 
-    <p
-      style={{
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'var(--text-low)',
-        textTransform: 'uppercase',
-        letterSpacing: '.08em',
-        margin: '14px 0 4px',
-      }}
-    >
-      Performance
-    </p>
+    {/* PERFORMANCE */}
+    <SectionTitle>Performance</SectionTitle>
 
     <div
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: 10,
-        marginBottom: 12,
+        gap: 8,
+        marginBottom: 10,
       }}
     >
       <BestSellersCard
@@ -112,25 +104,15 @@ export default function InventoryInsightsScreen() {
       />
     </div>
 
-    <p
-      style={{
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'var(--text-low)',
-        textTransform: 'uppercase',
-        letterSpacing: '.08em',
-        margin: '14px 0 4px',
-      }}
-    >
-      Inventory
-    </p>
+    {/* INVENTORY */}
+    <SectionTitle>Inventory</SectionTitle>
 
     <div
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: 10,
-        marginBottom: 12,
+        gap: 8,
+        marginBottom: 10,
       }}
     >
       <DeadStockCard
@@ -144,18 +126,8 @@ export default function InventoryInsightsScreen() {
       />
     </div>
 
-    <p
-      style={{
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'var(--text-low)',
-        textTransform: 'uppercase',
-        letterSpacing: '.08em',
-        margin: '14px 0 4px',
-      }}
-    >
-      AI Assistant
-    </p>
+    {/* AI */}
+    <SectionTitle>AI Assistant</SectionTitle>
 
     <AIAdvisorCard insights={insights} />
 
@@ -166,25 +138,30 @@ export default function InventoryInsightsScreen() {
       outOfStock={outOfStock}
     />
 
-    <p
-      style={{
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'var(--text-low)',
-        textTransform: 'uppercase',
-        letterSpacing: '.08em',
-        margin: '14px 0 4px',
-      }}
-    >
-      Summary
-    </p>
+    {/* SUMMARY */}
+    <SectionTitle>Summary</SectionTitle>
 
     <InventorySummaryCard
       totalProducts={products.length}
       lowStock={lowStock}
       outOfStock={outOfStock}
     />
-
   </div>
 )
+}
+function SectionTitle({ children }) {
+  return (
+    <p
+      style={{
+        margin: '10px 0 4px',
+        fontSize: 9,
+        fontWeight: 700,
+        letterSpacing: '.08em',
+        textTransform: 'uppercase',
+        color: 'var(--text-low)',
+      }}
+    >
+      {children}
+    </p>
+  )
 }
