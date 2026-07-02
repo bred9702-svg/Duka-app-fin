@@ -53,13 +53,13 @@ export default function InventoryInsightsScreen() {
     style={{
       flex: 1,
       width: '100%',
-      padding: '16px 14px 24px',
+      padding: '14px 12px 20px',
     }}
   >
     <h1
       style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 22,
+        fontSize: 18,
         fontWeight: 700,
         color: 'var(--text-hi)',
         marginBottom: 4,
@@ -72,7 +72,7 @@ export default function InventoryInsightsScreen() {
       style={{
         color: 'var(--text-low)',
         fontSize: 12,
-        marginBottom: 16,
+        marginBottom: 12,
       }}
     >
       AI powered inventory management.
@@ -87,7 +87,7 @@ export default function InventoryInsightsScreen() {
         color: 'var(--text-low)',
         textTransform: 'uppercase',
         letterSpacing: '.08em',
-        margin: '18px 0 8px',
+        margin: '14px 0 4px',
       }}
     >
       Performance
@@ -97,8 +97,8 @@ export default function InventoryInsightsScreen() {
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: 12,
-        marginBottom: 16,
+        gap: 10,
+        marginBottom: 12,
       }}
     >
       <BestSellersCard
@@ -119,7 +119,7 @@ export default function InventoryInsightsScreen() {
         color: 'var(--text-low)',
         textTransform: 'uppercase',
         letterSpacing: '.08em',
-        margin: '18px 0 8px',
+        margin: '14px 0 4px',
       }}
     >
       Inventory
@@ -129,8 +129,8 @@ export default function InventoryInsightsScreen() {
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: 12,
-        marginBottom: 16,
+        gap: 10,
+        marginBottom: 12,
       }}
     >
       <DeadStockCard
@@ -151,7 +151,7 @@ export default function InventoryInsightsScreen() {
         color: 'var(--text-low)',
         textTransform: 'uppercase',
         letterSpacing: '.08em',
-        margin: '18px 0 8px',
+        margin: '14px 0 4px',
       }}
     >
       AI Assistant
@@ -173,7 +173,7 @@ export default function InventoryInsightsScreen() {
         color: 'var(--text-low)',
         textTransform: 'uppercase',
         letterSpacing: '.08em',
-        margin: '18px 0 8px',
+        margin: '14px 0 4px',
       }}
     >
       Summary
