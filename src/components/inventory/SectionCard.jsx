@@ -2,7 +2,7 @@ import Card from '../ui/Card'
 
 export default function SectionCard({
   children,
-  height = 96,
+  height = 76,
 }) {
   return (
     <Card
