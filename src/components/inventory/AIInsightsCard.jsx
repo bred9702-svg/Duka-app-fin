@@ -10,7 +10,12 @@ export default function AIInsightsCard({
     <Card
       style={{
         marginBottom: 16,
-        padding: 14,
+        padding: 12,
+        background: 'rgba(255,255,255,.02)',
+        border: '1px solid rgba(255,255,255,.10)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: 'none',
       }}
     >
       <p
@@ -35,7 +40,6 @@ export default function AIInsightsCard({
         }}
       >
         <Insight
-          icon="🔥"
           label="Best Seller"
           value={
             bestSeller
@@ -47,11 +51,9 @@ export default function AIInsightsCard({
               ? `${bestSeller.sold} sold`
               : "No sales"
           }
-          color="#5FD97A"
         />
 
         <Insight
-          icon="💰"
           label="Top Profit"
           value={
             highestProfit
@@ -63,23 +65,18 @@ export default function AIInsightsCard({
               ? `KES ${Math.round(highestProfit.profit).toLocaleString()}`
               : "No data"
           }
-          color="#F0A93D"
         />
 
         <Insight
-          icon="⚠️"
           label="Low Stock"
           value={lowStock.length}
           sub="Products"
-          color="#F0A93D"
         />
 
         <Insight
-          icon="📦"
           label="Out"
           value={outOfStock.length}
           sub="Products"
-          color="#FF6B5B"
         />
       </div>
     </Card>
@@ -87,50 +84,47 @@ export default function AIInsightsCard({
 }
 
 function Insight({
-  icon,
   label,
   value,
   sub,
-  color,
 }) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,.03)',
-        border: '1px solid rgba(255,255,255,.06)',
+        background:
+          'linear-gradient(180deg, rgba(28,28,28,.65) 0%, rgba(18,18,18,.72) 100%)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        border: '1px solid rgba(255,255,255,.08)',
         borderRadius: 10,
         padding: '10px 12px',
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px -6px rgba(0,0,0,.45)',
       }}
     >
-      <div
+      <p
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
+          margin: 0,
           marginBottom: 8,
+          fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
+          color: 'var(--text-low)',
+          opacity: 0.85,
+          lineHeight: 1,
         }}
       >
-        <span style={{ fontSize: 14 }}>
-          {icon}
-        </span>
-
-        <span
-          style={{
-            fontSize: 9,
-            color: 'var(--text-low)',
-            textTransform: 'uppercase',
-            letterSpacing: '.05em',
-          }}
-        >
-          {label}
-        </span>
-      </div>
+        {label}
+      </p>
 
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 600,
+          fontFamily: 'var(--font-display)',
+          fontSize: 13,
+          fontWeight: 700,
+          letterSpacing: '-0.015em',
           color: 'var(--text-hi)',
+          lineHeight: 1.15,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -141,9 +135,13 @@ function Insight({
 
       <div
         style={{
-          marginTop: 4,
-          fontSize: 10,
-          color,
+          marginTop: 7,
+          fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
+          color: 'var(--text-low)',
+          opacity: 0.7,
+          lineHeight: 1.2,
         }}
       >
         {sub}
