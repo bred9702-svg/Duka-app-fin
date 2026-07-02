@@ -2,7 +2,7 @@ export default function IconBadge({
   icon: Icon,
   color = '#F0A93D',
   background,
-  size = 38,
+  size = 30,
 }) {
   return (
     <div
@@ -14,11 +14,11 @@ export default function IconBadge({
         alignItems: 'center',
         justifyContent: 'center',
         background:
-          background ?? `${color}18`,
+          background ?? `${color}14`,
       }}
     >
       <Icon
-        size={20}
+        size={15}
         color={color}
         strokeWidth={2.3}
       />
