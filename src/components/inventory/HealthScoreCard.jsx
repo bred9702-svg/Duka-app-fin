@@ -29,6 +29,7 @@ export default function HealthScoreCard({ health }) {
           <p
             style={{
               margin: 0,
+              fontFamily: 'var(--font-display)',
               fontSize: 10,
               color: 'var(--text-low)',
               textTransform: 'uppercase',
@@ -44,6 +45,7 @@ export default function HealthScoreCard({ health }) {
               margin: '4px 0 2px',
               fontSize: 32,
               fontWeight: 700,
+              letterSpacing: '-0.02em',
               lineHeight: 1,
               color,
               fontFamily: 'var(--font-display)',
