@@ -20,7 +20,7 @@ export default function AIInsightsCard({
           fontSize: 10,
           color: 'var(--text-low)',
           textTransform: 'uppercase',
-          letterSpacing: '.08em',
+          letterSpacing: '.06em',
           fontWeight: 600,
         }}
       >
