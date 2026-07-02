@@ -1,10 +1,12 @@
-import Badge from './Badge'
+import { badgeToTagColor } from './Badge'
 
 export default function CardHeader({
   title,
   badge,
   badgeVariant = 'gray',
 }) {
+  const color = badgeToTagColor(badgeVariant)
+
   return (
     <div
       style={{
@@ -29,9 +31,20 @@ export default function CardHeader({
       </p>
 
       {badge && (
-        <Badge variant={badgeVariant}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '2px 7px',
+            fontSize: 8,
+            letterSpacing: '.02em',
+            fontWeight: 600,
+            background: `${color}1F`,
+            color,
+          }}
+        >
           {badge}
-        </Badge>
+        </div>
       )}
     </div>
   )
