@@ -10,7 +10,7 @@ export default function RestockSuggestionsCard({
   return (
     <SectionCard
       title="Restock"
-      height={compact ? 108 : 170}
+      height={compact ? 94 : 150}
     >
       <div
         style={{
@@ -22,7 +22,7 @@ export default function RestockSuggestionsCard({
       >
         <div
           style={{
-            fontSize: 20,
+            fontSize: 16,
           }}
         >
           📦
@@ -38,7 +38,7 @@ export default function RestockSuggestionsCard({
       <h3
         style={{
           margin: 0,
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: 700,
           color:
             count === 0
