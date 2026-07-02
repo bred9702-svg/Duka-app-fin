@@ -8,7 +8,7 @@ export default function BestSellersCard({
 }) {
   if (!bestSeller) {
     return (
-      <SectionCard height={compact ? 94 : 150}>
+      <SectionCard height={compact ? 76 : 110}>
         <CardHeader
           title="Best Seller"
           badge="NEW"
@@ -27,7 +27,7 @@ export default function BestSellersCard({
 
   return (
     <SectionCard
-      height={compact ? 94 : 150}
+      height={compact ? 76 : 110}
     >
       <CardHeader
         title="Best Seller"
