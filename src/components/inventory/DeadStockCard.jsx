@@ -24,7 +24,7 @@ export default function DeadStockCard({
           style={{
             fontSize: 14,
           }}
-      
+       </div>
 
         <Badge
           variant={count === 0 ? 'ok' : 'warn'}
