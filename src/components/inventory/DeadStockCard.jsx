@@ -10,7 +10,7 @@ export default function DeadStockCard({
   return (
     <SectionCard
       title="Dead Stock"
-      height={compact ? 94 : 150}
+      height={compact ? 94 : 120}
     >
       <div
         style={{
@@ -22,11 +22,9 @@ export default function DeadStockCard({
       >
         <div
           style={{
-            fontSize: 16,
+            fontSize: 14,
           }}
-        >
-          😴
-        </div>
+      
 
         <Badge
           variant={count === 0 ? 'ok' : 'warn'}
@@ -38,7 +36,7 @@ export default function DeadStockCard({
       <h3
         style={{
           margin: 0,
-          fontSize: 16,
+          fontSize: 10,
           fontWeight: 700,
           color:
             count === 0
