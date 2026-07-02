@@ -1,27 +1,84 @@
-export default function IconBadge({
-  icon: Icon,
-  color = '#F0A93D',
-  background,
-  size = 30,
+const TAG_COLORS = {
+  warn: '#F0A93D',
+  ok: '#5FD97A',
+  info: '#5B9FF0',
+  red: '#FF6B5B',
+  gray: '#A8AFBC',
+}
+
+export function badgeToTagColor(variant) {
+  return TAG_COLORS[variant] || TAG_COLORS.gray
+}
+
+const VARIANTS = {
+  warn: {
+    background: 'rgba(240,169,61,.08)',
+    color: '#F0A93D',
+    border: '1px solid rgba(240,169,61,.16)',
+  },
+
+  ok: {
+    background: 'rgba(95,217,122,.08)',
+    color: '#5FD97A',
+    border: '1px solid rgba(95,217,122,.16)',
+  },
+
+  info: {
+    background: 'rgba(91,159,240,.08)',
+    color: '#5B9FF0',
+    border: '1px solid rgba(91,159,240,.16)',
+  },
+
+  red: {
+    background: 'rgba(255,107,91,.08)',
+    color: '#FF6B5B',
+    border: '1px solid rgba(255,107,91,.16)',
+  },
+
+  gray: {
+    background: 'rgba(255,255,255,.03)',
+    color: 'var(--text-mid)',
+    border: '1px solid rgba(255,255,255,.05)',
+  },
+}
+
+export default function Badge({
+  children,
+  variant = 'gray',
 }) {
+  const style =
+    VARIANTS[variant] || VARIANTS.gray
+
   return (
-    <div
+    <span
       style={{
-        width: size,
-        height: size,
-        borderRadius: 12,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          background ?? `${color}14`,
+
+        minHeight: 15,
+
+        padding: '0 6px',
+
+        borderRadius: 999,
+
+        fontSize: 7,
+
+        fontWeight: 600,
+
+        letterSpacing: '.03em',
+
+        textTransform: 'uppercase',
+
+        fontFamily: 'var(--font-display)',
+
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+
+        ...style,
       }}
     >
-      <Icon
-        size={10}
-        color={color}
-        strokeWidth={2.3}
-      />
-    </div>
+      {children}
+    </span>
   )
 }
