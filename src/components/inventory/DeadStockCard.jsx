@@ -10,7 +10,7 @@ export default function DeadStockCard({
   return (
     <SectionCard
       title="Dead Stock"
-      height={compact ? 108 : 170}
+      height={compact ? 94 : 150}
     >
       <div
         style={{
@@ -22,7 +22,7 @@ export default function DeadStockCard({
       >
         <div
           style={{
-            fontSize: 20,
+            fontSize: 16,
           }}
         >
           😴
@@ -38,7 +38,7 @@ export default function DeadStockCard({
       <h3
         style={{
           margin: 0,
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: 700,
           color:
             count === 0
@@ -52,7 +52,7 @@ export default function DeadStockCard({
       <p
         style={{
           margin: '4px 0 0',
-          fontSize: 11,
+          fontSize: 10,
           color: 'var(--text-low)',
         }}
       >
