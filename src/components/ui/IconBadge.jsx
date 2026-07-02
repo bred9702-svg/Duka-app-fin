@@ -18,7 +18,7 @@ export default function IconBadge({
       }}
     >
       <Icon
-        size={15}
+        size={10}
         color={color}
         strokeWidth={2.3}
       />
