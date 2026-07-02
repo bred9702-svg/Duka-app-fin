@@ -1,85 +1,46 @@
 import SectionCard from './SectionCard'
-import Badge from '../ui/Badge'
+import CardHeader from '../ui/CardHeader'
+import CardBody from '../ui/CardBody'
 
 export default function BestSellersCard({
   bestSeller,
   compact = false,
 }) {
+  if (!bestSeller) {
+    return (
+      <SectionCard height={compact ? 94 : 150}>
+        <CardHeader
+          title="Best Seller"
+          badge="NEW"
+          badgeVariant="gray"
+        />
+
+        <CardBody
+          icon="🔥"
+          value="No sales"
+          subtitle="Waiting for transactions"
+          valueColor="var(--text-hi)"
+        />
+      </SectionCard>
+    )
+  }
+
   return (
     <SectionCard
-      title="Best Seller"
-      height={compact ? 94 : 120}
+      height={compact ? 94 : 150}
     >
-      {!bestSeller ? (
-        <p
-          style={{
-            fontSize: 10,
-            color: 'var(--text-low)',
-            margin: '4px 0 0',
-          }}
-        >
-          No sales yet
-        </p>
-      ) : (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: 10,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 14,
-              }}
-            >
-              🔥
-            </div>
+      <CardHeader
+        title="Best Seller"
+        badge="TOP"
+        badgeVariant="ok"
+      />
 
-            <Badge variant="ok">
-              TOP
-            </Badge>
-          </div>
-
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 10,
-              fontWeight: 600,
-              color: 'var(--text-hi)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {bestSeller.name}
-          </h3>
-
-          <p
-            style={{
-              margin: '6px 0 2px',
-              fontSize: 16,
-              fontWeight: 700,
-              color: '#5FD97A',
-              lineHeight: 1,
-            }}
-          >
-            {bestSeller.sold}
-          </p>
-
-          <p
-            style={{
-              margin: 0,
-              fontSize: 10,
-              color: 'var(--text-low)',
-            }}
-          >
-            units sold
-          </p>
-        </>
-      )}
+      <CardBody
+        icon="🔥"
+        value={bestSeller.name}
+        subtitle={`${bestSeller.sold} sold`}
+        valueColor="#5FD97A"
+      />
     </SectionCard>
   )
 }
