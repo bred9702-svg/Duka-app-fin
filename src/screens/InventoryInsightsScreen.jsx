@@ -151,12 +151,13 @@ function SectionTitle({ children }) {
     <p
       style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 10,
-        fontWeight: 600,
+        fontSize: 9,
+        fontWeight: 500,
         color: 'var(--text-low)',
+        opacity: 0.65,
         margin: '10px 0 8px',
         textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        letterSpacing: '0.06em',
       }}
     >
       {children}
