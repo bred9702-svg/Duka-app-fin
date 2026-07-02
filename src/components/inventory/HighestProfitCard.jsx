@@ -8,7 +8,7 @@ export default function HighestProfitCard({
 }) {
   if (!highestProfit) {
     return (
-      <SectionCard height={compact ? 94 : 150}>
+      <SectionCard height={compact ? 76 : 110}>
         <CardHeader
           title="Highest Profit"
           badge="NEW"
@@ -27,7 +27,7 @@ export default function HighestProfitCard({
 
   return (
     <SectionCard
-      height={compact ? 94 : 150}
+      height={compact ? 76 : 110}
     >
       <CardHeader
         title="Highest Profit"
