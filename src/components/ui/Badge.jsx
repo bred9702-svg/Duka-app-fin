@@ -44,17 +44,17 @@ export default function Badge({
         alignItems: 'center',
         justifyContent: 'center',
 
-        minHeight: 17,
+        minHeight: 15,
 
-        padding: '0 7px',
+        padding: '0 6px',
 
         borderRadius: 999,
 
-        fontSize: 8,
+        fontSize: 7,
 
         fontWeight: 600,
 
-        letterSpacing: '.04em',
+        letterSpacing: '.03em',
 
         textTransform: 'uppercase',
 
