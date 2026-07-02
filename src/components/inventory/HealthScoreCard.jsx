@@ -16,6 +16,20 @@ export default function HealthScoreCard({ health }) {
         boxShadow: 'none',
       }}
     >
+      <p
+        style={{
+          margin: '0 0 4px',
+          fontFamily: 'var(--font-display)',
+          fontSize: 10,
+          color: 'var(--text-low)',
+          textTransform: 'uppercase',
+          letterSpacing: '.08em',
+          fontWeight: 600,
+        }}
+      >
+        Inventory Health
+      </p>
+
       <h1
         style={{
           margin: '0 0 6px',
