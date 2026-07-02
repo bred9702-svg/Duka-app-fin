@@ -21,8 +21,8 @@ export default function AIAdvisorCard({
   return (
     <div
       style={{
-        background: 'rgba(91,159,240,0.08)',
-        border: '1px solid rgba(91,159,240,0.25)',
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 12,
         padding: '10px 12px',
         marginBottom: 16,
@@ -34,10 +34,10 @@ export default function AIAdvisorCard({
           marginBottom: 3,
           fontSize: 9,
           fontWeight: 600,
-          color: '#5B9FF0',
+          color: 'var(--text-low)',
         }}
       >
-        🤖 DUKA AI
+        DUKA AI
       </p>
 
       {!current ? (
@@ -45,8 +45,8 @@ export default function AIAdvisorCard({
           style={{
             margin: 0,
             fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--text-hi)',
+            color: 'var(--text-mid)',
+            lineHeight: 1.5,
           }}
         >
           No recommendation available.
@@ -57,11 +57,11 @@ export default function AIAdvisorCard({
             style={{
               margin: 0,
               fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--text-hi)',
+              color: 'var(--text-mid)',
+              lineHeight: 1.5,
             }}
           >
-            {current.icon} {current.title}
+            {current.title}
           </p>
 
           <p
@@ -69,7 +69,7 @@ export default function AIAdvisorCard({
               margin: '3px 0 0',
               fontSize: 10,
               lineHeight: 1.4,
-              color: '#5B9FF0',
+              color: 'var(--text-low)',
             }}
           >
             {current.message}
