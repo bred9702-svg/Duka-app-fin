@@ -1,5 +1,6 @@
 import SectionCard from './SectionCard'
-import Badge from '../ui/Badge'
+import CardHeader from '../ui/CardHeader'
+import CardBody from '../ui/CardBody'
 
 export default function DeadStockCard({
   deadStock = [],
@@ -9,70 +10,36 @@ export default function DeadStockCard({
 
   return (
     <SectionCard
-      title="Dead Stock"
-      height={compact ? 94 : 120}
+      height={compact ? 94 : 150}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 10,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-          }}
-           >
-          😴
-       </div>
+      <CardHeader
+        title="Dead Stock"
+        badge={
+          count === 0
+            ? 'GOOD'
+            : 'ACTION'
+        }
+        badgeVariant={
+          count === 0
+            ? 'ok'
+            : 'warn'
+        }
+      />
 
-        <Badge
-          variant={count === 0 ? 'ok' : 'warn'}
-        >
-          {count === 0 ? 'GOOD' : 'ACTION'}
-        </Badge>
-      </div>
-
-      <h3
-        style={{
-          margin: 0,
-          fontSize: 10,
-          fontWeight: 700,
-          color:
-            count === 0
-              ? '#5FD97A'
-              : '#F0A93D',
-        }}
-      >
-        {count}
-      </h3>
-
-      <p
-        style={{
-          margin: '4px 0 0',
-          fontSize: 10,
-          color: 'var(--text-low)',
-        }}
-      >
-        {count === 1
-          ? 'product inactive'
-          : 'products inactive'}
-      </p>
-
-      {count > 0 && (
-        <p
-          style={{
-            marginTop: 10,
-            fontSize: 10,
-            color: '#F0A93D',
-            fontWeight: 600,
-          }}
-        >
-          View details →
-        </p>
-      )}
+      <CardBody
+        icon="😴"
+        value={count}
+        subtitle={
+          count === 1
+            ? 'Inactive product'
+            : 'Inactive products'
+        }
+        valueColor={
+          count === 0
+            ? '#5FD97A'
+            : '#F0A93D'
+        }
+      />
     </SectionCard>
   )
 }
