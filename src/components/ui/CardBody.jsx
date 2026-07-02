@@ -1,14 +1,13 @@
 export default function CardBody({
   value,
   subtitle,
-  valueColor = 'var(--text-hi)',
 }) {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
+        gap: 7,
         flex: 1,
         justifyContent: 'flex-end',
       }}
@@ -17,7 +16,7 @@ export default function CardBody({
         style={{
           fontSize: 13,
           fontWeight: 600,
-          color: valueColor,
+          color: 'var(--text-hi)',
           lineHeight: 1.15,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
