@@ -14,8 +14,10 @@ export default function CardBody({
     >
       <div
         style={{
+          fontFamily: 'var(--font-display)',
           fontSize: 13,
-          fontWeight: 600,
+          fontWeight: 700,
+          letterSpacing: '-0.015em',
           color: 'var(--text-hi)',
           lineHeight: 1.15,
           whiteSpace: 'nowrap',
@@ -29,7 +31,10 @@ export default function CardBody({
       <div
         style={{
           fontSize: 9,
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
           color: 'var(--text-low)',
+          opacity: 0.7,
           lineHeight: 1.2,
         }}
       >
