@@ -24,6 +24,8 @@ export default function DeadStockCard({
           style={{
             fontSize: 14,
           }}
+           >
+          😴
        </div>
 
         <Badge
