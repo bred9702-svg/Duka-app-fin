@@ -1,32 +1,32 @@
 const VARIANTS = {
   warn: {
-    background: 'rgba(240,169,61,.12)',
+    background: 'rgba(240,169,61,.08)',
     color: '#F0A93D',
-    border: '1px solid rgba(240,169,61,.22)',
+    border: '1px solid rgba(240,169,61,.16)',
   },
 
   ok: {
-    background: 'rgba(95,217,122,.12)',
+    background: 'rgba(95,217,122,.08)',
     color: '#5FD97A',
-    border: '1px solid rgba(95,217,122,.22)',
+    border: '1px solid rgba(95,217,122,.16)',
   },
 
   info: {
-    background: 'rgba(91,159,240,.12)',
+    background: 'rgba(91,159,240,.08)',
     color: '#5B9FF0',
-    border: '1px solid rgba(91,159,240,.22)',
+    border: '1px solid rgba(91,159,240,.16)',
   },
 
   red: {
-    background: 'rgba(255,107,91,.12)',
+    background: 'rgba(255,107,91,.08)',
     color: '#FF6B5B',
-    border: '1px solid rgba(255,107,91,.22)',
+    border: '1px solid rgba(255,107,91,.16)',
   },
 
   gray: {
-    background: 'rgba(255,255,255,.04)',
+    background: 'rgba(255,255,255,.03)',
     color: 'var(--text-mid)',
-    border: '1px solid rgba(255,255,255,.06)',
+    border: '1px solid rgba(255,255,255,.05)',
   },
 }
 
@@ -44,17 +44,17 @@ export default function Badge({
         alignItems: 'center',
         justifyContent: 'center',
 
-        minHeight: 22,
+        minHeight: 17,
 
-        padding: '0 10px',
+        padding: '0 7px',
 
         borderRadius: 999,
 
-        fontSize: 9,
+        fontSize: 8,
 
-        fontWeight: 700,
+        fontWeight: 600,
 
-        letterSpacing: '.05em',
+        letterSpacing: '.04em',
 
         textTransform: 'uppercase',
 
