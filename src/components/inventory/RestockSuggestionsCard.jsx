@@ -10,7 +10,7 @@ export default function RestockSuggestionsCard({
 
   return (
     <SectionCard
-      height={compact ? 94 : 150}
+      height={compact ? 76 : 110}
     >
       <CardHeader
         title="Restock"
