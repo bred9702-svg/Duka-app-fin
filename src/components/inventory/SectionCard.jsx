@@ -7,7 +7,7 @@ export default function SectionCard({
   return (
     <Card
       style={{
-        height,
+        minHeight: height,
         padding: 10,
         display: 'flex',
         flexDirection: 'column',
