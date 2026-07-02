@@ -10,7 +10,7 @@ export default function DeadStockCard({
 
   return (
     <SectionCard
-      height={compact ? 94 : 150}
+      height={compact ? 76 : 110}
     >
       <CardHeader
         title="Dead Stock"
