@@ -72,19 +72,16 @@ return (
       </div>
 
       {/* Hero */}
-      <div style={{ marginBottom: 6 }}>
+      <div style={{ marginBottom: 8 }}>
         <HealthScoreCard health={health} />
       </div>
-
-      {/* PERFORMANCE */}
-      <SectionTitle>Performance</SectionTitle>
 
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 8,
-          marginBottom: 14,
+          marginBottom: 8,
         }}
       >
         <BestSellersCard
@@ -98,15 +95,12 @@ return (
         />
       </div>
 
-      {/* INVENTORY */}
-      <SectionTitle>Inventory</SectionTitle>
-
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 8,
-          marginBottom: 14,
+          marginBottom: 8,
         }}
       >
         <DeadStockCard
@@ -120,22 +114,18 @@ return (
         />
       </div>
 
-      {/* AI */}
-      <SectionTitle>AI Assistant</SectionTitle>
-
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 8 }}>
         <AIAdvisorCard insights={insights} />
       </div>
 
-      <AIInsightsCard
-        bestSeller={bestSeller}
-        highestProfit={highestProfit}
-        lowStock={lowStock}
-        outOfStock={outOfStock}
-      />
-
-      {/* SUMMARY */}
-      <SectionTitle>Summary</SectionTitle>
+      <div style={{ marginBottom: 8 }}>
+        <AIInsightsCard
+          bestSeller={bestSeller}
+          highestProfit={highestProfit}
+          lowStock={lowStock}
+          outOfStock={outOfStock}
+        />
+      </div>
 
       <InventorySummaryCard
         totalProducts={products.length}
@@ -145,22 +135,4 @@ return (
     </div>
   </div>
 )
-}
-function SectionTitle({ children }) {
-  return (
-    <p
-      style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: 9,
-        fontWeight: 500,
-        color: 'var(--text-low)',
-        opacity: 0.65,
-        margin: '10px 0 8px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-      }}
-    >
-      {children}
-    </p>
-  )
 }
