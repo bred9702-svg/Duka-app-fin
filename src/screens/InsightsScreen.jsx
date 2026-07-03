@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import Card from '../components/ui/Card'
+import ScreenContainer from '../components/layout/ScreenContainer'
 import Icon from '../components/ui/Icon'
 
 const ITEMS = [
@@ -44,108 +44,127 @@ export default function InsightsScreen() {
   const navigate = useNavigate()
 
   return (
-    <div
-      style={{
-        flex: 1,
-        width: '100%',
-        padding: '16px 14px 24px',
-        position: 'relative',
-      }}
-    >
+    <ScreenContainer>
       <div
         className="bg-blob"
         style={{
-          width: 140,
-          height: 140,
+          width: 130,
+          height: 130,
           top: -30,
-          right: -20,
-          background: 'rgba(91,159,240,.15)',
+          right: -30,
+          background: 'rgba(240,169,61,0.2)',
         }}
       />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <h1
+        <div
           style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 22,
-            fontWeight: 700,
-            color: 'var(--text-hi)',
-            marginBottom: 4,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
           }}
         >
-          Insights
-        </h1>
-
-        <p
-          style={{
-            color: 'var(--text-low)',
-            fontSize: 12,
-            marginBottom: 22,
-          }}
-        >
-          Grow your business with intelligent insights.
-        </p>
-
-        {ITEMS.map((item) => (
-          <Card
-            key={item.title}
-            onClick={() => navigate(item.path)}
+          <h1
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              marginBottom: 12,
-              cursor: 'pointer',
+              fontFamily: 'var(--font-display)',
+              fontSize: 21,
+              fontWeight: 700,
+              color: 'var(--text-hi)',
+              letterSpacing: '-0.02em',
             }}
           >
+            Insights
+          </h1>
+        </div>
+
+        <div>
+          {ITEMS.map((item, i) => (
             <div
+              key={item.title}
+              onClick={() => navigate(item.path)}
               style={{
-                width: 46,
-                height: 46,
-                borderRadius: 12,
-                background: `${item.color}20`,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                gap: 10,
+                padding: '9px 11px',
+                marginBottom: 6,
+                borderRadius: 12,
+                cursor: 'pointer',
+                background: 'var(--glass-fill-soft)',
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+                border: '1px solid var(--glass-border)',
+                animation: 'slideUp .35s ease-out backwards',
+                animationDelay: `${i * 0.05}s`,
               }}
             >
+              <div
+                style={{
+                  width: 3,
+                  height: 34,
+                  alignSelf: 'center',
+                  borderRadius: 999,
+                  background: item.color,
+                  flexShrink: 0,
+                }}
+              />
+
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  background: `${item.color}20`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon
+                  name={item.icon}
+                  size={14}
+                  color={item.color}
+                />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '-.01em',
+                    color: 'var(--text-hi)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {item.title}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontSize: 8,
+                    opacity: 0.65,
+                    color: 'var(--text-low)',
+                  }}
+                >
+                  {item.subtitle}
+                </div>
+              </div>
+
               <Icon
-                name={item.icon}
-                size={18}
-                color={item.color}
+                name="chevronRight"
+                size={16}
+                color="var(--text-low)"
               />
             </div>
-
-            <div style={{ flex: 1 }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontWeight: 700,
-                  color: 'var(--text-hi)',
-                }}
-              >
-                {item.title}
-              </p>
-
-              <p
-                style={{
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: 'var(--text-low)',
-                }}
-              >
-                {item.subtitle}
-              </p>
-            </div>
-
-            <Icon
-              name="chevronRight"
-              size={16}
-              color="var(--text-low)"
-            />
-          </Card>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </ScreenContainer>
   )
 }
