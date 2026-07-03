@@ -84,6 +84,7 @@ export default function App() {
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
+          paddingBottom: hideNav ? 0 : 84,
         }}
       >
         <Routes>
