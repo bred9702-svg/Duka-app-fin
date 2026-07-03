@@ -53,15 +53,17 @@ export default function BottomNav() {
         alignItems: 'center',
         margin: '0 12px 12px',
         padding: '6px 6px',
-        background: 'rgba(255,255,255,.07)',
-        backdropFilter: 'blur(22px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(180%)',
-        border: '1px solid rgba(255,255,255,.14)',
+        background:
+          'linear-gradient(180deg, rgba(91,159,240,.05) 0%, rgba(6,7,10,.55) 100%)',
+        backdropFilter: 'blur(26px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(26px) saturate(180%)',
+        border: '1px solid rgba(140,180,255,.10)',
         borderRadius: 16,
         boxShadow:
-          '0 10px 30px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.18)',
+          '0 20px 40px -14px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10)',
         flexShrink: 0,
         zIndex: 10,
+        position: 'relative',
       }}
     >
       {TABS.map((tab) => {
@@ -88,8 +90,20 @@ export default function BottomNav() {
                 padding: '4px 4px',
                 borderRadius: 10,
                 background: active
-                  ? 'rgba(240,169,61,.18)'
+                  ? 'linear-gradient(180deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.05) 100%)'
                   : 'transparent',
+                backdropFilter: active
+                  ? 'blur(14px) saturate(180%)'
+                  : 'none',
+                WebkitBackdropFilter: active
+                  ? 'blur(14px) saturate(180%)'
+                  : 'none',
+                border: active
+                  ? '1px solid rgba(255,255,255,.28)'
+                  : '1px solid transparent',
+                boxShadow: active
+                  ? 'inset 0 1px 1px rgba(255,255,255,.5), inset 0 -2px 3px rgba(0,0,0,.25), 0 4px 14px -4px rgba(0,0,0,.4)'
+                  : 'none',
                 transition: '.18s',
               }}
             >
