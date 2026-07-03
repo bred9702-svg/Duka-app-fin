@@ -164,3 +164,12 @@ button:active { transform: scale(0.97); }
   -webkit-text-fill-color: transparent;
   animation: shimmer 2.8s linear infinite;
 }
+
+@keyframes liveBlink {
+  0%, 92%, 100% { opacity: 1; }
+  96% { opacity: 0.25; }
+}
+
+.live-badge-blink {
+  animation: liveBlink 10s ease-in-out infinite;
+}
