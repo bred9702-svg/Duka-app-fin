@@ -65,9 +65,23 @@ return (
             AI powered inventory management
           </p>
         </div>
-        <div className="glass-card" style={{ padding: '5px 12px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+        <div
+          className="live-badge-blink"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '2px 7px',
+            fontSize: 8,
+            letterSpacing: '.02em',
+            fontWeight: 600,
+            background: 'rgba(95,217,122,.12)',
+            color: '#5FD97A',
+            flexShrink: 0,
+          }}
+        >
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#5FD97A' }} />
-          <span style={{ fontSize: 10, fontWeight: 600, color: '#5FD97A' }}>LIVE</span>
+          LIVE
         </div>
       </div>
 
