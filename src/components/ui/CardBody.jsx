@@ -1,6 +1,7 @@
 export default function CardBody({
   value,
   subtitle,
+  valueColor = 'var(--text-hi)',
 }) {
   return (
     <div
@@ -18,7 +19,7 @@ export default function CardBody({
           fontSize: 13,
           fontWeight: 700,
           letterSpacing: '-0.015em',
-          color: 'var(--text-hi)',
+          color: valueColor,
           lineHeight: 1.15,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
