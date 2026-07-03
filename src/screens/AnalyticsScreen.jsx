@@ -13,6 +13,12 @@ function fmtHour(h) {
   return (h - 12) + 'pm'
 }
 
+const PERIODS = [
+  { id: 1, label: 'Today' },
+  { id: 7, label: 'Week' },
+  { id: 30, label: 'Month' },
+]
+
 function SectionTitle({ children }) {
   return (
     <p style={{
@@ -45,7 +51,7 @@ function GlassCard({ children, style = {} }) {
   )
 }
 
-function BarChart({ data, colorFn, labelKey, valueKey }) {
+function BarChart({ data, colorFn, labelKey, valueKey, height = 80 }) {
   if (!data || data.length === 0) return (
     <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', padding: '12px 0' }}>
       Not enough data yet
@@ -53,7 +59,7 @@ function BarChart({ data, colorFn, labelKey, valueKey }) {
   )
   const max = Math.max(...data.map(d => d[valueKey] || 0), 1)
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80, marginTop: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height, marginTop: 8 }}>
       {data.map((d, i) => {
         const pct = ((d[valueKey] || 0) / max) * 100
         const color = colorFn ? colorFn(d, i) : '#F0A93D'
@@ -66,7 +72,7 @@ function BarChart({ data, colorFn, labelKey, valueKey }) {
               borderRadius: '4px 4px 0 0',
               boxShadow: `0 0 8px ${color}55`,
             }} />
-            <span style={{ fontSize: 8, color: 'var(--text-low)', textAlign: 'center', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 7, color: 'var(--text-low)', textAlign: 'center', lineHeight: 1.2 }}>
               {d[labelKey]}
             </span>
           </div>
@@ -77,12 +83,13 @@ function BarChart({ data, colorFn, labelKey, valueKey }) {
 }
 
 export default function AnalyticsScreen() {
-  const [period, setPeriod] = useState(30)
+  const [period, setPeriod] = useState(7)
   const [loading, setLoading] = useState(true)
   const [topProducts, setTopProducts] = useState([])
   const [byDay, setByDay] = useState([])
-  const [byHour, setByHour] = useState([])
+  const [byHourChart, setByHourChart] = useState([])
   const [topCustomers, setTopCustomers] = useState([])
+  const [customerCount, setCustomerCount] = useState(0)
   const [summary, setSummary] = useState({ totalSales: 0, totalProfit: 0, totalTransactions: 0, avgBasket: 0 })
 
   useEffect(() => { loadData() }, [period])
@@ -106,39 +113,38 @@ export default function AnalyticsScreen() {
         productMap[name].qty += t.quantity || 1
         productMap[name].profit += t.profit || 0
       })
-      setTopProducts(Object.values(productMap).sort((a, b) => b.qty - a.qty).slice(0, 8))
+      setTopProducts(Object.values(productMap).sort((a, b) => b.qty - a.qty).slice(0, 3))
 
-      // By day
+      // By day (revenue trend)
       const dayMap = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
       dayData.forEach(t => { if (t.day_of_week !== null) dayMap[t.day_of_week] += t.amount })
       setByDay(Object.entries(dayMap).map(([day, amount]) => ({ label: fmtDay(parseInt(day)), amount })))
 
-      // By hour
+      // By hour (full 24h, ordered, for Sale by Hour chart)
       const hourMap = {}
       for (let i = 0; i < 24; i++) hourMap[i] = 0
       hourData.forEach(t => { if (t.hour_of_day !== null) hourMap[t.hour_of_day] += t.amount })
-      setByHour(
-        Object.entries(hourMap)
-          .map(([h, amount]) => ({ label: fmtHour(parseInt(h)), hour: parseInt(h), amount }))
-          .filter(h => h.amount > 0)
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 5)
+      setByHourChart(
+        [6, 9, 12, 15, 18, 21].map(h => ({
+          label: fmtHour(h),
+          amount: hourMap[h] || 0,
+        }))
       )
 
       // Top customers
-      setTopCustomers(
-        customers
-          .map(c => {
-            const spent = transactions
-              .filter(t => t.customer_id === c.id && t.classified && t.direction === 'in')
-              .reduce((a, t) => a + t.amount, 0)
-            const visits = transactions.filter(t => t.customer_id === c.id).length
-            return { ...c, spent, visits }
-          })
-          .filter(c => c.spent > 0 || c.total_owed > 0)
-          .sort((a, b) => b.spent - a.spent)
-          .slice(0, 8)
-      )
+      const customersWithSpend = customers
+        .map(c => {
+          const spent = transactions
+            .filter(t => t.customer_id === c.id && t.classified && t.direction === 'in')
+            .reduce((a, t) => a + t.amount, 0)
+          const visits = transactions.filter(t => t.customer_id === c.id).length
+          return { ...c, spent, visits }
+        })
+        .filter(c => c.spent > 0 || c.total_owed > 0)
+        .sort((a, b) => b.spent - a.spent)
+
+      setTopCustomers(customersWithSpend.slice(0, 3))
+      setCustomerCount(customers.length)
 
       // Summary
       const sales = transactions.filter(t => t.operation_type === 'sale')
@@ -156,6 +162,8 @@ export default function AnalyticsScreen() {
       setLoading(false)
     }
   }
+
+  const topCustomer = topCustomers[0]
 
   return (<div style={{ flex: 1, padding: '16px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -30, background: 'rgba(240,169,61,0.2)' }} />
@@ -187,148 +195,88 @@ export default function AnalyticsScreen() {
           </div>
         ) : (
           <>
-            {activeTab === 'overview' && (
-              <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                  {[
-                    { label: 'Total sales', value: fmtKES(summary.totalSales) + ' KES', color: '#5FD97A' },
-                    { label: 'Total profit', value: fmtKES(summary.totalProfit) + ' KES', color: '#F0A93D' },
-                    { label: 'Transactions', value: summary.totalTransactions, color: '#5B9FF0' },
-                    { label: 'Avg basket', value: fmtKES(summary.avgBasket) + ' KES', color: 'var(--text-hi)' },
-                  ].map((s, i) => (
-                    <GlassCard key={i} style={{ marginBottom: 0 }}>
-                      <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>{s.label}</p>
-                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</p>
-                    </GlassCard>
-                  ))}
+            <SectionTitle>Revenue Trend</SectionTitle>
+            <GlassCard>
+              <BarChart data={byDay} labelKey="label" valueKey="amount"
+                colorFn={(d) => {
+                  const max = Math.max(...byDay.map(x => x.amount))
+                  return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
+                }}
+              />
+            </GlassCard>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+              {[
+                { label: 'Revenue', value: fmtKES(summary.totalSales) + ' KES', color: '#5FD97A' },
+                { label: 'Profit', value: fmtKES(summary.totalProfit) + ' KES', color: '#F0A93D' },
+                { label: 'Orders', value: summary.totalTransactions, color: '#5B9FF0' },
+                { label: 'Avg Basket', value: fmtKES(summary.avgBasket) + ' KES', color: 'var(--text-hi)' },
+              ].map((s, i) => (
+                <GlassCard key={i} style={{ marginBottom: 0 }}>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>{s.label}</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</p>
+                </GlassCard>
+              ))}
+            </div>
+
+            <SectionTitle>Top 3 products</SectionTitle>
+            {topProducts.length === 0 ? (
+              <GlassCard style={{ textAlign: 'center', padding: 16 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
+              </GlassCard>
+            ) : topProducts.map((p, i) => (
+              <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(240,169,61,0.2)' : 'var(--glass-fill-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-low)' }}>
+                  {i + 1}
                 </div>
-                <SectionTitle>Best day of the week</SectionTitle>
-                <GlassCard>
-                  <BarChart data={byDay} labelKey="label" valueKey="amount"
-                    colorFn={(d) => {
-                      const max = Math.max(...byDay.map(x => x.amount))
-                      return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
-                    }}
-                  />
-                </GlassCard>
-                <SectionTitle>Top 3 products</SectionTitle>
-                {topProducts.slice(0, 3).length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 16 }}>
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
-                  </GlassCard>
-                ) : topProducts.slice(0, 3).map((p, i) => (
-                  <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(240,169,61,0.2)' : 'var(--glass-fill-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-low)' }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold</p>
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A' }}>
-                      +{fmtKES(p.profit)} KES
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
+                  <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold</p>
+                </div>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A' }}>
+                  +{fmtKES(p.profit)} KES
+                </p>
+              </GlassCard>
+            ))}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 6, marginBottom: 8 }}>
+              <GlassCard style={{ marginBottom: 0 }}>
+                <Icon name="users" size={16} color="#5B9FF0" style={{ marginBottom: 6 }} />
+                <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Customer Ins.</p>
+                {topCustomer ? (
+                  <>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {topCustomer.name}
                     </p>
-                  </GlassCard>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'products' && (
-              <div>
-                <SectionTitle>Top products by volume</SectionTitle>
-                {topProducts.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 24 }}>
-                    <Icon name="bottle" size={28} color="var(--text-low)" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
-                  </GlassCard>
-                ) : topProducts.map((p, i) => {
-                  const pct = (p.qty / (topProducts[0]?.qty || 1)) * 100
-                  return (
-                    <GlassCard key={i}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
-                          <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold · {fmtKES(p.profit)} KES profit</p>
-                        </div>
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', marginLeft: 8 }}>×{p.qty}</p>
-                      </div>
-                      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#F0A93D,#FFD98A)', borderRadius: 2 }} />
-                      </div>
-                    </GlassCard>
-                  )
-                })}
-              </div>
-            )}
-
-            {activeTab === 'clients' && (
-              <div>
-                <SectionTitle>Top customers</SectionTitle>
-                {topCustomers.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 24 }}>
-                    <Icon name="users" size={28} color="var(--text-low)" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No customer data yet</p>
-                  </GlassCard>
-                ) : topCustomers.map((c, i) => (
-                  <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: i === 0 ? 'rgba(240,169,61,0.2)' : 'rgba(255,255,255,0.06)', border: i === 0 ? '1px solid rgba(240,169,61,0.4)' : '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-mid)', flexShrink: 0 }}>
-                      {c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text-low)' }}>
-                        {c.visits} visit{c.visits !== 1 ? 's' : ''}
-                        {c.total_owed > 0 && <span style={{ color: '#FF6B5B', marginLeft: 6 }}>· {fmtKES(c.total_owed)} owed</span>}
-                      </p>
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A', flexShrink: 0 }}>
-                      {fmtKES(c.spent)} KES
+                    <p style={{ fontSize: 9, color: '#5FD97A', marginTop: 2 }}>
+                      {fmtKES(topCustomer.spent)} KES top
                     </p>
-                  </GlassCard>
-                ))}
-              </div>
-            )}
+                  </>
+                ) : (
+                  <p style={{ fontSize: 11, color: 'var(--text-low)' }}>{customerCount} customers</p>
+                )}
+              </GlassCard>
 
-            {activeTab === 'time' && (
-              <div>
-                <SectionTitle>Sales by day of week</SectionTitle>
-                <GlassCard>
-                  <BarChart data={byDay} labelKey="label" valueKey="amount"
-                    colorFn={(d) => {
-                      const max = Math.max(...byDay.map(x => x.amount))
-                      return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
-                    }}
-                  />
-                  {byDay.some(d => d.amount > 0) && (() => {
-                    const best = byDay.reduce((a, b) => b.amount > a.amount ? b : a, byDay[0])
-                    return (
-                      <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 8, textAlign: 'center' }}>
-                        Best day: <span style={{ color: '#F0A93D', fontWeight: 600 }}>{best.label}</span> — {fmtKES(best.amount)} KES
-                      </p>
-                    )
-                  })()}
-                </GlassCard>
-                <SectionTitle>Peak hours</SectionTitle>
-                {byHour.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 16 }}>
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>Not enough data yet</p>
-                  </GlassCard>
-                ) : byHour.map((h, i) => {
-                  const pct = (h.amount / (byHour[0]?.amount || 1)) * 100
-                  return (
-                    <GlassCard key={i}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, color: i === 0 ? '#F0A93D' : 'var(--text-hi)' }}>{h.label}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-low)' }}>{fmtKES(h.amount)} KES</p>
-                      </div>
-                      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? 'linear-gradient(90deg,#F0A93D,#FFD98A)' : 'rgba(240,169,61,0.35)', borderRadius: 2 }} />
-                      </div>
-                    </GlassCard>
-                  )
-                })}
-              </div>
-            )}
+              <GlassCard style={{ marginBottom: 0 }}>
+                <Icon name="bell" size={16} color="#FF6B5B" style={{ marginBottom: 6 }} />
+                <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>AI Business</p>
+                <p style={{ fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.4 }}>
+                  {summary.totalProfit > 0
+                    ? `Profit margin looking healthy this period.`
+                    : `Add more sales data for insights.`}
+                </p>
+              </GlassCard>
+            </div>
+
+            <SectionTitle>Sale by Hour</SectionTitle>
+            <GlassCard>
+              <BarChart data={byHourChart} labelKey="label" valueKey="amount" height={70}
+                colorFn={(d) => {
+                  const max = Math.max(...byHourChart.map(x => x.amount))
+                  return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
+                }}
+              />
+            </GlassCard>
           </>
         )}
       </div>
