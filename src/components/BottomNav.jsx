@@ -48,6 +48,10 @@ export default function BottomNav() {
   return (
     <div
       style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
@@ -63,7 +67,6 @@ export default function BottomNav() {
           '0 20px 40px -14px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10)',
         flexShrink: 0,
         zIndex: 10,
-        position: 'relative',
       }}
     >
       {TABS.map((tab) => {
