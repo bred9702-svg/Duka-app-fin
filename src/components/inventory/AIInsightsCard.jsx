@@ -51,6 +51,7 @@ export default function AIInsightsCard({
               ? `${bestSeller.sold} sold`
               : "No sales"
           }
+          color="#5FD97A"
         />
 
         <Insight
@@ -65,18 +66,29 @@ export default function AIInsightsCard({
               ? `KES ${Math.round(highestProfit.profit).toLocaleString()}`
               : "No data"
           }
+          color="#F0A93D"
         />
 
         <Insight
           label="Low Stock"
           value={lowStock.length}
           sub="Products"
+          color={
+            lowStock.length === 0
+              ? '#5FD97A'
+              : '#F0A93D'
+          }
         />
 
         <Insight
           label="Out"
           value={outOfStock.length}
           sub="Products"
+          color={
+            outOfStock.length === 0
+              ? '#5FD97A'
+              : '#FF6B5B'
+          }
         />
       </div>
     </Card>
@@ -87,6 +99,7 @@ function Insight({
   label,
   value,
   sub,
+  color,
 }) {
   return (
     <div
@@ -123,7 +136,7 @@ function Insight({
           fontSize: 13,
           fontWeight: 700,
           letterSpacing: '-0.015em',
-          color: 'var(--text-hi)',
+          color,
           lineHeight: 1.15,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
