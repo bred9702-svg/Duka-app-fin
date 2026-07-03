@@ -1,58 +1,107 @@
 import { useNavigate } from 'react-router-dom'
-import Card from '../components/ui/Card'
 import Icon from '../components/ui/Icon'
 
-const ITEMS = [
+const SECTIONS = [
   {
-    title: 'Profile',
-    subtitle: 'Your personal information',
-    icon: 'users',
-    color: '#5B9FF0',
-    path: '/profile',
+    title: 'Business',
+    items: [
+      { label: 'Shop Profile', icon: 'store', color: '#5FD97A', path: '/shop' },
+      { label: 'Payment Mode', icon: 'cash', color: '#F0A93D', path: '/payment-mode' },
+      { label: 'Business Preferences', icon: 'settings', color: '#5B9FF0', path: '/business-preferences' },
+    ],
   },
   {
-    title: 'Appearance',
-    subtitle: 'Theme and display',
-    icon: 'settings',
-    color: '#F0A93D',
-    path: '/appearance',
+    title: 'Application',
+    items: [
+      { label: 'Notification', icon: 'bell', color: '#FF6B5B', path: '/notifications' },
+      { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
+      { label: 'Language', icon: 'globe', color: '#4FC3F7', path: '/language' },
+    ],
   },
   {
-    title: 'Shop',
-    subtitle: 'Business information',
-    icon: 'store',
-    color: '#5FD97A',
-    path: '/shop',
-  },
-  {
-    title: 'Backup',
-    subtitle: 'Protect your data',
-    icon: 'package',
-    color: '#7C5CFC',
-    path: '/backup',
-  },
-  {
-    title: 'Subscription',
-    subtitle: 'Manage your plan',
-    icon: 'cash',
-    color: '#4FC3F7',
-    path: '/subscription',
-  },
-  {
-    title: 'Help',
-    subtitle: 'Support & FAQ',
-    icon: 'alertTriangle',
-    color: '#FFB74D',
-    path: '/help',
-  },
-  {
-    title: 'About',
-    subtitle: 'Version and information',
-    icon: 'bell',
-    color: '#90A4AE',
-    path: '/about',
+    title: 'Support',
+    items: [
+      { label: 'Help', icon: 'helpCircle', color: '#F0A93D', path: '/help' },
+      { label: 'Privacy', icon: 'shield', color: '#5B9FF0', path: '/privacy' },
+      { label: 'Rate Duka', icon: 'star', color: '#FFD166', path: '/rate' },
+    ],
   },
 ]
+
+function SectionTitle({ children }) {
+  return (
+    <p
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      {children}
+    </p>
+  )
+}
+
+function Row({ item, onClick, isFirst, isLast }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '11px 12px',
+        cursor: 'pointer',
+        background: 'var(--glass-fill-soft)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderLeft: '1px solid var(--glass-border)',
+        borderRight: '1px solid var(--glass-border)',
+        borderTop: isFirst ? '1px solid var(--glass-border)' : 'none',
+        borderBottom: isLast
+          ? '1px solid var(--glass-border)'
+          : '1px solid rgba(255,255,255,.04)',
+        borderTopLeftRadius: isFirst ? 14 : 0,
+        borderTopRightRadius: isFirst ? 14 : 0,
+        borderBottomLeftRadius: isLast ? 14 : 0,
+        borderBottomRightRadius: isLast ? 14 : 0,
+      }}
+    >
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          background: `${item.color}20`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon name={item.icon} size={14} color={item.color} />
+      </div>
+
+      <p
+        style={{
+          flex: 1,
+          margin: 0,
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--text-hi)',
+        }}
+      >
+        {item.label}
+      </p>
+
+      <Icon name="chevronRight" size={15} color="var(--text-low)" />
+    </div>
+  )
+}
 
 export default function MeScreen() {
   const navigate = useNavigate()
@@ -73,7 +122,7 @@ export default function MeScreen() {
           height: 140,
           top: -30,
           right: -20,
-          background: 'rgba(91,159,240,.16)',
+          background: 'rgba(91,159,240,.14)',
         }}
       />
 
@@ -81,130 +130,101 @@ export default function MeScreen() {
         <h1
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 21,
             fontWeight: 700,
             color: 'var(--text-hi)',
-            marginBottom: 4,
+            letterSpacing: '-0.02em',
+            marginBottom: 14,
           }}
         >
           Me
         </h1>
 
-        <p
+        <div
           style={{
-            color: 'var(--text-low)',
-            fontSize: 12,
-            marginBottom: 22,
-          }}
-        >
-          Manage your account and preferences.
-        </p>
-
-        <Card
-          style={{
-            marginBottom: 18,
             display: 'flex',
             alignItems: 'center',
-            gap: 16,
+            gap: 14,
+            padding: '14px',
+            borderRadius: 14,
+            background: 'var(--glass-fill-soft)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid var(--glass-border)',
           }}
         >
           <div
             style={{
-              width: 58,
-              height: 58,
+              width: 50,
+              height: 50,
               borderRadius: '50%',
               background: 'rgba(240,169,61,.18)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 24,
+              flexShrink: 0,
             }}
           >
-            👤
+            <Icon name="users" size={22} color="#F0A93D" />
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p
               style={{
+                margin: 0,
+                fontFamily: 'var(--font-display)',
+                fontSize: 15,
                 fontWeight: 700,
-                fontSize: 17,
                 color: 'var(--text-hi)',
-                marginBottom: 2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
-              Shop Owner
+              Bred Mwepu
             </p>
 
             <p
               style={{
-                fontSize: 12,
+                margin: '2px 0 0',
+                fontSize: 11,
                 color: 'var(--text-low)',
               }}
             >
-              Duka Business
+              Owner
             </p>
           </div>
-        </Card>
+        </div>
 
-        {ITEMS.map((item) => (
-          <Card
-            key={item.title}
-            onClick={() => navigate(item.path)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              marginBottom: 10,
-              cursor: 'pointer',
-            }}
-          >
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                background: `${item.color}20`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon
-                name={item.icon}
-                size={18}
-                color={item.color}
-              />
+        {SECTIONS.map((section) => (
+          <div key={section.title}>
+            <SectionTitle>{section.title}</SectionTitle>
+
+            <div>
+              {section.items.map((item, i) => (
+                <Row
+                  key={item.label}
+                  item={item}
+                  onClick={() => navigate(item.path)}
+                  isFirst={i === 0}
+                  isLast={i === section.items.length - 1}
+                />
+              ))}
             </div>
-
-            <div style={{ flex: 1 }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontWeight: 600,
-                  color: 'var(--text-hi)',
-                }}
-              >
-                {item.title}
-              </p>
-
-              <p
-                style={{
-                  marginTop: 4,
-                  fontSize: 12,
-                  color: 'var(--text-low)',
-                }}
-              >
-                {item.subtitle}
-              </p>
-            </div>
-
-            <Icon
-              name="chevronRight"
-              size={16}
-              color="var(--text-low)"
-            />
-          </Card>
+          </div>
         ))}
+
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 10,
+            color: 'var(--text-low)',
+            opacity: 0.6,
+            marginTop: 22,
+          }}
+        >
+          Version 1.0.0
+        </p>
       </div>
     </div>
   )
