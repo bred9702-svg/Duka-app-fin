@@ -22,7 +22,7 @@ export default function AIAdvisorCard({
     <div
       style={{
         background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid rgba(240,169,61,0.20)',
         borderRadius: 12,
         padding: '10px 12px',
         marginBottom: 16,
