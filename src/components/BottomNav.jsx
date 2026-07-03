@@ -52,12 +52,12 @@ export default function BottomNav() {
         justifyContent: 'space-around',
         alignItems: 'center',
         margin: '0 12px 12px',
-        padding: '10px 6px',
+        padding: '6px 6px',
         background: 'rgba(255,255,255,.07)',
         backdropFilter: 'blur(22px) saturate(180%)',
         WebkitBackdropFilter: 'blur(22px) saturate(180%)',
         border: '1px solid rgba(255,255,255,.14)',
-        borderRadius: 18,
+        borderRadius: 16,
         boxShadow:
           '0 10px 30px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.18)',
         flexShrink: 0,
@@ -84,9 +84,9 @@ export default function BottomNav() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 4,
-                padding: '6px 4px',
-                borderRadius: 12,
+                gap: 2,
+                padding: '4px 4px',
+                borderRadius: 10,
                 background: active
                   ? 'rgba(240,169,61,.18)'
                   : 'transparent',
@@ -100,7 +100,7 @@ export default function BottomNav() {
               >
                 <Icon
                   name={tab.icon}
-                  size={18}
+                  size={16}
                   color={
                     active
                       ? '#F0A93D'
@@ -127,7 +127,7 @@ export default function BottomNav() {
               <span
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: 9,
+                  fontSize: 8,
                   fontWeight: 600,
                   color: active
                     ? '#F0A93D'
