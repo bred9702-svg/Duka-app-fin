@@ -13,19 +13,6 @@ function fmtHour(h) {
   return (h - 12) + 'pm'
 }
 
-const PERIODS = [
-  { id: 7, label: '7 days' },
-  { id: 30, label: '30 days' },
-  { id: 90, label: '3 months' },
-]
-
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: 'barChart' },
-  { id: 'products', label: 'Products', icon: 'bottle' },
-  { id: 'clients', label: 'Clients', icon: 'users' },
-  { id: 'time', label: 'Time', icon: 'pieChart' },
-]
-
 function SectionTitle({ children }) {
   return (
     <p style={{
@@ -90,7 +77,6 @@ function BarChart({ data, colorFn, labelKey, valueKey }) {
 }
 
 export default function AnalyticsScreen() {
-  const [activeTab, setActiveTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [loading, setLoading] = useState(true)
   const [topProducts, setTopProducts] = useState([])
@@ -193,23 +179,6 @@ export default function AnalyticsScreen() {
               </button>
             ))}
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: activeTab === tab.id ? 'rgba(240,169,61,0.18)' : 'var(--glass-fill-soft)',
-              border: activeTab === tab.id ? '1px solid rgba(240,169,61,0.5)' : '1px solid var(--glass-border)',
-              borderRadius: 10, padding: '7px 12px',
-              fontSize: 11, fontFamily: 'var(--font-display)', fontWeight: 600,
-              color: activeTab === tab.id ? '#F0A93D' : 'var(--text-low)',
-              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-            }}>
-              <Icon name={tab.icon} size={13} color={activeTab === tab.id ? '#F0A93D' : 'var(--text-low)'} />
-              {tab.label}
-            </button>
-          ))}
         </div>
 
         {loading ? (
