@@ -13,6 +13,15 @@ import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
 
+import ShopProfileScreen from './screens/settings/ShopProfileScreen'
+import PaymentModeScreen from './screens/settings/PaymentModeScreen'
+import StoreSettingsScreen from './screens/settings/StoreSettingsScreen'
+import NotificationsScreen from './screens/settings/NotificationsScreen'
+import ThemeScreen from './screens/settings/ThemeScreen'
+import LanguageScreen from './screens/settings/LanguageScreen'
+import HelpScreen from './screens/settings/HelpScreen'
+import PrivacyScreen from './screens/settings/PrivacyScreen'
+
 import BottomNav from './components/BottomNav'
 
 function LoadingScreen() {
@@ -129,6 +138,15 @@ export default function App() {
             path="/me"
             element={<MeScreen />}
           />
+
+          <Route path="/shop" element={<ShopProfileScreen />} />
+          <Route path="/payment-mode" element={<PaymentModeScreen />} />
+          <Route path="/business-preferences" element={<StoreSettingsScreen />} />
+          <Route path="/notifications" element={<NotificationsScreen />} />
+          <Route path="/appearance" element={<ThemeScreen />} />
+          <Route path="/language" element={<LanguageScreen />} />
+          <Route path="/help" element={<HelpScreen />} />
+          <Route path="/privacy" element={<PrivacyScreen />} />
         </Routes>
       </div>
 
