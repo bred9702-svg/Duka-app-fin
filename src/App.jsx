@@ -9,6 +9,7 @@ import DebtsScreen from './screens/DebtsScreen'
 import CustomerDetailScreen from './screens/CustomerDetailScreen'
 
 import AnalyticsScreen from './screens/AnalyticsScreen'
+import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
@@ -132,6 +133,11 @@ export default function App() {
           <Route
             path="/inventory"
             element={<InventoryInsightsScreen />}
+          />
+
+          <Route
+            path="/finance"
+            element={<FinancialAnalysisScreen />}
           />
 
           <Route
