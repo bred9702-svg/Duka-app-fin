@@ -93,11 +93,11 @@ function PeakCurve({ data }) {
 function TrendRow({ rank, name, pct, up }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0' }}>
-      <span style={{ fontSize: 10, color: 'var(--text-low)', width: 12 }}>{rank}</span>
-      <span style={{ flex: 1, fontSize: 11, fontWeight: 500, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontSize: 10, color: 'var(--text-low)', width: 12, flexShrink: 0 }}>{rank}</span>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 11, fontWeight: 500, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {name}
       </span>
-      <span style={{ fontSize: 10, fontWeight: 700, color: up ? '#5FD97A' : '#FF6B5B', display: 'flex', alignItems: 'center', gap: 2 }}>
+      <span style={{ fontSize: 10, fontWeight: 700, color: up ? '#5FD97A' : '#FF6B5B', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0, whiteSpace: 'nowrap' }}>
         {up ? '↑' : '↓'} {pct}%
       </span>
     </div>
