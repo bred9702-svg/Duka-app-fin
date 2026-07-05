@@ -1,4 +1,3 @@
-import Card from '../ui/Card'
 import Icon from '../ui/Icon'
 import { fmtKES, fmtShortDate } from '../../utils/formatters'
 
@@ -14,7 +13,11 @@ export default function CustomerTimeline({
       title: debt.product_name || debt.productName || 'Credit Sale',
       subtitle: `Qty ${debt.quantity || 1}`,
       amount: debt.total_price || debt.amount || 0,
-      color: '#FF6B5B',
+      barColor: '#FF6B5B',
+      iconBg: 'rgba(255,107,91,.14)',
+      iconFg: '#FF6B5B',
+      tagBg: 'rgba(255,107,91,.12)',
+      tagLabel: 'Debt',
       icon: 'receiptOff',
     })),
 
@@ -28,7 +31,11 @@ export default function CustomerTimeline({
       title: 'Payment',
       subtitle: payment.payment_method || 'Cash',
       amount: payment.amount || 0,
-      color: '#5FD97A',
+      barColor: '#5FD97A',
+      iconBg: 'rgba(95,217,122,.14)',
+      iconFg: '#5FD97A',
+      tagBg: 'rgba(95,217,122,.12)',
+      tagLabel: 'Payment',
       icon: 'circleCheck',
     })),
   ].sort(
@@ -42,10 +49,10 @@ export default function CustomerTimeline({
       <p
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 11,
-          fontWeight: 700,
+          fontSize: 10,
+          fontWeight: 600,
           color: 'var(--text-low)',
-          marginBottom: 12,
+          marginBottom: 8,
           textTransform: 'uppercase',
           letterSpacing: '.08em',
         }}
@@ -54,87 +61,136 @@ export default function CustomerTimeline({
       </p>
 
       {events.length === 0 ? (
-        <Card>
-          <p
-            style={{
-              textAlign: 'center',
-              color: 'var(--text-low)',
-            }}
-          >
+        <div
+          style={{
+            padding: '16px',
+            borderRadius: 12,
+            textAlign: 'center',
+            background: 'var(--glass-fill-soft)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid var(--glass-border)',
+          }}
+        >
+          <p style={{ fontSize: 12, color: 'var(--text-low)' }}>
             No activity yet
           </p>
-        </Card>
+        </div>
       ) : (
-        events.map((event) => (
-          <Card
+        events.map((event, i) => (
+          <div
             key={event.id}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 14,
-              marginBottom: 10,
+              gap: 10,
+              padding: '9px 11px',
+              marginBottom: 6,
+              borderRadius: 12,
+              background: 'var(--glass-fill-soft)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid var(--glass-border)',
+              animation: 'slideUp .35s ease-out backwards',
+              animationDelay: `${i * 0.05}s`,
             }}
           >
+            {/* Left color bar */}
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                background: `${event.color}18`,
+                width: 3,
+                height: 34,
+                alignSelf: 'center',
+                borderRadius: 999,
+                background: event.barColor,
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Icon */}
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 9,
+                background: event.iconBg,
                 display: 'flex',
-                justifyContent: 'center',
                 alignItems: 'center',
+                justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
               <Icon
                 name={event.icon}
-                size={18}
-                color={event.color}
+                size={14}
+                color={event.iconFg}
               />
             </div>
 
-            <div style={{ flex: 1 }}>
-              <p
+            {/* Content */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 7px',
+                  marginBottom: 4,
+                  fontSize: 8,
+                  letterSpacing: '.02em',
                   fontWeight: 600,
+                  background: event.tagBg,
+                  color: event.barColor,
+                }}
+              >
+                {event.tagLabel}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: '-.01em',
                   color: 'var(--text-hi)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {event.title}
-              </p>
+              </div>
 
-              <p
+              <div
                 style={{
-                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  marginTop: 2,
+                  fontSize: 8,
+                  opacity: 0.65,
                   color: 'var(--text-low)',
                 }}
               >
-                {event.subtitle}
-              </p>
-
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-low)',
-                  marginTop: 4,
-                }}
-              >
-                {fmtShortDate(event.date)}
-              </p>
+                <span>{event.subtitle}</span>
+                <span>•</span>
+                <span>{fmtShortDate(event.date)}</span>
+              </div>
             </div>
 
-            <p
+            {/* Amount */}
+            <div
               style={{
                 fontFamily: 'var(--font-display)',
+                fontSize: 14,
                 fontWeight: 700,
-                color: event.color,
+                letterSpacing: '-.02em',
+                color: event.type === 'payment' ? '#5FD97A' : '#FF6B5B',
+                flexShrink: 0,
               }}
             >
               {event.type === 'payment' ? '+' : '-'}
               {fmtKES(event.amount)}
-            </p>
-          </Card>
+            </div>
+          </div>
         ))
       )}
     </div>
