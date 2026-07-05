@@ -12,10 +12,8 @@ export default function ProgressBar({
         height,
         borderRadius: 999,
         overflow: 'hidden',
-        background:
-          'rgba(255,255,255,.045)',
-        border:
-          '1px solid rgba(255,255,255,.04)',
+        background: 'var(--faint-fill)',
+        border: '1px solid var(--faint-border)',
       }}
     >
       <div
