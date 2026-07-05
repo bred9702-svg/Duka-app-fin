@@ -57,14 +57,12 @@ export default function BottomNav() {
         alignItems: 'center',
         margin: '0 12px 12px',
         padding: '6px 6px',
-        background:
-          'linear-gradient(180deg, rgba(91,159,240,.05) 0%, rgba(6,7,10,.55) 100%)',
+        background: 'var(--nav-bg)',
         backdropFilter: 'blur(26px) saturate(180%)',
         WebkitBackdropFilter: 'blur(26px) saturate(180%)',
-        border: '1px solid rgba(140,180,255,.10)',
+        border: '1px solid var(--nav-border)',
         borderRadius: 16,
-        boxShadow:
-          '0 20px 40px -14px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10)',
+        boxShadow: 'var(--nav-shadow)',
         flexShrink: 0,
         zIndex: 10,
       }}
@@ -93,7 +91,7 @@ export default function BottomNav() {
                 padding: '4px 4px',
                 borderRadius: 10,
                 background: active
-                  ? 'linear-gradient(180deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.05) 100%)'
+                  ? 'var(--nav-active-bg)'
                   : 'transparent',
                 backdropFilter: active
                   ? 'blur(14px) saturate(180%)'
@@ -102,10 +100,10 @@ export default function BottomNav() {
                   ? 'blur(14px) saturate(180%)'
                   : 'none',
                 border: active
-                  ? '1px solid rgba(255,255,255,.28)'
+                  ? '1px solid var(--nav-active-border)'
                   : '1px solid transparent',
                 boxShadow: active
-                  ? 'inset 0 1px 1px rgba(255,255,255,.5), inset 0 -2px 3px rgba(0,0,0,.25), 0 4px 14px -4px rgba(0,0,0,.4)'
+                  ? 'var(--nav-active-shadow)'
                   : 'none',
                 transition: '.18s',
               }}
