@@ -11,6 +11,7 @@ import CustomerDetailScreen from './screens/CustomerDetailScreen'
 import AnalyticsScreen from './screens/AnalyticsScreen'
 import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
 import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
+import AdvisorScreen from './screens/AdvisorScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
@@ -144,6 +145,11 @@ export default function App() {
           <Route
             path="/trends"
             element={<BusinessTrendsScreen />}
+          />
+
+          <Route
+            path="/advisor"
+            element={<AdvisorScreen />}
           />
 
           <Route
