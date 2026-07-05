@@ -9,7 +9,7 @@ export default function Toggle({ checked, onChange }) {
         border: 'none',
         padding: 2,
         cursor: 'pointer',
-        background: checked ? '#F0A93D' : 'rgba(255,255,255,.12)',
+        background: checked ? '#F0A93D' : 'var(--line)',
         transition: 'background .18s',
         flexShrink: 0,
         display: 'flex',
@@ -23,7 +23,7 @@ export default function Toggle({ checked, onChange }) {
           height: 20,
           borderRadius: '50%',
           background: '#fff',
-          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+          boxShadow: '0 1px 3px var(--shadow)',
         }}
       />
     </button>
