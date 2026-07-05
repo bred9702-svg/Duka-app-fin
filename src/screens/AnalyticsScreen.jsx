@@ -336,7 +336,7 @@ export default function AnalyticsScreen() {
               <AreaChart data={byDay} color="#F0A93D" />
             </GlassCard>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginBottom: 14 }}>
               {[
                 { label: 'Revenue', value: fmtKES(summary.totalSales) + ' KES', color: '#5FD97A', delta: summary.salesDelta },
                 { label: 'Profit', value: fmtKES(summary.totalProfit) + ' KES', color: '#F0A93D', delta: summary.profitDelta },
@@ -374,7 +374,7 @@ export default function AnalyticsScreen() {
               </GlassCard>
             ))}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 6, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginTop: 6, marginBottom: 8 }}>
               <GlassCard style={{ marginBottom: 0 }}>
                 <Icon name="users" size={16} color="#5B9FF0" style={{ marginBottom: 6 }} />
                 <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Customer Ins.</p>
