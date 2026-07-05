@@ -12,22 +12,18 @@ export default function Card({
         position: 'relative',
         overflow: 'hidden',
 
-        background:
-          'linear-gradient(180deg, rgba(28,28,28,.55) 0%, rgba(18,18,18,.62) 100%)',
+        background: 'var(--card-elevated-bg)',
 
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
 
-        border: '1px solid rgba(255,255,255,.05)',
+        border: '1px solid var(--card-elevated-border)',
 
         borderRadius: radius.lg ?? UI.radius,
 
         padding: UI.cardPadding,
 
-        boxShadow: `
-          inset 0 1px 0 rgba(255,255,255,.05),
-          0 10px 30px rgba(0,0,0,.28)
-        `,
+        boxShadow: 'var(--card-shadow)',
 
         transition:
           'all .25s cubic-bezier(.4,0,.2,1)',
@@ -41,7 +37,7 @@ export default function Card({
           inset: 0,
           pointerEvents: 'none',
           background:
-            'linear-gradient(180deg, rgba(255,255,255,.035), transparent 40%)',
+            'linear-gradient(180deg, var(--card-inner-highlight), transparent 40%)',
         }}
       />
 
