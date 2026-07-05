@@ -36,9 +36,9 @@ const VARIANTS = {
   },
 
   gray: {
-    background: 'rgba(255,255,255,.03)',
+    background: 'var(--faint-fill)',
     color: 'var(--text-mid)',
-    border: '1px solid rgba(255,255,255,.05)',
+    border: '1px solid var(--faint-border)',
   },
 }
 
