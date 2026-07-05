@@ -30,22 +30,52 @@
   --glass-fill-soft: rgba(255, 255, 255, 0.045);
   --glass-border: rgba(255, 255, 255, 0.12);
   --shadow: rgba(0, 0, 0, 0.5);
+
+  --card-elevated-bg: linear-gradient(180deg, rgba(28,28,28,.55) 0%, rgba(18,18,18,.62) 100%);
+  --card-elevated-border: rgba(255,255,255,.05);
+  --card-inner-highlight: rgba(255,255,255,.035);
+  --card-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px -6px rgba(0,0,0,.45);
+
+  --faint-fill: rgba(255,255,255,.03);
+  --faint-border: rgba(255,255,255,.05);
+
+  --nav-bg: linear-gradient(180deg, rgba(91,159,240,.05) 0%, rgba(6,7,10,.55) 100%);
+  --nav-border: rgba(140,180,255,.10);
+  --nav-shadow: 0 20px 40px -14px rgba(0,0,0,.75), 0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.10);
+  --nav-active-bg: linear-gradient(180deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.05) 100%);
+  --nav-active-border: rgba(255,255,255,.28);
+  --nav-active-shadow: inset 0 1px 1px rgba(255,255,255,.5), inset 0 -2px 3px rgba(0,0,0,.25), 0 4px 14px -4px rgba(0,0,0,.4);
 }
 
 /* ── LIGHT THEME ─────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg-deep: #F5F0E8;
-  --bg-surface: #EDE8DF;
-  --bg-raised: #E5DFD4;
-  --text-hi: #1C1810;
-  --text-mid: #6B6050;
-  --text-low: #9A8E7A;
-  --line: #D8D0C0;
-  --line-soft: rgba(0, 0, 0, 0.08);
-  --glass-fill: rgba(255, 255, 255, 0.6);
-  --glass-fill-soft: rgba(255, 255, 255, 0.5);
-  --glass-border: rgba(0, 0, 0, 0.1);
-  --shadow: rgba(0, 0, 0, 0.12);
+  --bg-deep: #F7F3EC;
+  --bg-surface: #FFFFFF;
+  --bg-raised: #FFFFFF;
+  --text-hi: #171310;
+  --text-mid: #4A4234;
+  --text-low: #665C4C;
+  --line: #E7E0D4;
+  --line-soft: rgba(28, 20, 10, 0.08);
+  --glass-fill: rgba(255, 255, 255, 0.72);
+  --glass-fill-soft: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(28, 20, 10, 0.08);
+  --shadow: rgba(60, 45, 20, 0.14);
+
+  --card-elevated-bg: linear-gradient(180deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.74) 100%);
+  --card-elevated-border: rgba(28,20,10,.06);
+  --card-inner-highlight: rgba(255,255,255,.9);
+  --card-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 6px 16px -6px rgba(60,45,20,.10);
+
+  --faint-fill: rgba(28,20,10,.03);
+  --faint-border: rgba(28,20,10,.05);
+
+  --nav-bg: linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.62) 100%);
+  --nav-border: rgba(28,20,10,.07);
+  --nav-shadow: 0 14px 32px -14px rgba(60,45,20,.22), 0 2px 8px rgba(60,45,20,.08), inset 0 1px 0 rgba(255,255,255,.9);
+  --nav-active-bg: linear-gradient(180deg, rgba(240,169,61,.20) 0%, rgba(240,169,61,.08) 100%);
+  --nav-active-border: rgba(240,169,61,.38);
+  --nav-active-shadow: inset 0 1px 1px rgba(255,255,255,.6), 0 4px 12px -4px rgba(240,169,61,.30);
 }
 
 * {
@@ -67,10 +97,20 @@ body {
   font-family: var(--font-body);
   background: var(--bg-deep);
   color: var(--text-hi);
-  -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease;
 
   overflow-y: scroll;
+}
+
+[data-theme="dark"] body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="light"] body {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
 }
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
