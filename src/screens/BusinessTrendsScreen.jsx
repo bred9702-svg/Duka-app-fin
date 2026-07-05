@@ -235,7 +235,7 @@ export default function BusinessTrendsScreen() {
               </p>
             </GlassCard>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginTop: 8 }}>
               <GlassCard style={{ marginBottom: 0 }}>
                 <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 4 }}>Trending Up</p>
                 {trendingUp.length === 0 ? (
