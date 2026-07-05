@@ -25,7 +25,7 @@ export default function Avatar({ name, color = 'amber', size = 36 }) {
         fontWeight: 600,
         fontFamily: 'var(--font-display)',
         flexShrink: 0,
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--glass-border)',
       }}
     >
       {initials(name)}
