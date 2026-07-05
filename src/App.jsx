@@ -26,6 +26,7 @@ import HelpScreen from './screens/settings/HelpScreen'
 import PrivacyScreen from './screens/settings/PrivacyScreen'
 
 import BottomNav from './components/BottomNav'
+import FadeIn from './components/animation/FadeIn'
 
 function LoadingScreen() {
   return (
@@ -99,73 +100,80 @@ export default function App() {
           paddingBottom: hideNav ? 0 : 84,
         }}
       >
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
+        <FadeIn
+          key={location.pathname}
+          duration={260}
+          y={14}
+          style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}
+        >
+          <Routes>
+            <Route path="/" element={<HomeScreen />} />
 
-          <Route
-            path="/inbox"
-            element={<TransactionsScreen />}
-          />
+            <Route
+              path="/inbox"
+              element={<TransactionsScreen />}
+            />
 
-          <Route
-            path="/classify/:id"
-            element={<ClassifyScreen />}
-          />
+            <Route
+              path="/classify/:id"
+              element={<ClassifyScreen />}
+            />
 
-          <Route
-            path="/debts"
-            element={<DebtsScreen />}
-          />
+            <Route
+              path="/debts"
+              element={<DebtsScreen />}
+            />
 
-          <Route
-            path="/customer/:id"
-            element={<CustomerDetailScreen />}
-          />
+            <Route
+              path="/customer/:id"
+              element={<CustomerDetailScreen />}
+            />
 
-          <Route
-            path="/insights"
-            element={<InsightsScreen />}
-          />
+            <Route
+              path="/insights"
+              element={<InsightsScreen />}
+            />
 
-          <Route
-            path="/analytics"
-            element={<AnalyticsScreen />}
-          />
+            <Route
+              path="/analytics"
+              element={<AnalyticsScreen />}
+            />
 
-          <Route
-            path="/inventory"
-            element={<InventoryInsightsScreen />}
-          />
+            <Route
+              path="/inventory"
+              element={<InventoryInsightsScreen />}
+            />
 
-          <Route
-            path="/finance"
-            element={<FinancialAnalysisScreen />}
-          />
+            <Route
+              path="/finance"
+              element={<FinancialAnalysisScreen />}
+            />
 
-          <Route
-            path="/trends"
-            element={<BusinessTrendsScreen />}
-          />
+            <Route
+              path="/trends"
+              element={<BusinessTrendsScreen />}
+            />
 
-          <Route
-            path="/advisor"
-            element={<AdvisorScreen />}
-          />
+            <Route
+              path="/advisor"
+              element={<AdvisorScreen />}
+            />
 
-          <Route
-            path="/me"
-            element={<MeScreen />}
-          />
+            <Route
+              path="/me"
+              element={<MeScreen />}
+            />
 
-          <Route path="/shop" element={<ShopProfileScreen />} />
-          <Route path="/payment-mode" element={<PaymentModeScreen />} />
-          <Route path="/business-preferences" element={<StoreSettingsScreen />} />
-          <Route path="/notifications" element={<NotificationsScreen />} />
-          <Route path="/appearance" element={<ThemeScreen />} />
-          <Route path="/language" element={<LanguageScreen />} />
-          <Route path="/help" element={<HelpScreen />} />
-          <Route path="/privacy" element={<PrivacyScreen />} />
-        </Routes>
+            <Route path="/shop" element={<ShopProfileScreen />} />
+            <Route path="/payment-mode" element={<PaymentModeScreen />} />
+            <Route path="/business-preferences" element={<StoreSettingsScreen />} />
+            <Route path="/notifications" element={<NotificationsScreen />} />
+            <Route path="/appearance" element={<ThemeScreen />} />
+            <Route path="/language" element={<LanguageScreen />} />
+            <Route path="/help" element={<HelpScreen />} />
+            <Route path="/privacy" element={<PrivacyScreen />} />
+          </Routes>
+        </FadeIn>
       </div>
 
       {!hideNav && <BottomNav />}
