@@ -7,6 +7,8 @@ import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import DeadStockCard from '../components/inventory/DeadStockCard'
 import AIAdvisorCard from '../components/inventory/AIAdvisorCard'
 
+import { useNavigate } from 'react-router-dom'
+import Icon from '../components/ui/Icon'
 import useAppStore from '../store/useAppStore'
 
 import { generateBusinessInsights } from '../utils/aiAdvisor'
@@ -22,6 +24,7 @@ import {
 } from '../utils/inventoryEngine'
 
 export default function InventoryInsightsScreen() {
+  const navigate = useNavigate()
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
 
@@ -65,23 +68,35 @@ return (
             AI powered inventory management
           </p>
         </div>
-        <div
-          className="live-badge-blink"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 5,
-            padding: '2px 7px',
-            fontSize: 8,
-            letterSpacing: '.02em',
-            fontWeight: 600,
-            background: 'rgba(95,217,122,.12)',
-            color: '#5FD97A',
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#5FD97A' }} />
-          LIVE
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => navigate('/inventory-investment')}
+            style={{
+              width: 30, height: 30, borderRadius: 10, border: '1px solid var(--glass-border)',
+              background: 'var(--glass-fill-soft)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}
+          >
+            <Icon name="plus" size={15} color="#F0A93D" />
+          </button>
+
+          <div
+            className="live-badge-blink"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '2px 7px',
+              fontSize: 8,
+              letterSpacing: '.02em',
+              fontWeight: 600,
+              background: 'rgba(95,217,122,.12)',
+              color: '#5FD97A',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#5FD97A' }} />
+            LIVE
+          </div>
         </div>
       </div>
 
