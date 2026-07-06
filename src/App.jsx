@@ -12,6 +12,7 @@ import AnalyticsScreen from './screens/AnalyticsScreen'
 import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
 import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
 import AdvisorScreen from './screens/AdvisorScreen'
+import InventoryInvestmentScreen from './screens/InventoryInvestmentScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
@@ -157,6 +158,11 @@ export default function App() {
             <Route
               path="/advisor"
               element={<AdvisorScreen />}
+            />
+
+            <Route
+              path="/inventory-investment"
+              element={<InventoryInvestmentScreen />}
             />
 
             <Route
