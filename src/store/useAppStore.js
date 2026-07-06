@@ -143,7 +143,7 @@ bootstrap: async () => {
     }
   },
 
-  recordPurchase: async ({ items, supplier, purchaseDate, notes }) => {
+  recordPurchase: async ({ items, supplier, purchaseDate, notes, linkedTransactionId = null, budget = null }) => {
     try {
       const totalInvestment = items.reduce((a, it) => a + it.purchasePrice * it.quantity, 0)
       const expectedRevenue = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
@@ -173,19 +173,36 @@ bootstrap: async () => {
         }),
       }))
 
-      // Register the purchase as a single expense transaction
       const productNames = items.map((it) => it.name).join(', ')
-      const savedTxn = await dbAddTransaction({
-        operation_type: 'expense',
-        expense_category: 'stock',
-        amount: totalInvestment,
-        direction: 'out',
-        classified: true,
-        raw_message: supplier
-          ? `Stock purchase from ${supplier}: ${productNames}`
-          : `Stock purchase: ${productNames}`,
-      })
-      set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
+
+      if (linkedTransactionId) {
+        // This purchase completes an existing Cash Out → Expense → Stock
+        // transaction — don't record a second expense, just mark it done.
+        try {
+          const key = 'duka-pending-stock-purchases'
+          const pending = JSON.parse(localStorage.getItem(key) || '[]')
+          localStorage.setItem(
+            key,
+            JSON.stringify(pending.filter((p) => p.transactionId !== linkedTransactionId))
+          )
+        } catch (e) {
+          console.error('Pending purchase cleanup error:', e)
+        }
+      } else {
+        // Standalone purchase (not started from Cash Out) — record its own expense
+        const savedTxn = await dbAddTransaction({
+          operation_type: 'expense',
+          expense_category: 'stock',
+          amount: totalInvestment,
+          direction: 'out',
+          classified: true,
+          raw_message: supplier
+            ? `Stock purchase from ${supplier}: ${productNames}`
+            : `Stock purchase: ${productNames}`,
+        })
+        set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
+      }
+
       await get().refreshTodayStats()
 
       // Local purchase history record (no dedicated backend table yet)
@@ -198,6 +215,8 @@ bootstrap: async () => {
         totalInvestment,
         expectedRevenue,
         expectedProfit,
+        linkedTransactionId,
+        budget,
       }
       try {
         const key = 'duka-purchase-history'
@@ -211,6 +230,16 @@ bootstrap: async () => {
     } catch (err) {
       console.error('Record purchase error:', err)
       throw err
+    }
+  },
+
+  addPendingStockPurchase: (record) => {
+    try {
+      const key = 'duka-pending-stock-purchases'
+      const existing = JSON.parse(localStorage.getItem(key) || '[]')
+      localStorage.setItem(key, JSON.stringify([record, ...existing]))
+    } catch (e) {
+      console.error('Add pending purchase error:', e)
     }
   },
 }))
