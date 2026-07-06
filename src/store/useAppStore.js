@@ -12,6 +12,7 @@ import {
   addStock,
   updateStock,
   updateProductPrice,
+  completeSalePayment,
 } from '../lib/db'
 
 const useAppStore = create((set, get) => ({
@@ -244,15 +245,10 @@ bootstrap: async () => {
     }
   },
 
-  recordSale: async ({ items, type, customerId, newCustomer }) => {
+  completeSale: async ({ linkedTransactionId, items }) => {
     try {
-      let finalCustomerId = customerId
-
-      if (type === 'debt' && !finalCustomerId && newCustomer?.name) {
-        const saved = await addNewCustomer(newCustomer.name, newCustomer.phone || null)
-        if (!saved?.id) throw new Error('Failed to create customer')
-        finalCustomerId = saved.id
-        set((s) => ({ customers: [...s.customers, saved] }))
+      if (!linkedTransactionId) {
+        throw new Error('A sale must be linked to a payment transaction.')
       }
 
       const grandTotal = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
@@ -272,39 +268,17 @@ bootstrap: async () => {
         ),
       }))
 
-      const productSummary = items.map((it) => `${it.name} x${it.quantity}`).join(', ')
-      const isDebt = type === 'debt'
-
-      // One transaction row represents the whole multi-item sale
-      const savedTxn = await dbAddTransaction({
-        operation_type: isDebt ? 'debt' : 'sale',
-        direction: 'in',
-        amount: grandTotal,
-        classified: true,
-        product_id: items.length === 1 ? items[0].productId : null,
-        quantity: items.length === 1 ? items[0].quantity : null,
-        unit_price: items.length === 1 ? items[0].unitPrice : null,
-        total_price: grandTotal,
-        profit: totalProfit,
-        customer_id: isDebt ? finalCustomerId : null,
-        is_debt: isDebt,
-        original_amount: isDebt ? grandTotal : null,
-        paid_amount: 0,
-        remaining_amount: isDebt ? grandTotal : 0,
-        debt_status: isDebt ? 'active' : null,
-        raw_message: `Sale: ${productSummary}`,
+      // Classify the existing payment transaction — do NOT insert a new one,
+      // otherwise the same money would be counted twice.
+      const updatedTxn = await completeSalePayment(linkedTransactionId, {
+        items, grandTotal, totalProfit,
       })
 
-      set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
-
-      if (isDebt && finalCustomerId) {
-        const updatedCustomer = await dbIncreaseDebt(finalCustomerId, grandTotal)
-        set((s) => ({
-          customers: s.customers.map((c) =>
-            c.id === finalCustomerId ? { ...c, ...updatedCustomer } : c
-          ),
-        }))
-      }
+      set((s) => ({
+        transactions: s.transactions.map((t) =>
+          t.id === linkedTransactionId ? { ...t, ...updatedTxn } : t
+        ),
+      }))
 
       await get().refreshTodayStats()
 
@@ -313,10 +287,10 @@ bootstrap: async () => {
         totalProfit,
         itemCount: items.length,
         totalQuantity: items.reduce((a, it) => a + it.quantity, 0),
-        transaction: savedTxn,
+        transaction: updatedTxn,
       }
     } catch (err) {
-      console.error('Record sale error:', err)
+      console.error('Complete sale error:', err)
       throw err
     }
   },
