@@ -184,6 +184,12 @@ export default function ClassifyScreen() {
               <div
                 key={o.id}
                 onClick={() => {
+                  if (o.id === 'sale') {
+                    navigate('/new-sale', {
+                      state: { paymentAmount: txn.amount, linkedTransactionId: txn.id },
+                    })
+                    return
+                  }
                   setType(o.id)
                   setCategory(null)
                   setCustomerId(null)
