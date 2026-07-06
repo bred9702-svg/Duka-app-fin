@@ -41,6 +41,23 @@ export async function updateStock(productId, quantity) {
   return newStock
 }
 
+export async function addStock(productId, quantity) {
+  const { data: product, error: fetchError } = await supabase
+    .from('products')
+    .select('stock_current')
+    .eq('id', productId)
+    .single()
+  if (fetchError) throw fetchError
+
+  const newStock = (product.stock_current || 0) + quantity
+  const { error } = await supabase
+    .from('products')
+    .update({ stock_current: newStock })
+    .eq('id', productId)
+  if (error) throw error
+  return newStock
+}
+
 // ── TRANSACTIONS ──────────────────────────────────────────────
 
 export async function getTransactions(limit = 50) {
