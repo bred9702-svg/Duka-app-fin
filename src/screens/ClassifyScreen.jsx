@@ -28,6 +28,7 @@ export default function ClassifyScreen() {
   const products = useAppStore((s) => s.products)
   const classifyTransaction = useAppStore((s) => s.classifyTransaction)
   const addCustomer = useAppStore((s) => s.addCustomer)
+  const addPendingStockPurchase = useAppStore((s) => s.addPendingStockPurchase)
 
   const txn = transactions.find((t) => t.id === id)
 
@@ -108,7 +109,21 @@ export default function ClassifyScreen() {
 
       await classifyTransaction(txn.id, cls)
       setDone(true)
-      setTimeout(() => navigate('/inbox'), 700)
+
+      if (type === 'expense' && category === 'stock') {
+        addPendingStockPurchase({
+          transactionId: txn.id,
+          amount: txn.amount,
+          createdAt: new Date().toISOString(),
+        })
+        setTimeout(() => {
+          navigate('/inventory-investment', {
+            state: { budget: txn.amount, linkedTransactionId: txn.id },
+          })
+        }, 700)
+      } else {
+        setTimeout(() => navigate('/inbox'), 700)
+      }
     } catch (err) {
       console.error('Classify error:', err)
       setSaving(false)
