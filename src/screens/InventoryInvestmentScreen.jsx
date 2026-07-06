@@ -69,6 +69,7 @@ export default function InventoryInvestmentScreen() {
         productId: product.id,
         name: product.name,
         unitPrice: product.unit_price || 0,
+        originalPrice: product.unit_price || 0,
         purchasePrice: product.cost_price || '',
         quantity: '',
       },
@@ -111,6 +112,7 @@ export default function InventoryInvestmentScreen() {
         unitPrice: Number(it.unitPrice),
         purchasePrice: Number(it.purchasePrice),
         quantity: Number(it.quantity),
+        priceChanged: Number(it.unitPrice) !== Number(it.originalPrice),
       }))
 
       await recordPurchase({
@@ -329,7 +331,10 @@ export default function InventoryInvestmentScreen() {
         {items.length > 0 && (
           <StaggerContainer step={40}>
             {items.map((item) => {
-              const subtotal = (Number(item.purchasePrice) || 0) * (Number(item.quantity) || 0)
+              const qty = Number(item.quantity) || 0
+              const investment = (Number(item.purchasePrice) || 0) * qty
+              const revenue = (Number(item.unitPrice) || 0) * qty
+              const profit = revenue - investment
               return (
                 <GlassCard key={item.productId}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -342,7 +347,7 @@ export default function InventoryInvestmentScreen() {
                     </button>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: 6 }}>
                     <div>
                       <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Purchase Price</p>
                       <input
@@ -351,7 +356,18 @@ export default function InventoryInvestmentScreen() {
                         value={item.purchasePrice}
                         onChange={(e) => updateItem(item.productId, 'purchasePrice', e.target.value)}
                         placeholder="0"
-                        style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 9px', fontSize: 13, fontWeight: 600, color: '#F0A93D', fontFamily: 'var(--font-display)' }}
+                        style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: '#F0A93D', fontFamily: 'var(--font-display)' }}
+                      />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Selling Price</p>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={item.unitPrice}
+                        onChange={(e) => updateItem(item.productId, 'unitPrice', e.target.value)}
+                        placeholder="0"
+                        style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: '#5FD97A', fontFamily: 'var(--font-display)' }}
                       />
                     </div>
                     <div>
@@ -362,16 +378,24 @@ export default function InventoryInvestmentScreen() {
                         value={item.quantity}
                         onChange={(e) => updateItem(item.productId, 'quantity', e.target.value)}
                         placeholder="0"
-                        style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 9px', fontSize: 13, fontWeight: 600, color: 'var(--text-hi)', fontFamily: 'var(--font-display)' }}
+                        style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', fontFamily: 'var(--font-display)' }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-low)' }}>Subtotal</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text-hi)' }}>
-                      {fmtKES(subtotal)} KES
-                    </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: 6, marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+                    <div>
+                      <p style={{ fontSize: 8, color: 'var(--text-low)', marginBottom: 2 }}>Investment</p>
+                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: '#F0A93D' }}>{fmtKES(investment)}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 8, color: 'var(--text-low)', marginBottom: 2 }}>Revenue</p>
+                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: 'var(--text-hi)' }}>{fmtKES(revenue)}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 8, color: 'var(--text-low)', marginBottom: 2 }}>Profit</p>
+                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: '#5FD97A' }}>{fmtKES(profit)}</p>
+                    </div>
                   </div>
                 </GlassCard>
               )
@@ -396,7 +420,7 @@ export default function InventoryInvestmentScreen() {
               border: '1px solid rgba(240,169,61,0.18)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-mid)' }}>Number of products</span>
+                <span style={{ fontSize: 11, color: 'var(--text-mid)' }}>Total Products</span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{validItems.length}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
