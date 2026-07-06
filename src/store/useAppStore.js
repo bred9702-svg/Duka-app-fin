@@ -9,6 +9,7 @@ import {
   addNewCustomer,
   getProducts,
   getTodayStats,
+  addStock,
 } from '../lib/db'
 
 const useAppStore = create((set, get) => ({
@@ -138,6 +139,66 @@ bootstrap: async () => {
       set({ todayStats })
     } catch (err) {
       console.error('Stats error:', err)
+    }
+  },
+
+  recordPurchase: async ({ items, supplier, purchaseDate, notes }) => {
+    try {
+      const totalInvestment = items.reduce((a, it) => a + it.purchasePrice * it.quantity, 0)
+      const expectedRevenue = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
+      const expectedProfit = expectedRevenue - totalInvestment
+
+      // Increase stock for every line item, one product at a time
+      const updatedStocks = {}
+      for (const item of items) {
+        const newStock = await addStock(item.productId, item.quantity)
+        updatedStocks[item.productId] = newStock
+      }
+
+      set((s) => ({
+        products: s.products.map((p) =>
+          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
+        ),
+      }))
+
+      // Register the purchase as a single expense transaction
+      const productNames = items.map((it) => it.name).join(', ')
+      const savedTxn = await dbAddTransaction({
+        operation_type: 'expense',
+        expense_category: 'stock',
+        amount: totalInvestment,
+        direction: 'out',
+        classified: true,
+        raw_message: supplier
+          ? `Stock purchase from ${supplier}: ${productNames}`
+          : `Stock purchase: ${productNames}`,
+      })
+      set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
+      await get().refreshTodayStats()
+
+      // Local purchase history record (no dedicated backend table yet)
+      const record = {
+        id: `purchase-${Date.now()}`,
+        date: purchaseDate || new Date().toISOString(),
+        supplier: supplier || null,
+        notes: notes || null,
+        items,
+        totalInvestment,
+        expectedRevenue,
+        expectedProfit,
+      }
+      try {
+        const key = 'duka-purchase-history'
+        const existing = JSON.parse(localStorage.getItem(key) || '[]')
+        localStorage.setItem(key, JSON.stringify([record, ...existing].slice(0, 100)))
+      } catch (e) {
+        console.error('Purchase history save error:', e)
+      }
+
+      return record
+    } catch (err) {
+      console.error('Record purchase error:', err)
+      throw err
     }
   },
 }))
