@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import Icon from '../components/ui/Icon'
 import useAppStore from '../store/useAppStore'
@@ -39,6 +39,10 @@ function todayISO() {
 
 export default function InventoryInvestmentScreen() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const budget = location.state?.budget ?? null
+  const linkedTransactionId = location.state?.linkedTransactionId ?? null
+
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
   const recordPurchase = useAppStore((s) => s.recordPurchase)
@@ -120,6 +124,8 @@ export default function InventoryInvestmentScreen() {
         supplier: supplier.trim(),
         purchaseDate,
         notes: notes.trim(),
+        linkedTransactionId,
+        budget,
       })
 
       // Estimate how long this inventory should last based on historical sales velocity
@@ -409,6 +415,41 @@ export default function InventoryInvestmentScreen() {
               Search and add products above to build this purchase
             </p>
           </GlassCard>
+        )}
+
+        {budget !== null && (
+          <>
+            <SectionTitle>Purchase Budget</SectionTitle>
+            <GlassCard style={{
+              background: totalInvestment > budget
+                ? 'linear-gradient(160deg, rgba(255,107,91,0.10), rgba(255,255,255,0.02))'
+                : 'linear-gradient(160deg, rgba(95,217,122,0.08), rgba(255,255,255,0.02))',
+              border: totalInvestment > budget
+                ? '1px solid rgba(255,107,91,0.25)'
+                : '1px solid rgba(95,217,122,0.20)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-mid)' }}>Budget</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text-hi)' }}>
+                  {fmtKES(budget)} KES
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-mid)' }}>Current Investment</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D' }}>
+                  <AnimatedCounter value={totalInvestment} format={fmtKES} suffix=" KES" duration={300} />
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: totalInvestment > budget ? '#FF6B5B' : '#5FD97A' }}>
+                  {totalInvestment > budget ? 'Budget Exceeded' : 'Remaining Budget'}
+                </span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: totalInvestment > budget ? '#FF6B5B' : '#5FD97A' }}>
+                  {fmtKES(Math.abs(budget - totalInvestment))} KES
+                </span>
+              </div>
+            </GlassCard>
+          </>
         )}
 
         {/* Live summary */}
