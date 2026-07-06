@@ -225,6 +225,24 @@ export default function HomeScreen() {
           </div>
         )}
 
+        {/* New Sale */}
+        <button
+          onClick={() => navigate('/new-sale')}
+          style={{
+            width: '100%',
+            background: 'var(--glass-fill-soft)',
+            color: 'var(--text-hi)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: 12, padding: 11,
+            fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            cursor: 'pointer', marginBottom: 8,
+          }}
+        >
+          <Icon name="bag" size={15} color="#F0A93D" />
+          New Sale
+        </button>
+
         {/* Simulate M-Pesa */}
         <button
           onClick={simulateMpesa}
