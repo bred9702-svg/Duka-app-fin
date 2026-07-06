@@ -10,6 +10,7 @@ import {
   getProducts,
   getTodayStats,
   addStock,
+  updateProductPrice,
 } from '../lib/db'
 
 const useAppStore = create((set, get) => ({
@@ -150,15 +151,26 @@ bootstrap: async () => {
 
       // Increase stock for every line item, one product at a time
       const updatedStocks = {}
+      const updatedPrices = {}
       for (const item of items) {
         const newStock = await addStock(item.productId, item.quantity)
         updatedStocks[item.productId] = newStock
+
+        if (item.priceChanged) {
+          await updateProductPrice(item.productId, item.unitPrice)
+          updatedPrices[item.productId] = item.unitPrice
+        }
       }
 
       set((s) => ({
-        products: s.products.map((p) =>
-          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
-        ),
+        products: s.products.map((p) => {
+          if (!(p.id in updatedStocks)) return p
+          return {
+            ...p,
+            stock_current: updatedStocks[p.id],
+            ...(p.id in updatedPrices ? { unit_price: updatedPrices[p.id] } : {}),
+          }
+        }),
       }))
 
       // Register the purchase as a single expense transaction
