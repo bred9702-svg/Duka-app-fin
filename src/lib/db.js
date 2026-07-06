@@ -67,6 +67,28 @@ export async function updateProductPrice(productId, unitPrice) {
   return unitPrice
 }
 
+export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit }) {
+  const productSummary = items.map((it) => `${it.name} x${it.quantity}`).join(', ')
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({
+      classified: true,
+      operation_type: 'sale',
+      product_id: items.length === 1 ? items[0].productId : null,
+      quantity: items.length === 1 ? items[0].quantity : null,
+      unit_price: items.length === 1 ? items[0].unitPrice : null,
+      total_price: grandTotal,
+      profit: totalProfit,
+      raw_message: `Sale: ${productSummary}`,
+    })
+    .eq('id', transactionId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 // ── TRANSACTIONS ──────────────────────────────────────────────
 
 export async function getTransactions(limit = 50) {
