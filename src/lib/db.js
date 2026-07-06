@@ -58,6 +58,15 @@ export async function addStock(productId, quantity) {
   return newStock
 }
 
+export async function updateProductPrice(productId, unitPrice) {
+  const { error } = await supabase
+    .from('products')
+    .update({ unit_price: unitPrice })
+    .eq('id', productId)
+  if (error) throw error
+  return unitPrice
+}
+
 // ── TRANSACTIONS ──────────────────────────────────────────────
 
 export async function getTransactions(limit = 50) {
