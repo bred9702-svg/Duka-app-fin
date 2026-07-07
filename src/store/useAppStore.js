@@ -15,6 +15,15 @@ import {
   completeSalePayment,
 } from '../lib/db'
 
+function loadSession() {
+  try {
+    const raw = localStorage.getItem('duka-session')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 const useAppStore = create((set, get) => ({
   transactions: [],
   customers: [],
@@ -23,11 +32,54 @@ const useAppStore = create((set, get) => ({
   loading: false,
   error: null,
   theme: localStorage.getItem('duka-theme') || 'dark',
+  session: loadSession(),
 
 setTheme: (theme) => {
   localStorage.setItem('duka-theme', theme)
   document.documentElement.setAttribute('data-theme', theme)
   set({ theme })
+},
+
+registerOwner: (data) => {
+  const session = {
+    role: 'owner',
+    name: data.name,
+    phone: data.phone,
+    shopName: data.shopName,
+    shopAddress: data.shopAddress,
+    photo: data.photo || null,
+    isOnboarded: false,
+  }
+  localStorage.setItem('duka-session', JSON.stringify(session))
+  set({ session })
+},
+
+signIn: (data) => {
+  const session = {
+    role: data.role || 'owner',
+    name: data.name || 'Shop Owner',
+    phone: data.phone,
+    shopName: data.shopName || null,
+    shopAddress: data.shopAddress || null,
+    photo: null,
+    isOnboarded: true,
+  }
+  localStorage.setItem('duka-session', JSON.stringify(session))
+  set({ session })
+},
+
+completeOnboarding: () => {
+  set((s) => {
+    if (!s.session) return {}
+    const session = { ...s.session, isOnboarded: true }
+    localStorage.setItem('duka-session', JSON.stringify(session))
+    return { session }
+  })
+},
+
+signOut: () => {
+  localStorage.removeItem('duka-session')
+  set({ session: null })
 },
 
 bootstrap: async () => {
