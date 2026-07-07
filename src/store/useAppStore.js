@@ -175,8 +175,6 @@ bootstrap: async () => {
         }),
       }))
 
-      const productNames = items.map((it) => it.name).join(', ')
-
       if (linkedTransactionId) {
         // This purchase completes an existing Cash Out → Expense → Stock
         // transaction — don't record a second expense, just mark it done.
@@ -198,9 +196,6 @@ bootstrap: async () => {
           amount: totalInvestment,
           direction: 'out',
           classified: true,
-          raw_message: supplier
-            ? `Stock purchase from ${supplier}: ${productNames}`
-            : `Stock purchase: ${productNames}`,
         })
         set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
       }
