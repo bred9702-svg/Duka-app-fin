@@ -68,8 +68,6 @@ export async function updateProductPrice(productId, unitPrice) {
 }
 
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit }) {
-  const productSummary = items.map((it) => `${it.name} x${it.quantity}`).join(', ')
-
   const { data, error } = await supabase
     .from('transactions')
     .update({
@@ -80,7 +78,6 @@ export async function completeSalePayment(transactionId, { items, grandTotal, to
       unit_price: items.length === 1 ? items[0].unitPrice : null,
       total_price: grandTotal,
       profit: totalProfit,
-      raw_message: `Sale: ${productSummary}`,
     })
     .eq('id', transactionId)
     .select()
