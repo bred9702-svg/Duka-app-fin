@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/ui/Icon'
+import useAppStore from '../store/useAppStore'
 
 const SECTIONS = [
   {
@@ -105,6 +106,8 @@ function Row({ item, onClick, isFirst, isLast }) {
 
 export default function MeScreen() {
   const navigate = useNavigate()
+  const session = useAppStore((s) => s.session)
+  const signOut = useAppStore((s) => s.signOut)
 
   return (
     <div
@@ -181,18 +184,27 @@ export default function MeScreen() {
                 textOverflow: 'ellipsis',
               }}
             >
-              Bred Mwepu
+              {session?.name || 'Shop Owner'}
             </p>
 
-            <p
-              style={{
-                margin: '2px 0 0',
-                fontSize: 11,
-                color: 'var(--text-low)',
-              }}
-            >
-              Owner
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 600,
+                  padding: '2px 7px',
+                  background: session?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
+                  color: session?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
+                }}
+              >
+                {session?.role === 'employee' ? 'Employee' : 'Owner'}
+              </span>
+              {session?.shopName && (
+                <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
+                  {session.shopName}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -214,13 +226,28 @@ export default function MeScreen() {
           </div>
         ))}
 
+        <button
+          onClick={() => {
+            signOut()
+            navigate('/splash')
+          }}
+          style={{
+            width: '100%', marginTop: 20, padding: '12px', borderRadius: 12,
+            border: '1px solid rgba(255,107,91,0.25)', background: 'rgba(255,107,91,0.08)',
+            cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600,
+            color: '#FF6B5B',
+          }}
+        >
+          Sign Out
+        </button>
+
         <p
           style={{
             textAlign: 'center',
             fontSize: 10,
             color: 'var(--text-low)',
             opacity: 0.6,
-            marginTop: 22,
+            marginTop: 14,
           }}
         >
           Version 1.0.0
