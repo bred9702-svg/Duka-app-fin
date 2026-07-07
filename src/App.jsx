@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import useAppStore from './store/useAppStore'
 
 import HomeScreen from './screens/HomeScreen'
@@ -29,6 +29,13 @@ import PrivacyScreen from './screens/settings/PrivacyScreen'
 
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
+import RequireOwner from './components/auth/RequireOwner'
+
+import SplashScreen from './screens/onboarding/SplashScreen'
+import WelcomeScreen from './screens/onboarding/WelcomeScreen'
+import OwnerRegistrationScreen from './screens/onboarding/OwnerRegistrationScreen'
+import InitialInventorySetupScreen from './screens/onboarding/InitialInventorySetupScreen'
+import SignInScreen from './screens/onboarding/SignInScreen'
 
 function LoadingScreen() {
   return (
@@ -70,15 +77,32 @@ function LoadingScreen() {
 
 export default function App() {
   const location = useLocation()
+  const navigate = useNavigate()
 
   const bootstrap = useAppStore((s) => s.bootstrap)
   const loading = useAppStore((s) => s.loading)
+  const session = useAppStore((s) => s.session)
 
   useEffect(() => {
     bootstrap()
   }, [])
 
+  const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']
+  const isOnboardingRoute = ONBOARDING_PATHS.some((p) => location.pathname.startsWith(p))
+
+  // Frontend-only auth guard: no valid, onboarded session and not already
+  // on an onboarding screen → send the merchant through Splash first.
+  useEffect(() => {
+    if (loading) return
+    const needsOnboarding = !session || !session.isOnboarded
+    if (needsOnboarding && !isOnboardingRoute) {
+      navigate('/splash', { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, session, location.pathname])
+
   const hideNav =
+    isOnboardingRoute ||
     location.pathname.startsWith('/classify') ||
     location.pathname.startsWith('/customer')
 
@@ -109,6 +133,12 @@ export default function App() {
           style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}
         >
           <Routes>
+            <Route path="/splash" element={<SplashScreen />} />
+            <Route path="/welcome" element={<WelcomeScreen />} />
+            <Route path="/register" element={<OwnerRegistrationScreen />} />
+            <Route path="/setup-inventory" element={<InitialInventorySetupScreen />} />
+            <Route path="/sign-in" element={<SignInScreen />} />
+
             <Route path="/" element={<HomeScreen />} />
 
             <Route
@@ -148,7 +178,7 @@ export default function App() {
 
             <Route
               path="/finance"
-              element={<FinancialAnalysisScreen />}
+              element={<RequireOwner title="Financial Analysis"><FinancialAnalysisScreen /></RequireOwner>}
             />
 
             <Route
@@ -178,7 +208,7 @@ export default function App() {
 
             <Route path="/shop" element={<ShopProfileScreen />} />
             <Route path="/payment-mode" element={<PaymentModeScreen />} />
-            <Route path="/business-preferences" element={<StoreSettingsScreen />} />
+            <Route path="/business-preferences" element={<RequireOwner title="Store Settings"><StoreSettingsScreen /></RequireOwner>} />
             <Route path="/notifications" element={<NotificationsScreen />} />
             <Route path="/appearance" element={<ThemeScreen />} />
             <Route path="/language" element={<LanguageScreen />} />
