@@ -13,9 +13,9 @@ export default function SignInScreen() {
 
   const canSubmit = phone.trim().length > 0
 
-  function handleContinue() {
+  async function handleContinue() {
     if (!canSubmit) return
-    signIn({ phone: phone.trim(), role })
+    await signIn({ phone: phone.trim(), role })
     navigate('/')
   }
 
