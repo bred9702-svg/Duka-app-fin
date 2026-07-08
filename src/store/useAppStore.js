@@ -284,13 +284,19 @@ bootstrap: async () => {
           console.error('Pending purchase cleanup error:', e)
         }
       } else {
-        // Standalone purchase (not started from Cash Out) — record its own expense
+        // Standalone purchase (not started from Cash Out) — record its own
+        // expense, using the exact same transaction shape as the proven
+        // working Cash In/Out flow.
         const savedTxn = await dbAddTransaction({
-          operation_type: 'expense',
-          expense_category: 'stock',
           amount: totalInvestment,
+          source: 'cash',
           direction: 'out',
           classified: true,
+          operation_type: 'expense',
+          expense_category: 'stock',
+          mpesa_sender_name: null,
+          mpesa_sender_phone: null,
+          mpesa_reference: null,
         })
         set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
       }
