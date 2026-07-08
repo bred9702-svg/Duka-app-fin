@@ -34,9 +34,9 @@ export default function OwnerRegistrationScreen() {
 
   const canSubmit = name.trim() && phone.trim() && shopName.trim()
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit) return
-    registerOwner({ name: name.trim(), phone: phone.trim(), shopName: shopName.trim(), shopAddress: shopAddress.trim() })
+    await registerOwner({ name: name.trim(), phone: phone.trim(), shopName: shopName.trim(), shopAddress: shopAddress.trim() })
     navigate('/setup-inventory')
   }
 
