@@ -31,20 +31,20 @@ export default function WelcomeScreen() {
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 10 }}>
-            Run your shop smarter
+            Your business, understood.
           </h1>
 
           <p style={{ fontSize: 14, color: 'var(--text-mid)', lineHeight: 1.5 }}>
-            Duka tracks your sales, inventory, and profit in real time — with an AI advisor built for Wine &amp; Spirits retailers.
+            Duka is an AI manager for your shop. It learns from your own sales, stock, and customers — then tells you exactly what to do next, every day.
           </p>
         </FadeIn>
 
         <FadeIn delay={120} duration={320} y={14}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 32 }}>
             {[
-              { icon: 'barChart', text: 'Real-time sales & profit tracking' },
-              { icon: 'package', text: 'Smart inventory & restock alerts' },
-              { icon: 'bell', text: 'An AI advisor that knows your business' },
+              { icon: 'brain', text: 'Decisions based on your real numbers, not guesses' },
+              { icon: 'bell', text: 'Daily guidance on what to restock, chase, or fix' },
+              { icon: 'trendingUp', text: 'Gets sharper the more your shop runs' },
             ].map((f) => (
               <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(240,169,61,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
