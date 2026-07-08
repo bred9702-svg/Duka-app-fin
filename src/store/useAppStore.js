@@ -24,6 +24,24 @@ function loadSession() {
   }
 }
 
+// All the account-scoped local caches used across settings/purchase
+// screens. Kept in one place so registration and sign-out never miss one.
+// duka-theme is intentionally excluded — it's a device preference, not
+// account data.
+const LOCAL_APP_DATA_KEYS = [
+  'duka-shop-profile',
+  'duka-payment-methods',
+  'duka-store-settings',
+  'duka-notifications',
+  'duka-language',
+  'duka-purchase-history',
+  'duka-pending-stock-purchases',
+]
+
+function clearLocalAppData() {
+  LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
+}
+
 const useAppStore = create((set, get) => ({
   transactions: [],
   customers: [],
@@ -41,6 +59,10 @@ setTheme: (theme) => {
 },
 
 registerOwner: (data) => {
+  // A brand new account must never inherit a previous account's local
+  // settings cache (shop profile, purchase history, preferences, etc.)
+  clearLocalAppData()
+
   const session = {
     role: 'owner',
     name: data.name,
@@ -51,6 +73,18 @@ registerOwner: (data) => {
     isOnboarded: false,
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
+
+  // Seed the Shop Profile screen with what was just entered, so it
+  // reflects this account immediately instead of stale defaults.
+  localStorage.setItem('duka-shop-profile', JSON.stringify({
+    name: data.shopName,
+    type: 'Wines & Spirits',
+    phone: data.phone,
+    address: data.shopAddress || '',
+    currency: 'KES — Kenyan Shilling',
+    timezone: 'Africa/Nairobi',
+  }))
+
   set({ session })
 },
 
@@ -79,7 +113,16 @@ completeOnboarding: () => {
 
 signOut: () => {
   localStorage.removeItem('duka-session')
-  set({ session: null })
+  clearLocalAppData()
+  set({
+    session: null,
+    transactions: [],
+    customers: [],
+    products: [],
+    todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
+    loading: false,
+    error: null,
+  })
 },
 
 bootstrap: async () => {
