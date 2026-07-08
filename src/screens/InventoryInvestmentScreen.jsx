@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import Icon from '../components/ui/Icon'
@@ -42,6 +42,7 @@ export default function InventoryInvestmentScreen() {
   const location = useLocation()
   const budget = location.state?.budget ?? null
   const linkedTransactionId = location.state?.linkedTransactionId ?? null
+  const fromOnboarding = location.state?.fromOnboarding ?? false
 
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
@@ -56,6 +57,15 @@ export default function InventoryInvestmentScreen() {
 
   const [saving, setSaving] = useState(false)
   const [summary, setSummary] = useState(null)
+
+  useEffect(() => {
+    if (!summary) return
+    const t = setTimeout(() => {
+      navigate(fromOnboarding ? '/' : '/inventory')
+    }, 2200)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summary])
 
   const suggestions = useMemo(() => {
     if (!query.trim()) return []
@@ -239,14 +249,14 @@ export default function InventoryInvestmentScreen() {
 
           <FadeIn delay={200}>
             <button
-              onClick={() => navigate('/inventory')}
+              onClick={() => navigate(fromOnboarding ? '/' : '/inventory')}
               style={{
                 width: '100%', marginTop: 18, padding: '13px', borderRadius: 12,
                 border: 'none', cursor: 'pointer', fontFamily: 'var(--font-display)',
                 fontSize: 13, fontWeight: 700, color: '#0F1117', background: '#F0A93D',
               }}
             >
-              View Inventory
+              {fromOnboarding ? 'Enter Dashboard' : 'View Inventory'}
             </button>
           </FadeIn>
         </div>
