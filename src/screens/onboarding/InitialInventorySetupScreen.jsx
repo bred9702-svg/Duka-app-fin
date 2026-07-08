@@ -11,7 +11,7 @@ export default function InitialInventorySetupScreen() {
 
   function goToInventoryPurchase() {
     completeOnboarding()
-    navigate('/inventory-investment')
+    navigate('/inventory-investment', { state: { fromOnboarding: true } })
   }
 
   function skipForNow() {
