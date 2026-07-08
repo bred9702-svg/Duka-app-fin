@@ -58,7 +58,7 @@ setTheme: (theme) => {
   set({ theme })
 },
 
-registerOwner: (data) => {
+registerOwner: async (data) => {
   // A brand new account must never inherit a previous account's local
   // settings cache (shop profile, purchase history, preferences, etc.)
   clearLocalAppData()
@@ -86,9 +86,12 @@ registerOwner: (data) => {
   }))
 
   set({ session })
+  // In case registration follows a signOut() that emptied the data —
+  // bootstrap() only runs once on initial app mount otherwise.
+  await get().bootstrap()
 },
 
-signIn: (data) => {
+signIn: async (data) => {
   const session = {
     role: data.role || 'owner',
     name: data.name || 'Shop Owner',
@@ -100,6 +103,10 @@ signIn: (data) => {
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
   set({ session })
+  // signOut() empties products/transactions/customers — reload them now
+  // that a session is active again, since bootstrap() only runs once
+  // on initial app mount.
+  await get().bootstrap()
 },
 
 completeOnboarding: () => {
