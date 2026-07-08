@@ -59,15 +59,22 @@ export default function SignInScreen() {
           />
 
           <button
+            disabled
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '11px', borderRadius: 10, border: '1px solid var(--glass-border)',
-              background: 'var(--glass-fill-soft)', cursor: 'pointer', marginBottom: 20,
-              fontSize: 12, fontWeight: 600, color: 'var(--text-mid)',
+              background: 'var(--faint-fill)', cursor: 'default', marginBottom: 20,
+              fontSize: 12, fontWeight: 600, color: 'var(--text-low)', opacity: 0.6,
             }}
           >
             <Icon name="circleCheck" size={14} color="var(--text-low)" />
             Continue with Google
+            <span style={{
+              marginLeft: 4, fontSize: 8, fontWeight: 700, padding: '2px 6px',
+              background: 'var(--glass-fill-soft)', color: 'var(--text-low)', letterSpacing: '.03em',
+            }}>
+              COMING SOON
+            </span>
           </button>
 
           <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 6, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em' }}>
