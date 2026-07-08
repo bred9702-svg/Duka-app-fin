@@ -92,15 +92,22 @@ export default function OwnerRegistrationScreen() {
           <Field label="Phone Number" value={phone} onChange={setPhone} placeholder="+254 7XX XXX XXX" type="tel" />
 
           <button
+            disabled
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '11px', borderRadius: 10, border: '1px solid var(--glass-border)',
-              background: 'var(--glass-fill-soft)', cursor: 'pointer', marginBottom: 16,
-              fontSize: 12, fontWeight: 600, color: 'var(--text-mid)',
+              background: 'var(--faint-fill)', cursor: 'default', marginBottom: 16,
+              fontSize: 12, fontWeight: 600, color: 'var(--text-low)', opacity: 0.6,
             }}
           >
             <Icon name="circleCheck" size={14} color="var(--text-low)" />
             Continue with Google
+            <span style={{
+              marginLeft: 4, fontSize: 8, fontWeight: 700, padding: '2px 6px',
+              background: 'var(--glass-fill-soft)', color: 'var(--text-low)', letterSpacing: '.03em',
+            }}>
+              COMING SOON
+            </span>
           </button>
 
           <div style={{ height: 1, background: 'var(--glass-border)', marginBottom: 16 }} />
