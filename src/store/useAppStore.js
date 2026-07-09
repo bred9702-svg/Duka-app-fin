@@ -372,7 +372,7 @@ bootstrap: async () => {
 
       const savedTxn = await dbAddTransaction({
         amount: grandTotal,
-        source: 'manual',
+        source: 'cash',
         direction: 'out',
         classified: true,
         operation_type: 'debt',
