@@ -104,23 +104,56 @@ function Row({ item, onClick, isFirst, isLast }) {
   )
 }
 
-function getTrialDaysRemaining(session) {
-  if (!session) return null
+function getSubscriptionStatus(session) {
+  if (!session) {
+    return null
+  }
 
-  const status = session.subscriptionStatus || 'trial'
-  if (status !== 'trial') return null
-  if (!session.trialEnd) return 15
+  if (session.subscriptionStatus === 'active') {
+    return {
+      title: 'Pro Active',
+      detail: 'Your subscription is active',
+      color: '#5FD97A',
+      bg: 'linear-gradient(160deg, rgba(95,217,122,.16), rgba(255,255,255,.03))',
+      border: '1px solid rgba(95,217,122,.28)',
+    }
+  }
 
-  const diffMs = new Date(session.trialEnd).getTime() - Date.now()
-  if (Number.isNaN(diffMs)) return 15
-  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+  if (session.subscriptionStatus === 'expired') {
+    return {
+      title: 'Trial Expired',
+      detail: 'Your trial has ended. Upgrade to continue.',
+      color: '#FF6B5B',
+      bg: 'linear-gradient(160deg, rgba(255,107,91,.16), rgba(255,255,255,.03))',
+      border: '1px solid rgba(255,107,91,.28)',
+    }
+  }
+
+  const diffMs = session.trialEnd
+    ? new Date(session.trialEnd).getTime() - Date.now()
+    : 15 * 24 * 60 * 60 * 1000
+
+  const daysRemaining = Number.isNaN(diffMs)
+    ? 15
+    : Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+
+  return {
+    title: 'Pro Trial',
+    detail: `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} remaining`,
+    color: '#F0A93D',
+    bg: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
+    border: '1px solid rgba(240,169,61,.28)',
+  }
 }
 
 export default function MeScreen() {
   const navigate = useNavigate()
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
-  const trialDaysRemaining = getTrialDaysRemaining(session)
+  const refreshSubscriptionStatus = useAppStore((s) => s.refreshSubscriptionStatus)
+
+  const currentSession = refreshSubscriptionStatus?.() || session
+  const subscription = getSubscriptionStatus(currentSession)
 
   return (
     <div
@@ -197,7 +230,7 @@ export default function MeScreen() {
                 textOverflow: 'ellipsis',
               }}
             >
-              {session?.name || 'Shop Owner'}
+              {currentSession?.name || 'Shop Owner'}
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -206,29 +239,29 @@ export default function MeScreen() {
                   fontSize: 8,
                   fontWeight: 600,
                   padding: '2px 7px',
-                  background: session?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
-                  color: session?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
+                  background: currentSession?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
+                  color: currentSession?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
                 }}
               >
-                {session?.role === 'employee' ? 'Employee' : 'Owner'}
+                {currentSession?.role === 'employee' ? 'Employee' : 'Owner'}
               </span>
-              {session?.shopName && (
+              {currentSession?.shopName && (
                 <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
-                  {session.shopName}
+                  {currentSession.shopName}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {trialDaysRemaining !== null && (
+        {subscription && (
           <div
             style={{
               marginTop: 10,
               padding: '12px 14px',
               borderRadius: 14,
-              background: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
-              border: '1px solid rgba(240,169,61,.28)',
+              background: subscription.bg,
+              border: subscription.border,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -236,14 +269,14 @@ export default function MeScreen() {
             }}
           >
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', margin: 0 }}>
-                Pro Trial
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: subscription.color, margin: 0 }}>
+                {subscription.title}
               </p>
               <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
-                {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
+                {subscription.detail}
               </p>
             </div>
-            <Icon name="star" size={20} color="#F0A93D" />
+            <Icon name="star" size={20} color={subscription.color} />
           </div>
         )}
 
