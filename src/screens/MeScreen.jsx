@@ -104,11 +104,15 @@ function Row({ item, onClick, isFirst, isLast }) {
   )
 }
 
-
 function getTrialDaysRemaining(session) {
-  if (session?.subscriptionStatus !== 'trial' || !session?.trialEnd) return null
+  if (!session) return null
+
+  const status = session.subscriptionStatus || 'trial'
+  if (status !== 'trial') return null
+  if (!session.trialEnd) return 15
+
   const diffMs = new Date(session.trialEnd).getTime() - Date.now()
-  if (Number.isNaN(diffMs)) return null
+  if (Number.isNaN(diffMs)) return 15
   return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
 }
 
