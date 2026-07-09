@@ -13,6 +13,7 @@ import {
   updateStock,
   updateProductPrice,
   completeSalePayment,
+  addProduct,
 } from '../lib/db'
 
 function loadSession() {
@@ -394,6 +395,17 @@ bootstrap: async () => {
       }
     } catch (err) {
       console.error('Complete sale error:', err)
+      throw err
+    }
+  },
+
+  createProduct: async (data) => {
+    try {
+      const saved = await addProduct(data)
+      set((s) => ({ products: [...s.products, saved] }))
+      return saved
+    } catch (err) {
+      console.error('Create product error:', err)
       throw err
     }
   },
