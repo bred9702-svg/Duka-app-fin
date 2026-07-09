@@ -20,7 +20,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   lowStockAlerts: true,
   newDebtAlerts: true,
   debtPaymentAlerts: true,
-  dailySummary: true,
+  dailySummary: false,
   weeklySummary: true,
 }
 
@@ -191,6 +191,7 @@ const useAppStore = create((set, get) => ({
     // Applique le thème sauvegardé
     const savedTheme = localStorage.getItem('duka-theme') || 'dark'
     document.documentElement.setAttribute('data-theme', savedTheme)
+
     set({
       theme: savedTheme,
       notificationSettings: loadNotificationSettings(),
