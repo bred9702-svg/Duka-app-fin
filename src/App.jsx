@@ -18,7 +18,6 @@ import NewDebtScreen from './screens/NewDebtScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
-import NotificationSettingsScreen from './screens/NotificationSettingsScreen'
 
 import ShopProfileScreen from './screens/settings/ShopProfileScreen'
 import PaymentModeScreen from './screens/settings/PaymentModeScreen'
@@ -212,11 +211,6 @@ export default function App() {
             <Route
               path="/me"
               element={<MeScreen />}
-            />
-
-            <Route
-              path="/notification-settings"
-              element={<NotificationSettingsScreen />}
             />
 
             <Route path="/shop" element={<ShopProfileScreen />} />
