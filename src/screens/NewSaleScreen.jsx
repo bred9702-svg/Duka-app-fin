@@ -34,6 +34,26 @@ function SectionTitle({ children }) {
   )
 }
 
+function TrialBlockedMessage({ message }) {
+  return (
+    <div style={{
+      background: 'rgba(255,107,91,0.10)',
+      border: '1px solid rgba(255,107,91,0.3)',
+      borderRadius: 12,
+      padding: '10px 12px',
+      marginBottom: 8,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+    }}>
+      <Icon name="alertTriangle" size={15} color="#FF6B5B" />
+      <p style={{ fontSize: 11, color: '#FF6B5B', margin: 0 }}>
+        {message}
+      </p>
+    </div>
+  )
+}
+
 export default function NewSaleScreen() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -44,6 +64,8 @@ export default function NewSaleScreen() {
   const customers = useAppStore((s) => s.customers)
   const addCustomer = useAppStore((s) => s.addCustomer)
   const completeSale = useAppStore((s) => s.completeSale)
+  const writeBlocked = useAppStore((s) => s.writeBlocked)
+  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -53,14 +75,12 @@ export default function NewSaleScreen() {
   const [query, setQuery] = useState('')
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [productCreatedNote, setProductCreatedNote] = useState(null)
-  const [cart, setCart] = useState([]) // { productId, name, unitPrice, costPrice, quantity, stock }
+  const [cart, setCart] = useState([])
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
 
-  // A sale only ever starts from a payment — no state means this screen
-  // was reached directly, so send the merchant back to where sales begin.
   useEffect(() => {
     if (!linkedTransactionId) {
       navigate('/inbox', { replace: true })
@@ -68,8 +88,6 @@ export default function NewSaleScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-return to Inbox a moment after a successful sale — never leaves
-  // the merchant stuck on the confirmation screen.
   useEffect(() => {
     if (!result) return
     const t = setTimeout(() => navigate('/inbox'), 2200)
@@ -128,12 +146,19 @@ export default function NewSaleScreen() {
   const difference = paymentAmount !== null ? paymentAmount - grandTotal : null
 
   const hasCustomer = !!selectedCustomer || (addingCustomer && newCustomerName.trim())
-  const canSave = cart.length > 0 && hasCustomer && !saving
+  const canSave = cart.length > 0 && hasCustomer && !saving && !writeBlocked
 
   async function handleConfirm() {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+
     if (!canSave) return
+
     setError(null)
     setSaving(true)
+
     try {
       const items = cart.map((it) => ({
         productId: it.productId,
@@ -242,7 +267,10 @@ export default function NewSaleScreen() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="New Sale" />
 
-        {/* Payment banner */}
+        {writeBlocked && (
+          <TrialBlockedMessage message={trialEndedMessage} />
+        )}
+
         {paymentAmount !== null && (
           <GlassCard style={{
             background: 'linear-gradient(160deg, rgba(95,217,122,0.10), rgba(255,255,255,0.02))',
@@ -259,7 +287,6 @@ export default function NewSaleScreen() {
           </GlassCard>
         )}
 
-        {/* Customer */}
         <SectionTitle>Customer</SectionTitle>
         <div style={{ position: 'relative', marginBottom: 8 }}>
           <div style={{
@@ -304,6 +331,10 @@ export default function NewSaleScreen() {
 
         <button
           onClick={() => {
+            if (writeBlocked) {
+              setError(trialEndedMessage)
+              return
+            }
             setAddingCustomer((open) => !open)
             setSelectedCustomer(null)
           }}
@@ -337,7 +368,6 @@ export default function NewSaleScreen() {
           </GlassCard>
         )}
 
-        {/* Product search */}
         <div style={{ position: 'relative', marginBottom: 8 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
@@ -386,7 +416,13 @@ export default function NewSaleScreen() {
               boxShadow: 'var(--card-shadow)',
             }}>
               <div
-                onClick={() => setShowCreateProduct(true)}
+                onClick={() => {
+                  if (writeBlocked) {
+                    setError(trialEndedMessage)
+                    return
+                  }
+                  setShowCreateProduct(true)
+                }}
                 style={{ padding: '11px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
               >
                 <Icon name="plus" size={13} color="#F0A93D" />
@@ -422,7 +458,6 @@ export default function NewSaleScreen() {
           />
         )}
 
-        {/* Cart */}
         {cart.length > 0 ? (
           <StaggerContainer step={40}>
             {cart.map((item) => (
@@ -492,7 +527,6 @@ export default function NewSaleScreen() {
           </GlassCard>
         )}
 
-        {/* Live summary */}
         {cart.length > 0 && (
           <>
             <SectionTitle>Sale Summary</SectionTitle>
@@ -557,7 +591,6 @@ export default function NewSaleScreen() {
     </div>
   )
 }
-
 
 const inputStyle = {
   width: '100%',
