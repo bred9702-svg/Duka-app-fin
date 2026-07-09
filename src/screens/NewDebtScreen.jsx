@@ -36,12 +36,30 @@ function SearchBox({ value, onChange, placeholder }) {
   )
 }
 
+function TrialBlockedMessage({ message }) {
+  return (
+    <div style={{
+      background: 'rgba(255,107,91,0.10)',
+      border: '1px solid rgba(255,107,91,0.3)',
+      borderRadius: 12,
+      padding: '10px 12px',
+      marginBottom: 8,
+    }}>
+      <p style={{ fontSize: 11, color: '#FF6B5B', margin: 0 }}>
+        {message}
+      </p>
+    </div>
+  )
+}
+
 export default function NewDebtScreen() {
   const navigate = useNavigate()
   const customers = useAppStore((s) => s.customers)
   const products = useAppStore((s) => s.products)
   const addCustomer = useAppStore((s) => s.addCustomer)
   const createDebtSale = useAppStore((s) => s.createDebtSale)
+  const writeBlocked = useAppStore((s) => s.writeBlocked)
+  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -73,7 +91,7 @@ export default function NewDebtScreen() {
 
   const grandTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0)
-  const canConfirm = !!selectedCustomer && cart.length > 0 && !saving
+  const canConfirm = !!selectedCustomer && cart.length > 0 && !saving && !writeBlocked
 
   function addToCart(product) {
     setCart((prev) => [
@@ -102,8 +120,15 @@ export default function NewDebtScreen() {
   }
 
   async function createCustomer() {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+
     if (!newCustomerName.trim()) return
+
     setError(null)
+
     try {
       const customer = await addCustomer({
         name: newCustomerName.trim(),
@@ -121,9 +146,16 @@ export default function NewDebtScreen() {
   }
 
   async function confirmDebt() {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+
     if (!canConfirm) return
+
     setSaving(true)
     setError(null)
+
     try {
       await createDebtSale({
         customerId: selectedCustomer.id,
@@ -148,6 +180,10 @@ export default function NewDebtScreen() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="New Debt" />
+
+        {writeBlocked && (
+          <TrialBlockedMessage message={trialEndedMessage} />
+        )}
 
         <p style={sectionTitleStyle}>Customer</p>
         <SearchBox value={customerQuery} onChange={setCustomerQuery} placeholder="Search customer..." />
@@ -179,7 +215,13 @@ export default function NewDebtScreen() {
         })}
 
         <button
-          onClick={() => setAddingCustomer((open) => !open)}
+          onClick={() => {
+            if (writeBlocked) {
+              setError(trialEndedMessage)
+              return
+            }
+            setAddingCustomer((open) => !open)
+          }}
           style={ghostButtonStyle}
         >
           <Icon name="plus" size={14} /> + New Customer
@@ -189,7 +231,7 @@ export default function NewDebtScreen() {
           <GlassCard>
             <input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" style={inputStyle} />
             <input value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Phone (optional)" style={{ ...inputStyle, marginTop: 8 }} />
-            <button onClick={createCustomer} disabled={!newCustomerName.trim()} style={{ ...primaryButtonStyle, marginTop: 10, opacity: newCustomerName.trim() ? 1 : 0.45 }}>
+            <button onClick={createCustomer} disabled={!newCustomerName.trim() || writeBlocked} style={{ ...primaryButtonStyle, marginTop: 10, opacity: newCustomerName.trim() && !writeBlocked ? 1 : 0.45 }}>
               Save Customer
             </button>
           </GlassCard>
@@ -210,7 +252,16 @@ export default function NewDebtScreen() {
           )}
           {productQuery.trim() && productMatches.length === 0 && (
             <div style={dropdownStyle}>
-              <div onClick={() => setShowCreateProduct(true)} style={{ ...dropdownRowStyle, justifyContent: 'flex-start', gap: 8 }}>
+              <div
+                onClick={() => {
+                  if (writeBlocked) {
+                    setError(trialEndedMessage)
+                    return
+                  }
+                  setShowCreateProduct(true)
+                }}
+                style={{ ...dropdownRowStyle, justifyContent: 'flex-start', gap: 8 }}
+              >
                 <Icon name="plus" size={13} color="#F0A93D" />
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#F0A93D' }}>Create Product "{productQuery.trim()}"</span>
               </div>
