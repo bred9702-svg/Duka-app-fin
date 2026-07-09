@@ -7,6 +7,7 @@ import { fmtKES } from '../utils/formatters'
 import FadeIn from '../components/animation/FadeIn'
 import StaggerContainer from '../components/animation/StaggerContainer'
 import AnimatedCounter from '../components/animation/AnimatedCounter'
+import CreateProductSheet from '../components/inventory/CreateProductSheet'
 
 function GlassCard({ children, style = {} }) {
   return (
@@ -43,6 +44,8 @@ export default function NewSaleScreen() {
   const completeSale = useAppStore((s) => s.completeSale)
 
   const [query, setQuery] = useState('')
+  const [showCreateProduct, setShowCreateProduct] = useState(false)
+  const [productCreatedNote, setProductCreatedNote] = useState(null)
   const [cart, setCart] = useState([]) // { productId, name, unitPrice, costPrice, quantity, stock }
 
   const [saving, setSaving] = useState(false)
@@ -268,7 +271,50 @@ export default function NewSaleScreen() {
               ))}
             </div>
           )}
+
+          {query.trim() && suggestions.length === 0 && (
+            <div style={{
+              position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
+              background: 'var(--card-elevated-bg)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+              border: '1px solid var(--card-elevated-border)', borderRadius: 12, overflow: 'hidden',
+              boxShadow: 'var(--card-shadow)',
+            }}>
+              <div
+                onClick={() => setShowCreateProduct(true)}
+                style={{ padding: '11px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <Icon name="plus" size={13} color="#F0A93D" />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#F0A93D' }}>
+                  Create New Product "{query.trim()}"
+                </span>
+              </div>
+            </div>
+          )}
         </div>
+
+        {productCreatedNote && (
+          <div style={{
+            background: 'rgba(240,169,61,0.08)', border: '1px solid rgba(240,169,61,0.2)',
+            borderRadius: 10, padding: '9px 11px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <Icon name="circleCheck" size={13} color="#F0A93D" />
+            <p style={{ fontSize: 10, color: '#F0A93D', margin: 0 }}>
+              "{productCreatedNote}" added to your catalog — record a purchase to give it stock before selling it.
+            </p>
+          </div>
+        )}
+
+        {showCreateProduct && (
+          <CreateProductSheet
+            initialName={query.trim()}
+            onClose={() => setShowCreateProduct(false)}
+            onCreated={(product) => {
+              setShowCreateProduct(false)
+              setQuery('')
+              setProductCreatedNote(product.name)
+            }}
+          />
+        )}
 
         {/* Cart */}
         {cart.length > 0 ? (
