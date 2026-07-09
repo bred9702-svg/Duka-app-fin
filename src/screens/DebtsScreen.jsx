@@ -11,7 +11,6 @@ const AVATAR_COLORS = ['blue', 'amber', 'red', 'purple', 'green']
 export default function DebtsScreen() {
   const navigate = useNavigate()
   const customers = useAppStore((s) => s.customers)
-  const addTransaction = useAppStore((s) => s.addTransaction)
 
   // Supabase retourne total_owed (avec underscore)
   const activeDebts = [...customers]
@@ -84,24 +83,6 @@ return (
   customers={activeDebts.length}
   overdue={overdue}
 />
-      <button
-        onClick={startNewDebt}
-        style={{
-          width: '100%',
-          border: '1px solid rgba(240,169,61,.35)',
-          borderRadius: 12,
-          padding: '10px 12px',
-          marginBottom: 14,
-          background: 'rgba(240,169,61,.14)',
-          color: '#F0A93D',
-          fontFamily: 'var(--font-display)',
-          fontSize: 12,
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
-      >
-        + New Debt
-      </button>
 
       <SmartInsight customers={customers} />
 
