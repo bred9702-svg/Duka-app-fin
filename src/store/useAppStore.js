@@ -349,6 +349,77 @@ bootstrap: async () => {
     }
   },
 
+  createDebtSale: async ({ items, customerId }) => {
+    try {
+      if (!customerId) {
+        throw new Error('A customer is required for a debt sale.')
+      }
+      if (!items?.length) {
+        throw new Error('Add at least one product before confirming debt.')
+      }
+
+      const grandTotal = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
+      const totalProfit = items.reduce(
+        (a, it) => a + (it.unitPrice - (it.costPrice || 0)) * it.quantity,
+        0
+      )
+
+      const updatedStocks = {}
+      for (const item of items) {
+        const newStock = await updateStock(item.productId, item.quantity)
+        updatedStocks[item.productId] = newStock
+      }
+
+      const savedTxn = await dbAddTransaction({
+        amount: grandTotal,
+        source: 'manual',
+        direction: 'out',
+        classified: true,
+        operation_type: 'debt',
+        customer_id: customerId,
+        product_id: items.length === 1 ? items[0].productId : null,
+        quantity: items.length === 1 ? items[0].quantity : null,
+        unit_price: items.length === 1 ? items[0].unitPrice : null,
+        total_price: grandTotal,
+        profit: totalProfit,
+        is_debt: true,
+        original_amount: grandTotal,
+        paid_amount: 0,
+        remaining_amount: grandTotal,
+        debt_status: 'active',
+        mpesa_sender_name: null,
+        mpesa_sender_phone: null,
+        mpesa_reference: null,
+      })
+
+      const updatedCustomer = await dbIncreaseDebt(customerId, grandTotal)
+
+      set((s) => ({
+        products: s.products.map((p) =>
+          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
+        ),
+        transactions: [savedTxn, ...s.transactions],
+        customers: s.customers.map((c) =>
+          c.id === customerId ? { ...c, ...updatedCustomer } : c
+        ),
+      }))
+
+      await get().refreshTodayStats()
+
+      return {
+        grandTotal,
+        totalProfit,
+        itemCount: items.length,
+        totalQuantity: items.reduce((a, it) => a + it.quantity, 0),
+        transaction: savedTxn,
+        customer: updatedCustomer,
+      }
+    } catch (err) {
+      console.error('Create debt sale error:', err)
+      throw err
+    }
+  },
+
   completeSale: async ({ linkedTransactionId, items }) => {
     try {
       if (!linkedTransactionId) {
