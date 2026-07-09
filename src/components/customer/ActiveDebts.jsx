@@ -92,7 +92,7 @@ export default function ActiveDebts({
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {debt.product?.name || 'Unknown product'}
+                    {debt.product?.name || debt.product_name || debt.productName || debt.classification?.productName || 'Unknown product'}
                   </p>
 
                   <p
