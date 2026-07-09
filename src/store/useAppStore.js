@@ -64,6 +64,10 @@ registerOwner: async (data) => {
   // settings cache (shop profile, purchase history, preferences, etc.)
   clearLocalAppData()
 
+  const trialStart = new Date()
+  const trialEnd = new Date(trialStart)
+  trialEnd.setDate(trialStart.getDate() + 15)
+
   const session = {
     role: 'owner',
     name: data.name,
@@ -72,6 +76,9 @@ registerOwner: async (data) => {
     shopAddress: data.shopAddress,
     photo: data.photo || null,
     isOnboarded: false,
+    trialStart: trialStart.toISOString(),
+    trialEnd: trialEnd.toISOString(),
+    subscriptionStatus: 'trial',
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
 

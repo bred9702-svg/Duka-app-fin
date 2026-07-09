@@ -39,6 +39,15 @@ export default function CustomerDetailScreen() {
     transaction.classification?.productName ||
     'Unknown product'
 
+  const productById = new Map(products.map((product) => [product.id, product]))
+  const getProductName = (transaction) =>
+    transaction.product?.name ||
+    productById.get(transaction.product_id)?.name ||
+    transaction.product_name ||
+    transaction.productName ||
+    transaction.classification?.productName ||
+    'Unknown product'
+
   const purchaseHistory = transactions
     .filter((t) =>
       t.customer_id === customer?.id &&
@@ -47,7 +56,7 @@ export default function CustomerDetailScreen() {
     )
     .map((t) => ({
       id: t.id,
-       product: getProductName(t),
+      product: getProductName(t),
       date: fmtRelativeDay(t.created_at || t.ts, ''),
       amount: t.total_price || t.amount,
       quantity: t.quantity || 1,
