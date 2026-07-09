@@ -120,15 +120,6 @@ export default function ClassifyScreen() {
           })
           if (!newCust?.id) throw new Error('Failed to create customer')
           cls.customer_id = newCust.id
-        } else if (customerId) {
-          if (isDebtPayment) {
-            await addDebtPayment(customerId, txn.amount)
-          } else {
-            await increaseDebt(
-  customerId,
-  selectedProduct.unit_price * parsedQty
-)
-          }
         }
       }
 

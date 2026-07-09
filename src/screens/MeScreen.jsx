@@ -104,10 +104,19 @@ function Row({ item, onClick, isFirst, isLast }) {
   )
 }
 
+
+function getTrialDaysRemaining(session) {
+  if (session?.subscriptionStatus !== 'trial' || !session?.trialEnd) return null
+  const diffMs = new Date(session.trialEnd).getTime() - Date.now()
+  if (Number.isNaN(diffMs)) return null
+  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+}
+
 export default function MeScreen() {
   const navigate = useNavigate()
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
+  const trialDaysRemaining = getTrialDaysRemaining(session)
 
   return (
     <div
@@ -207,6 +216,32 @@ export default function MeScreen() {
             </div>
           </div>
         </div>
+
+        {trialDaysRemaining !== null && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
+              border: '1px solid rgba(240,169,61,.28)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', margin: 0 }}>
+                Pro Trial
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
+                {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
+              </p>
+            </div>
+            <Icon name="star" size={20} color="#F0A93D" />
+          </div>
+        )}
 
         {SECTIONS.map((section) => (
           <div key={section.title}>

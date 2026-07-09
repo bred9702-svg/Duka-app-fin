@@ -85,7 +85,7 @@ export async function updateProductPrice(productId, unitPrice) {
   return unitPrice
 }
 
-export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit }) {
+export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null }) {
   const { data, error } = await supabase
     .from('transactions')
     .update({
@@ -96,6 +96,7 @@ export async function completeSalePayment(transactionId, { items, grandTotal, to
       unit_price: items.length === 1 ? items[0].unitPrice : null,
       total_price: grandTotal,
       profit: totalProfit,
+      customer_id: customerId,
     })
     .eq('id', transactionId)
     .select()
