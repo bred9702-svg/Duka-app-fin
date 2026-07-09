@@ -15,6 +15,7 @@ import CustomerTimeline from '../components/customer/CustomerTimeline'
 export default function CustomerDetailScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
+  const products = useAppStore((s) => s.products)
   const addTransaction = useAppStore((s) => s.addTransaction)
   const addDebtPayment = useAppStore((s) => s.addDebtPayment)
 
@@ -29,6 +30,14 @@ export default function CustomerDetailScreen() {
     getLastPaymentDate(customer, transactions),
     'Never'
   )
+    const productById = new Map(products.map((product) => [product.id, product]))
+  const getProductName = (transaction) =>
+    transaction.product?.name ||
+    productById.get(transaction.product_id)?.name ||
+    transaction.product_name ||
+    transaction.productName ||
+    transaction.classification?.productName ||
+    'Unknown product'
 
   const purchaseHistory = transactions
     .filter((t) =>
@@ -38,7 +47,7 @@ export default function CustomerDetailScreen() {
     )
     .map((t) => ({
       id: t.id,
-      product: t.product?.name || 'Sale',
+       product: getProductName(t),
       date: fmtRelativeDay(t.created_at || t.ts, ''),
       amount: t.total_price || t.amount,
       quantity: t.quantity || 1,
@@ -60,6 +69,11 @@ export default function CustomerDetailScreen() {
         t.is_debt &&
         (t.remaining_amount || 0) > 0
     )
+    .map((t) => ({
+      ...t,
+      product: t.product || productById.get(t.product_id) || null,
+      product_name: getProductName(t),
+    }))
     .sort(
       (a, b) =>
         new Date(b.created_at) - new Date(a.created_at)
