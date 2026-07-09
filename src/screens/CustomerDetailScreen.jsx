@@ -44,8 +44,6 @@ export default function CustomerDetailScreen() {
 
   const productById = new Map(products.map((product) => [product.id, product]))
 
-  const productById = new Map(products.map((product) => [product.id, product]))
-
   const purchaseHistory = transactions
     .filter((t) =>
       t.customer_id === customer?.id &&
