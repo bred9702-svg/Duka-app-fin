@@ -13,6 +13,24 @@ export async function getProducts() {
   return data
 }
 
+export async function addProduct({ name, category, costPrice, unitPrice, stockCurrent = 0, stockAlert = 5 }) {
+  const { data, error } = await supabase
+    .from('products')
+    .insert({
+      name,
+      category,
+      cost_price: costPrice,
+      unit_price: unitPrice,
+      stock_current: stockCurrent,
+      stock_alert: stockAlert,
+      active: true,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 export async function searchProducts(query) {
   const { data, error } = await supabase
     .from('products')
