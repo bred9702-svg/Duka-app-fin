@@ -20,20 +20,6 @@ export default function DebtsScreen() {
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
   const overdue = activeDebts.filter(c => (c.total_owed || 0) > 5000).length
 
-  async function startNewDebt() {
-    const txn = await addTransaction({
-      amount: 0,
-      source: 'manual',
-      direction: 'out',
-      classified: false,
-      mpesa_sender_name: null,
-      mpesa_sender_phone: null,
-      mpesa_reference: null,
-    })
-
-    if (txn?.id) navigate(`/classify/${txn.id}`)
-  }
-
 return (
   <div
     style={{
@@ -83,6 +69,24 @@ return (
   customers={activeDebts.length}
   overdue={overdue}
 />
+      <button
+        onClick={() => navigate('/new-debt')}
+        style={{
+          width: '100%',
+          border: '1px solid rgba(240,169,61,.35)',
+          borderRadius: 12,
+          padding: '10px 12px',
+          marginBottom: 14,
+          background: 'rgba(240,169,61,.14)',
+          color: '#F0A93D',
+          fontFamily: 'var(--font-display)',
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}
+      >
+        + New Debt
+      </button>
 
       <SmartInsight customers={customers} />
 
