@@ -39,6 +39,7 @@ export default function ClassifyScreen() {
   const [qty, setQty] = useState('1')
   const [category, setCategory] = useState(null)
   const [customerId, setCustomerId] = useState(null)
+  const [customerSearch, setCustomerSearch] = useState('')
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [addingNew, setAddingNew] = useState(false)
@@ -47,6 +48,11 @@ export default function ClassifyScreen() {
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
+  )
+  const filteredCustomers = customers.filter((c) =>
+    [c.name, c.phone, c.mpesa_name]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(customerSearch.toLowerCase()))
   )
 
   // FIX: dépendances correctes — on écoute `type`, `txn`, `products`
@@ -72,16 +78,19 @@ export default function ClassifyScreen() {
   }
 
   const parsedQty = Math.max(1, parseInt(qty) || 1) // FIX: qty "0" → 1, centralisé
+  const isDebtPayment = type === 'debt' && txn.direction === 'in'
+  const needsCustomer = type === 'sale' || type === 'debt'
+  const hasCustomer = customerId || (!isDebtPayment && newName.trim())
 
   const canConfirm =
   type &&
   (
-    (type === 'sale' && selectedProduct) ||
+    (type === 'sale' && selectedProduct && hasCustomer) ||
     (type === 'expense' && category) ||
     (
       type === 'debt' &&
-      selectedProduct &&
-      (customerId || newName.trim())
+      (isDebtPayment || selectedProduct) &&
+      hasCustomer
     )
   )
 
@@ -90,15 +99,24 @@ export default function ClassifyScreen() {
     try {
       const cls = {
         type,
-        product_id: selectedProduct?.id || null,
-        quantity: parsedQty,
+        product_id: isDebtPayment ? null : selectedProduct?.id || null,
+        quantity: isDebtPayment ? null : parsedQty,
         category: category || null,
         customer_id: customerId || null,
-        unit_price: selectedProduct?.unit_price || null,
+        unit_price: isDebtPayment ? null : selectedProduct?.unit_price || null,
+      }
+
+      if (type === 'sale' && addingNew && newName.trim()) {
+        const newCust = await addCustomer({
+          name: newName.trim(),
+          phone: newPhone.trim() || null,
+        })
+        if (!newCust?.id) throw new Error('Failed to create customer')
+        cls.customer_id = newCust.id
       }
 
       if (type === 'debt') {
-        if (addingNew && newName.trim()) {
+        if (!isDebtPayment && addingNew && newName.trim()) {
           // FIX: on vérifie que addCustomer a bien retourné un id avant de continuer
           const newCust = await addCustomer({
             name: newName.trim(),
@@ -107,7 +125,7 @@ export default function ClassifyScreen() {
           if (!newCust?.id) throw new Error('Failed to create customer')
           cls.customer_id = newCust.id
         } else if (customerId) {
-          if (txn.direction === 'in') {
+          if (isDebtPayment) {
             await addDebtPayment(customerId, txn.amount)
           } else {
             await increaseDebt(
@@ -177,6 +195,7 @@ export default function ClassifyScreen() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
           {TYPE_OPTS.map((o) => {
             const selected = type === o.id
+            const label = o.id === 'debt' && txn.direction === 'in' ? 'Debt Payment' : o.label
             return (
               <div
                 key={o.id}
@@ -184,6 +203,7 @@ export default function ClassifyScreen() {
                   setType(o.id)
                   setCategory(null)
                   setCustomerId(null)
+                  setCustomerSearch('')
                   setSelectedProduct(null)
                   setSearch('')
                   setAddingNew(false)
@@ -214,7 +234,7 @@ export default function ClassifyScreen() {
                   }}
                 />
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
-                  {o.label}
+                  {label}
                 </span>
               </div>
             )
@@ -222,7 +242,7 @@ export default function ClassifyScreen() {
         </div>
 
         {/* SALE + DEBT */}
-{(type === 'sale' || type === 'debt') && (
+{(type === 'sale' || (type === 'debt' && !isDebtPayment)) && (
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 6 }}>
               Product
@@ -375,15 +395,25 @@ export default function ClassifyScreen() {
           </div>
         )}
 
-        {/* DEBT */}
-        {type === 'debt' && (
+        {/* CUSTOMER */}
+        {needsCustomer && (
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 8 }}>
-              {txn.direction === 'in' ? 'Customer repaying debt' : 'Assign debt to customer'}
+              {type === 'sale' ? 'Link sale to customer' : isDebtPayment ? 'Customer making this debt payment' : 'Assign debt to customer'}
             </p>
 
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              <input
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder="Search customer..."
+                style={{ ...inputStyle, paddingLeft: 36 }}
+              />
+              <Icon name="search" size={15} color="var(--text-low)" style={{ position: 'absolute', left: 11, top: 11 }} />
+            </div>
+
             {/* FIX: return() correctement fermé dans le .map() */}
-            {customers.map((c) => {
+            {filteredCustomers.map((c) => {
               const selected = customerId === c.id
               return (
                 <div
@@ -418,7 +448,8 @@ export default function ClassifyScreen() {
               )
             })}
 
-            <div
+            {!isDebtPayment && (
+              <div
               onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
               style={{
                 border: '1px dashed var(--text-low)', borderRadius: 11, padding: 10,
@@ -428,8 +459,9 @@ export default function ClassifyScreen() {
             >
               <Icon name="plus" size={14} /> New customer
             </div>
+            )}
 
-            {addingNew && (
+            {addingNew && !isDebtPayment && (
               <div>
                 <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Customer name" style={{ ...inputStyle, marginBottom: 8 }} />
                 <input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="Phone (optional)" style={inputStyle} />
@@ -445,7 +477,7 @@ export default function ClassifyScreen() {
             disabled={!canConfirm || saving}
             icon={saving ? 'loader' : 'check'}
           >
-            {saving ? 'Saving...' : type ? `Confirm ${type}` : 'Select a type'}
+            {saving ? 'Saving...' : isDebtPayment ? 'Confirm debt payment' : type ? `Confirm ${type}` : 'Select a type'}
           </Button>
         </div>
       </div>
