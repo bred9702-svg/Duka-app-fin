@@ -7,6 +7,7 @@ import { fmtKES } from '../utils/formatters'
 import FadeIn from '../components/animation/FadeIn'
 import StaggerContainer from '../components/animation/StaggerContainer'
 import AnimatedCounter from '../components/animation/AnimatedCounter'
+import CreateProductSheet from '../components/inventory/CreateProductSheet'
 
 function GlassCard({ children, style = {} }) {
   return (
@@ -53,6 +54,7 @@ export default function InventoryInvestmentScreen() {
   const [notes, setNotes] = useState('')
 
   const [query, setQuery] = useState('')
+  const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [items, setItems] = useState([]) // { productId, name, unitPrice, purchasePrice, quantity }
 
   const [saving, setSaving] = useState(false)
@@ -341,7 +343,40 @@ export default function InventoryInvestmentScreen() {
               ))}
             </div>
           )}
+
+          {query.trim() && suggestions.length === 0 && (
+            <div style={{
+              position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
+              background: 'var(--card-elevated-bg)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+              border: '1px solid var(--card-elevated-border)', borderRadius: 12, overflow: 'hidden',
+              boxShadow: 'var(--card-shadow)',
+            }}>
+              <div
+                onClick={() => setShowCreateProduct(true)}
+                style={{
+                  padding: '11px 12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}
+              >
+                <Icon name="plus" size={13} color="#F0A93D" />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#F0A93D' }}>
+                  Create New Product "{query.trim()}"
+                </span>
+              </div>
+            </div>
+          )}
         </div>
+
+        {showCreateProduct && (
+          <CreateProductSheet
+            initialName={query.trim()}
+            onClose={() => setShowCreateProduct(false)}
+            onCreated={(product) => {
+              setShowCreateProduct(false)
+              addProduct(product)
+            }}
+          />
+        )}
 
         {/* Line items */}
         {items.length > 0 && (
