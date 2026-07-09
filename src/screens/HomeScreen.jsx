@@ -1,305 +1,303 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import useAppStore from '../store/useAppStore'
-import StatCard from '../components/ui/StatCard'
 import Icon from '../components/ui/Icon'
-import ProfitRing from '../components/ProfitRing'
-import TransactionRow from '../components/transactions/TransactionRow'
-import ContextualMessage from '../components/ContextualMessage'
-import { fmtKES, fmtDateLong } from '../utils/formatters'
-import { getTopProducts } from '../lib/db'
+import useAppStore from '../store/useAppStore'
 
-const MPESA_AMOUNTS = [500, 800, 1000, 1500, 2000, 2500]
+const SECTIONS = [
+  {
+    title: 'Business',
+    items: [
+      { label: 'Shop Profile', icon: 'store', color: '#5FD97A', path: '/shop' },
+      { label: 'Payment Mode', icon: 'cash', color: '#F0A93D', path: '/payment-mode' },
+      { label: 'Business Preferences', icon: 'settings', color: '#5B9FF0', path: '/business-preferences' },
+    ],
+  },
+  {
+    title: 'Application',
+    items: [
+      { label: 'Notification Settings', icon: 'bell', color: '#FF6B5B', path: '/notification-settings' },
+      { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
+      { label: 'Language', icon: 'globe', color: '#4FC3F7', path: '/language' },
+    ],
+  },
+  {
+    title: 'Support',
+    items: [
+      { label: 'Help', icon: 'helpCircle', color: '#F0A93D', path: '/help' },
+      { label: 'Privacy', icon: 'shield', color: '#5B9FF0', path: '/privacy' },
+      { label: 'Rate Duka', icon: 'star', color: '#FFD166', path: '/rate' },
+    ],
+  },
+]
 
-function getGreeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  if (hour < 21) return 'Good evening'
-  return 'Good night'
-}
-
-function getRating(profit, income) {
-  if (income === 0) return 0
-  const margin = (profit / income) * 100
-  if (margin >= 35) return 5
-  if (margin >= 25) return 4
-  if (margin >= 15) return 3
-  if (margin >= 5) return 2
-  return 1
-}
-
-function Stars({ count }) {
+function SectionTitle({ children }) {
   return (
-    <div style={{ display: 'flex', gap: 3, margin: '4px 0 8px' }}>
-      {[1, 2, 3, 4, 5].map(i => (
-        <span key={i} style={{ fontSize: 14, opacity: i <= count ? 1 : 0.2 }}>★</span>
-      ))}
+    <p
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      {children}
+    </p>
+  )
+}
+
+function Row({ item, onClick, isFirst, isLast }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '11px 12px',
+        cursor: 'pointer',
+        background: 'var(--glass-fill-soft)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderLeft: '1px solid var(--glass-border)',
+        borderRight: '1px solid var(--glass-border)',
+        borderTop: isFirst ? '1px solid var(--glass-border)' : 'none',
+        borderBottom: isLast
+          ? '1px solid var(--glass-border)'
+          : '1px solid rgba(255,255,255,.04)',
+        borderTopLeftRadius: isFirst ? 14 : 0,
+        borderTopRightRadius: isFirst ? 14 : 0,
+        borderBottomLeftRadius: isLast ? 14 : 0,
+        borderBottomRightRadius: isLast ? 14 : 0,
+      }}
+    >
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          background: `${item.color}20`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon name={item.icon} size={14} color={item.color} />
+      </div>
+
+      <p
+        style={{
+          flex: 1,
+          margin: 0,
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--text-hi)',
+        }}
+      >
+        {item.label}
+      </p>
+
+      <Icon name="chevronRight" size={15} color="var(--text-low)" />
     </div>
   )
 }
 
-function TrialBlockedMessage({ message }) {
+function getTrialDaysRemaining(session) {
+  if (!session) return null
+
+  const status = session.subscriptionStatus || 'trial'
+  if (status !== 'trial') return null
+  if (!session.trialEnd) return 15
+
+  const diffMs = new Date(session.trialEnd).getTime() - Date.now()
+  if (Number.isNaN(diffMs)) return 15
+  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+}
+
+export default function MeScreen() {
+  const navigate = useNavigate()
+  const session = useAppStore((s) => s.session)
+  const signOut = useAppStore((s) => s.signOut)
+  const trialDaysRemaining = getTrialDaysRemaining(session)
+
   return (
     <div
       style={{
-        background: 'rgba(255,107,91,0.10)',
-        border: '1px solid rgba(255,107,91,0.28)',
-        borderRadius: 12,
-        padding: '10px 12px',
-        marginBottom: 12,
+        flex: 1,
+        width: '100%',
+        padding: '16px 14px 20px',
+        position: 'relative',
       }}
     >
-      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#FF6B5B' }}>
-        Trial Expired
-      </p>
-      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.45 }}>
-        {message}
-      </p>
-    </div>
-  )
-}
-
-export default function HomeScreen() {
-  const navigate = useNavigate()
-  const transactions = useAppStore((s) => s.transactions)
-  const customers = useAppStore((s) => s.customers)
-  const products = useAppStore((s) => s.products)
-  const todayStats = useAppStore((s) => s.todayStats)
-  const addTransaction = useAppStore((s) => s.addTransaction)
-  const writeBlocked = useAppStore((s) => s.writeBlocked)
-  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
-
-  const [simulating, setSimulating] = useState(false)
-  const [topProduct, setTopProduct] = useState(null)
-  const [blockedMessage, setBlockedMessage] = useState('')
-
-  const { income, expenses, profit, unclassified: unclassifiedCount } = todayStats
-  const marginPct = income > 0 ? (profit / income) * 100 : 0
-  const totalOwed = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
-  const recent = transactions.slice(0, 5)
-  const rating = getRating(profit, income)
-
-  const topCustomer = customers
-    .filter(c => (c.total_owed || 0) > 0)
-    .sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0))[0] || null
-
-  const lowStock = products.filter(p => p.stock_current <= p.stock_alert && p.stock_current > 0)
-
-  useEffect(() => {
-    getTopProducts(7).then(data => {
-      if (data && data.length > 0) {
-        const map = {}
-        data.forEach(t => {
-          const name = t.product?.name
-          if (!name) return
-          if (!map[name]) map[name] = { name, qty: 0 }
-          map[name].qty += t.quantity || 1
-        })
-        const top = Object.values(map).sort((a, b) => b.qty - a.qty)[0]
-        setTopProduct(top || null)
-      }
-    }).catch(() => {})
-  }, [])
-
-  function simulateMpesa() {
-    if (writeBlocked) {
-      setBlockedMessage(trialEndedMessage)
-      return
-    }
-
-    setBlockedMessage('')
-    setSimulating(true)
-
-    setTimeout(async () => {
-      await addTransaction({
-        amount: MPESA_AMOUNTS[Math.floor(Math.random() * MPESA_AMOUNTS.length)],
-        source: 'mpesa',
-        direction: 'in',
-        classified: false,
-        mpesa_sender_name: 'JAMES OTIENO',
-        mpesa_sender_phone: '+254712345678',
-        mpesa_reference: 'QK' + Math.random().toString(36).substr(2, 8).toUpperCase(),
-      })
-      setSimulating(false)
-      navigate('/inbox')
-    }, 900)
-  }
-
-  return (
-    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
-      <div className="bg-blob" style={{ width: 150, height: 150, top: -40, right: -40, background: 'rgba(240,169,61,0.25)' }} />
-      <div className="bg-blob" style={{ width: 120, height: 120, bottom: 200, left: -40, background: 'rgba(95,217,122,0.12)', animationDelay: '2s' }} />
+      <div
+        className="bg-blob"
+        style={{
+          width: 140,
+          height: 140,
+          top: -30,
+          right: -20,
+          background: 'rgba(91,159,240,.14)',
+        }}
+      />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div>
-            <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 2 }}>
-              {fmtDateLong(Date.now())}
-            </p>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {getGreeting()}
-            </h1>
-            {income > 0 ? (
-              <p style={{ fontSize: 12, color: 'var(--text-mid)', marginTop: 3 }}>
-                Your shop made <span style={{ color: '#5FD97A', fontWeight: 600 }}>{fmtKES(income)} KES</span> today
-              </p>
-            ) : (
-              <p style={{ fontSize: 12, color: 'var(--text-low)', marginTop: 3 }}>
-                No sales recorded yet today
-              </p>
-            )}
-          </div>
-          <div className="glass-card" style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Icon name="bottle" size={17} color="#F0A93D" />
-          </div>
-        </div>
-
-        {writeBlocked && <TrialBlockedMessage message={trialEndedMessage} />}
-
-        {blockedMessage && (
-          <div style={{
-            background: 'rgba(255,107,91,0.10)',
-            border: '1px solid rgba(255,107,91,0.25)',
-            borderRadius: 12,
-            padding: '9px 11px',
-            marginBottom: 10,
-          }}>
-            <p style={{ margin: 0, fontSize: 11, color: '#FF6B5B', fontWeight: 600 }}>
-              {blockedMessage}
-            </p>
-          </div>
-        )}
-
-        <ContextualMessage
-          stats={todayStats}
-          topProduct={topProduct}
-          topCustomer={topCustomer}
-          lowStock={lowStock}
-        />
-
-        <div style={{ marginBottom: 6 }}>
-          <ProfitRing profit={profit} income={income} marginPct={marginPct} />
-        </div>
-
-        {income > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, paddingLeft: 4 }}>
-            <Stars count={rating} />
-            <p style={{ fontSize: 11, color: 'var(--text-low)' }}>
-              {rating >= 4 ? 'Excellent day' : rating >= 3 ? 'Good performance' : rating >= 2 ? 'Could be better' : 'Keep going'}
-            </p>
-          </div>
-        )}
-
-        <div
+        <h1
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 8,
+            fontFamily: 'var(--font-display)',
+            fontSize: 21,
+            fontWeight: 700,
+            color: 'var(--text-hi)',
+            letterSpacing: '-0.02em',
             marginBottom: 14,
           }}
         >
-          <StatCard
-            label="Money in"
-            value={fmtKES(income)}
-            sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
-            color="green"
-            delay={0.05}
-          />
+          Me
+        </h1>
 
-          <StatCard
-            label="Money out"
-            value={fmtKES(expenses)}
-            sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
-            color="red"
-            delay={0.1}
-          />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            padding: '14px',
+            borderRadius: 14,
+            background: 'var(--glass-fill-soft)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid var(--glass-border)',
+          }}
+        >
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: '50%',
+              background: 'rgba(240,169,61,.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon name="users" size={22} color="#F0A93D" />
+          </div>
 
-          <StatCard
-            label="Customer debt"
-            value={fmtKES(totalOwed)}
-            sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
-            color="amber"
-            delay={0.15}
-          />
-
-          <StatCard
-            label="Needs review"
-            value={unclassifiedCount}
-            sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
-            color={unclassifiedCount ? 'red' : 'green'}
-            delay={0.2}
-          />
-        </div>
-
-        {(topProduct || topCustomer || lowStock.length > 0) && (
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Quick insights
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-display)',
+                fontSize: 15,
+                fontWeight: 700,
+                color: 'var(--text-hi)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {session?.name || 'Shop Owner'}
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: topProduct && topCustomer ? '1fr 1fr' : '1fr', gap: 8 }}>
-              {topProduct && (
-                <div style={{ background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>BEST PRODUCT</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topProduct.name}</p>
-                  <p style={{ fontSize: 10, color: '#F0A93D' }}>×{topProduct.qty} sold</p>
-                </div>
-              )}
-              {topCustomer && (
-                <div style={{ background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 12px' }}>
-                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>TOP CUSTOMER</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topCustomer.name}</p>
-                  <p style={{ fontSize: 10, color: '#5B9FF0' }}>{topCustomer.visit_count || 0} visits</p>
-                </div>
-              )}
-              {lowStock.length > 0 && (
-                <div style={{ background: 'rgba(255,107,91,0.08)', border: '1px solid rgba(255,107,91,0.25)', borderRadius: 12, padding: '10px 12px', gridColumn: topProduct && topCustomer ? '1 / -1' : 'auto' }}>
-                  <p style={{ fontSize: 9, color: '#FF6B5B', marginBottom: 3, fontWeight: 600 }}>⚠ STOCK RUNNING LOW</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{lowStock[0].name}</p>
-                  <p style={{ fontSize: 10, color: '#FF6B5B' }}>{lowStock[0].stock_current} units left</p>
-                </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 600,
+                  padding: '2px 7px',
+                  background: session?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
+                  color: session?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
+                }}
+              >
+                {session?.role === 'employee' ? 'Employee' : 'Owner'}
+              </span>
+              {session?.shopName && (
+                <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
+                  {session.shopName}
+                </span>
               )}
             </div>
           </div>
+        </div>
+
+        {trialDaysRemaining !== null && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
+              border: '1px solid rgba(240,169,61,.28)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', margin: 0 }}>
+                Pro Trial
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
+                {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
+              </p>
+            </div>
+            <Icon name="star" size={20} color="#F0A93D" />
+          </div>
         )}
+
+        {SECTIONS.map((section) => (
+          <div key={section.title}>
+            <SectionTitle>{section.title}</SectionTitle>
+
+            <div>
+              {section.items.map((item, i) => (
+                <Row
+                  key={item.label}
+                  item={item}
+                  onClick={() => navigate(item.path)}
+                  isFirst={i === 0}
+                  isLast={i === section.items.length - 1}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
 
         <button
-          onClick={simulateMpesa}
-          disabled={simulating || writeBlocked}
+          onClick={() => {
+            signOut()
+            navigate('/splash')
+          }}
           style={{
             width: '100%',
-            background: simulating || writeBlocked ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
-            color: simulating || writeBlocked ? '#FFD98A' : '#2A1A05',
-            border: simulating || writeBlocked ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
-            borderRadius: 12, padding: 11,
-            fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
-            cursor: simulating || writeBlocked ? 'default' : 'pointer', marginBottom: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: simulating || writeBlocked ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
-            opacity: writeBlocked ? 0.65 : 1,
+            marginTop: 20,
+            padding: '12px',
+            borderRadius: 12,
+            border: '1px solid rgba(255,107,91,0.25)',
+            background: 'rgba(255,107,91,0.08)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-display)',
+            fontSize: 12,
+            fontWeight: 600,
+            color: '#FF6B5B',
           }}
         >
-          <Icon name={simulating ? 'loader' : 'phone'} size={15} spin={simulating} />
-          {simulating ? 'Simulating M-Pesa...' : writeBlocked ? 'Trial Expired' : 'Simulate M-Pesa payment'}
+          Sign Out
         </button>
 
-        {recent.length > 0 && (
-          <>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Recent transactions
-            </p>
-            {recent.map((t, i) => (
-              <TransactionRow
-                key={t.id}
-                txn={t}
-                customers={customers}
-                delay={0.25 + i * 0.05}
-                onClick={!t.classified ? () => navigate(`/classify/${t.id}`) : undefined}
-              />
-            ))}
-          </>
-        )}
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: 10,
+            color: 'var(--text-low)',
+            opacity: 0.6,
+            marginTop: 14,
+          }}
+        >
+          Version 1.0.0
+        </p>
       </div>
     </div>
   )
