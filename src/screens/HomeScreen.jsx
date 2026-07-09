@@ -39,6 +39,27 @@ function Stars({ count }) {
   )
 }
 
+function TrialBlockedMessage({ message }) {
+  return (
+    <div
+      style={{
+        background: 'rgba(255,107,91,0.10)',
+        border: '1px solid rgba(255,107,91,0.28)',
+        borderRadius: 12,
+        padding: '10px 12px',
+        marginBottom: 12,
+      }}
+    >
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#FF6B5B' }}>
+        Trial Expired
+      </p>
+      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.45 }}>
+        {message}
+      </p>
+    </div>
+  )
+}
+
 export default function HomeScreen() {
   const navigate = useNavigate()
   const transactions = useAppStore((s) => s.transactions)
@@ -46,8 +67,12 @@ export default function HomeScreen() {
   const products = useAppStore((s) => s.products)
   const todayStats = useAppStore((s) => s.todayStats)
   const addTransaction = useAppStore((s) => s.addTransaction)
+  const writeBlocked = useAppStore((s) => s.writeBlocked)
+  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
+
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
+  const [blockedMessage, setBlockedMessage] = useState('')
 
   const { income, expenses, profit, unclassified: unclassifiedCount } = todayStats
   const marginPct = income > 0 ? (profit / income) * 100 : 0
@@ -78,7 +103,14 @@ export default function HomeScreen() {
   }, [])
 
   function simulateMpesa() {
+    if (writeBlocked) {
+      setBlockedMessage(trialEndedMessage)
+      return
+    }
+
+    setBlockedMessage('')
     setSimulating(true)
+
     setTimeout(async () => {
       await addTransaction({
         amount: MPESA_AMOUNTS[Math.floor(Math.random() * MPESA_AMOUNTS.length)],
@@ -101,14 +133,13 @@ export default function HomeScreen() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* Header humain */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 2 }}>
               {fmtDateLong(Date.now())}
             </p>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {getGreeting()} 
+              {getGreeting()}
             </h1>
             {income > 0 ? (
               <p style={{ fontSize: 12, color: 'var(--text-mid)', marginTop: 3 }}>
@@ -125,7 +156,22 @@ export default function HomeScreen() {
           </div>
         </div>
 
-        {/* Message contextuel */}
+        {writeBlocked && <TrialBlockedMessage message={trialEndedMessage} />}
+
+        {blockedMessage && (
+          <div style={{
+            background: 'rgba(255,107,91,0.10)',
+            border: '1px solid rgba(255,107,91,0.25)',
+            borderRadius: 12,
+            padding: '9px 11px',
+            marginBottom: 10,
+          }}>
+            <p style={{ margin: 0, fontSize: 11, color: '#FF6B5B', fontWeight: 600 }}>
+              {blockedMessage}
+            </p>
+          </div>
+        )}
+
         <ContextualMessage
           stats={todayStats}
           topProduct={topProduct}
@@ -133,12 +179,10 @@ export default function HomeScreen() {
           lowStock={lowStock}
         />
 
-        {/* Profit ring */}
         <div style={{ marginBottom: 6 }}>
           <ProfitRing profit={profit} income={income} marginPct={marginPct} />
         </div>
 
-        {/* Stars rating */}
         {income > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, paddingLeft: 4 }}>
             <Stars count={rating} />
@@ -148,52 +192,47 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* Stat cards — langage humain */}
-       <div
-  style={{
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
-    marginBottom: 14,
-  }}
->
- <StatCard
-  label="Money in"
-  value={fmtKES(income)}
-  sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
-  color="green"
-  delay={0.05}
-/>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+            marginBottom: 14,
+          }}
+        >
+          <StatCard
+            label="Money in"
+            value={fmtKES(income)}
+            sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
+            color="green"
+            delay={0.05}
+          />
 
-<StatCard
-  label="Money out"
-  value={fmtKES(expenses)}
-  sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
-  color="red"
-  delay={0.1}
-/>
+          <StatCard
+            label="Money out"
+            value={fmtKES(expenses)}
+            sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
+            color="red"
+            delay={0.1}
+          />
 
-<StatCard
-  label="Customer debt"
-  value={fmtKES(totalOwed)}
-  sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
-  color="amber"
-  delay={0.15}
-/>
+          <StatCard
+            label="Customer debt"
+            value={fmtKES(totalOwed)}
+            sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
+            color="amber"
+            delay={0.15}
+          />
 
-<StatCard
-  label="Needs review"
-  value={unclassifiedCount}
-  sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
-  color={unclassifiedCount ? 'red' : 'green'}
-  delay={0.2}
-/>
+          <StatCard
+            label="Needs review"
+            value={unclassifiedCount}
+            sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
+            color={unclassifiedCount ? 'red' : 'green'}
+            delay={0.2}
+          />
+        </div>
 
-</div>
-
-{/* Quick insights */}
-
-        {/* Quick insights */}
         {(topProduct || topCustomer || lowStock.length > 0) && (
           <div style={{ marginBottom: 14 }}>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -225,27 +264,26 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* Simulate M-Pesa */}
         <button
           onClick={simulateMpesa}
-          disabled={simulating}
+          disabled={simulating || writeBlocked}
           style={{
             width: '100%',
-            background: simulating ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
-            color: simulating ? '#FFD98A' : '#2A1A05',
-            border: simulating ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
+            background: simulating || writeBlocked ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
+            color: simulating || writeBlocked ? '#FFD98A' : '#2A1A05',
+            border: simulating || writeBlocked ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
             borderRadius: 12, padding: 11,
             fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', marginBottom: 14,
+            cursor: simulating || writeBlocked ? 'default' : 'pointer', marginBottom: 14,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: simulating ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
+            boxShadow: simulating || writeBlocked ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
+            opacity: writeBlocked ? 0.65 : 1,
           }}
         >
           <Icon name={simulating ? 'loader' : 'phone'} size={15} spin={simulating} />
-          {simulating ? 'Simulating M-Pesa...' : 'Simulate M-Pesa payment'}
+          {simulating ? 'Simulating M-Pesa...' : writeBlocked ? 'Trial Expired' : 'Simulate M-Pesa payment'}
         </button>
 
-        {/* Recent transactions */}
         {recent.length > 0 && (
           <>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
