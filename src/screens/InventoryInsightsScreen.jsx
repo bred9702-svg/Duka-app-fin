@@ -6,6 +6,10 @@ import AIInsightsCard from '../components/inventory/AIInsightsCard'
 import HealthScoreCard from '../components/inventory/HealthScoreCard'
 import DeadStockCard from '../components/inventory/DeadStockCard'
 import AIAdvisorCard from '../components/inventory/AIAdvisorCard'
+import CurrentStockCard from '../components/inventory/CurrentStockCard'
+import ExpectedProfitCard from '../components/inventory/ExpectedProfitCard'
+import LowStockSection from '../components/inventory/LowStockSection'
+import PurchaseHistorySection from '../components/inventory/PurchaseHistorySection'
 
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/ui/Icon'
@@ -161,6 +165,14 @@ return (
         lowStock={lowStock}
         outOfStock={outOfStock}
       />
+
+      <ExpectedProfitCard products={products} />
+
+      <LowStockSection lowStock={lowStock} />
+
+      <PurchaseHistorySection />
+
+      <CurrentStockCard products={products} />
     </div>
   </div>
 )
