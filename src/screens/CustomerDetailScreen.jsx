@@ -9,6 +9,7 @@ import CustomerStats from '../components/customer/CustomerStats'
 import PaymentInput from '../components/customer/PaymentInput'
 import ActiveDebts from '../components/customer/ActiveDebts'
 import PaymentTimeline from '../components/customer/PaymentTimeline'
+import PurchaseHistory from '../components/customer/PurchaseHistory'
 import CustomerTimeline from '../components/customer/CustomerTimeline'
 
 export default function CustomerDetailScreen() {
@@ -28,6 +29,21 @@ export default function CustomerDetailScreen() {
     getLastPaymentDate(customer, transactions),
     'Never'
   )
+
+  const purchaseHistory = transactions
+    .filter((t) =>
+      t.customer_id === customer?.id &&
+      t.classified &&
+      (t.operation_type === 'sale' || t.operation_type === 'debt')
+    )
+    .map((t) => ({
+      id: t.id,
+      product: t.product?.name || 'Sale',
+      date: fmtRelativeDay(t.created_at || t.ts, ''),
+      amount: t.total_price || t.amount,
+      quantity: t.quantity || 1,
+      paid: t.operation_type === 'sale' || (t.remaining_amount || 0) === 0,
+    }))
 
   const paymentHistory = transactions
     .filter((t) =>
@@ -117,32 +133,32 @@ export default function CustomerDetailScreen() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <BackButton to="/debts" />
 
-<CustomerHeader
-  customer={customer}
-/>
+        <CustomerHeader customer={customer} />
 
-<CustomerStats
-  customer={customer}
-  lastPaymentLabel={lastPaymentLabel}
-  activeDebtCount={debts.length}
-/>
+        <CustomerStats
+          customer={customer}
+          lastPaymentLabel={lastPaymentLabel}
+        />
 
-<ActiveDebts
-  debts={debts}
-  onRecordPayment={handleRecordPayment}
-/>
+        <ActiveDebts
+          debts={debts}
+          onRecordPayment={handleRecordPayment}
+        />
 
-<CustomerTimeline
-  debts={debts}
-  payments={paymentHistory}
-/>
+        <PaymentInput
+          customer={customer}
+          amount={amount}
+          setAmount={setAmount}
+          onRecord={recordPayment}
+        />
 
-<PaymentInput
-  customer={customer}
-  amount={amount}
-  setAmount={setAmount}
-  onRecord={recordPayment}
-/>
+        <PurchaseHistory
+          purchases={purchaseHistory}
+        />
+
+        <PaymentTimeline
+          payments={paymentHistory}
+        />
       </div>
     </div>
   )
