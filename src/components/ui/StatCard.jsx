@@ -55,8 +55,7 @@ export default function StatCard({
         padding: '12px',
         background: theme.background,
         border: `1px solid ${theme.border}`,
-        boxShadow:
-          '0 10px 30px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.10)',
+        boxShadow: 'var(--card-shadow)',
         animation: 'slideUp .45s ease-out backwards',
         animationDelay: `${delay}s`,
       }}

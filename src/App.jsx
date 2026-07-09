@@ -1,20 +1,74 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import useAppStore from './store/useAppStore'
+
 import HomeScreen from './screens/HomeScreen'
 import TransactionsScreen from './screens/TransactionsScreen'
 import ClassifyScreen from './screens/ClassifyScreen'
 import DebtsScreen from './screens/DebtsScreen'
 import CustomerDetailScreen from './screens/CustomerDetailScreen'
-import SettingsScreen from './screens/SettingsScreen'
+
 import AnalyticsScreen from './screens/AnalyticsScreen'
+import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
+import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
+import AdvisorScreen from './screens/AdvisorScreen'
+import InventoryInvestmentScreen from './screens/InventoryInvestmentScreen'
+import NewSaleScreen from './screens/NewSaleScreen'
+import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
+import InsightsScreen from './screens/InsightsScreen'
+import MeScreen from './screens/MeScreen'
+
+import ShopProfileScreen from './screens/settings/ShopProfileScreen'
+import PaymentModeScreen from './screens/settings/PaymentModeScreen'
+import StoreSettingsScreen from './screens/settings/StoreSettingsScreen'
+import NotificationsScreen from './screens/settings/NotificationsScreen'
+import ThemeScreen from './screens/settings/ThemeScreen'
+import LanguageScreen from './screens/settings/LanguageScreen'
+import HelpScreen from './screens/settings/HelpScreen'
+import PrivacyScreen from './screens/settings/PrivacyScreen'
+
 import BottomNav from './components/BottomNav'
+import FadeIn from './components/animation/FadeIn'
+import RequireOwner from './components/auth/RequireOwner'
+
+import SplashScreen from './screens/onboarding/SplashScreen'
+import WelcomeScreen from './screens/onboarding/WelcomeScreen'
+import OwnerRegistrationScreen from './screens/onboarding/OwnerRegistrationScreen'
+import InitialInventorySetupScreen from './screens/onboarding/InitialInventorySetupScreen'
+import SignInScreen from './screens/onboarding/SignInScreen'
 
 function LoadingScreen() {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)', gap: 16 }}>
-      <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--line)', borderTopColor: '#F0A93D', animation: 'spin 0.8s linear infinite' }} />
-      <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, color: 'var(--text-low)', fontWeight: 500 }}>
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-deep)',
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          border: '3px solid var(--line)',
+          borderTopColor: '#F0A93D',
+          animation: 'spin .8s linear infinite',
+        }}
+      />
+
+      <p
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 13,
+          color: 'var(--text-low)',
+          fontWeight: 500,
+        }}
+      >
         Loading your shop...
       </p>
     </div>
@@ -23,42 +77,148 @@ function LoadingScreen() {
 
 export default function App() {
   const location = useLocation()
+  const navigate = useNavigate()
+
   const bootstrap = useAppStore((s) => s.bootstrap)
   const loading = useAppStore((s) => s.loading)
+  const session = useAppStore((s) => s.session)
 
-  useEffect(() => { bootstrap() }, [])
+  useEffect(() => {
+    bootstrap()
+  }, [])
+
+  const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']
+  const isOnboardingRoute = ONBOARDING_PATHS.some((p) => location.pathname.startsWith(p))
+
+  // Frontend-only auth guard: no valid, onboarded session and not already
+  // on an onboarding screen → send the merchant through Splash first.
+  useEffect(() => {
+    if (loading) return
+    const needsOnboarding = !session || !session.isOnboarded
+    if (needsOnboarding && !isOnboardingRoute) {
+      navigate('/splash', { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, session, location.pathname])
 
   const hideNav =
+    isOnboardingRoute ||
     location.pathname.startsWith('/classify') ||
     location.pathname.startsWith('/customer')
 
   if (loading) {
-    return <div className="app-shell"><LoadingScreen /></div>
+    return (
+      <div className="app-shell">
+        <LoadingScreen />
+      </div>
+    )
   }
 
   return (
-   <div className="app-shell">
-  <div
-    style={{
-      flex: 1,
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-    }}
-  >
-    <Routes>
-      <Route path="/" element={<HomeScreen />} />
-      <Route path="/inbox" element={<TransactionsScreen />} />
-      <Route path="/classify/:id" element={<ClassifyScreen />} />
-      <Route path="/debts" element={<DebtsScreen />} />
-      <Route path="/customer/:id" element={<CustomerDetailScreen />} />
-      <Route path="/analytics" element={<AnalyticsScreen />} />
-      <Route path="/settings" element={<SettingsScreen />} />
-    </Routes>
-  </div>
+    <div className="app-shell">
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          paddingBottom: hideNav ? 0 : 84,
+        }}
+      >
+        <FadeIn
+          key={location.pathname}
+          duration={260}
+          y={14}
+          style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}
+        >
+          <Routes>
+            <Route path="/splash" element={<SplashScreen />} />
+            <Route path="/welcome" element={<WelcomeScreen />} />
+            <Route path="/register" element={<OwnerRegistrationScreen />} />
+            <Route path="/setup-inventory" element={<InitialInventorySetupScreen />} />
+            <Route path="/sign-in" element={<SignInScreen />} />
 
-  {!hideNav && <BottomNav />}
-</div>
-    )
-    }
+            <Route path="/" element={<HomeScreen />} />
+
+            <Route
+              path="/inbox"
+              element={<TransactionsScreen />}
+            />
+
+            <Route
+              path="/classify/:id"
+              element={<ClassifyScreen />}
+            />
+
+            <Route
+              path="/debts"
+              element={<DebtsScreen />}
+            />
+
+            <Route
+              path="/customer/:id"
+              element={<CustomerDetailScreen />}
+            />
+
+            <Route
+              path="/insights"
+              element={<InsightsScreen />}
+            />
+
+            <Route
+              path="/analytics"
+              element={<AnalyticsScreen />}
+            />
+
+            <Route
+              path="/inventory"
+              element={<InventoryInsightsScreen />}
+            />
+
+            <Route
+              path="/finance"
+              element={<RequireOwner title="Financial Analysis"><FinancialAnalysisScreen /></RequireOwner>}
+            />
+
+            <Route
+              path="/trends"
+              element={<BusinessTrendsScreen />}
+            />
+
+            <Route
+              path="/advisor"
+              element={<AdvisorScreen />}
+            />
+
+            <Route
+              path="/inventory-investment"
+              element={<InventoryInvestmentScreen />}
+            />
+
+            <Route
+              path="/new-sale"
+              element={<NewSaleScreen />}
+            />
+
+            <Route
+              path="/me"
+              element={<MeScreen />}
+            />
+
+            <Route path="/shop" element={<ShopProfileScreen />} />
+            <Route path="/payment-mode" element={<PaymentModeScreen />} />
+            <Route path="/business-preferences" element={<RequireOwner title="Store Settings"><StoreSettingsScreen /></RequireOwner>} />
+            <Route path="/notifications" element={<NotificationsScreen />} />
+            <Route path="/appearance" element={<ThemeScreen />} />
+            <Route path="/language" element={<LanguageScreen />} />
+            <Route path="/help" element={<HelpScreen />} />
+            <Route path="/privacy" element={<PrivacyScreen />} />
+          </Routes>
+        </FadeIn>
+      </div>
+
+      {!hideNav && <BottomNav />}
+    </div>
+  )
+}

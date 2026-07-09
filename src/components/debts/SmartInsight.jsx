@@ -1,25 +1,11 @@
 import Icon from '../ui/Icon'
-import { fmtKES } from '../../utils/formatters'
+import { generateSmartInsight } from '../../utils/smartInsight'
 
-export default function SmartInsight({ customers = [] }) {
-  const debtors = customers
-    .filter(c => (c.total_owed || 0) > 0)
-    .sort((a, b) => (b.total_owed || 0) - (a.total_owed || 0))
-
-  if (debtors.length === 0) return null
-
-  const top = debtors[0]
-
-  let title = 'Smart Insight'
-  let message = `Collect from ${top.name} first.`
-
-  if ((top.total_owed || 0) > 5000) {
-    message = `${top.name} owes ${fmtKES(top.total_owed)} KES. This should be your priority today.`
-  } else if ((top.total_owed || 0) > 2000) {
-    message = `${top.name} still owes ${fmtKES(top.total_owed)} KES. A quick reminder could improve today's cash flow.`
-  } else {
-    message = `${top.name} only owes ${fmtKES(top.total_owed)} KES. It's a good opportunity to close this debt.`
-  }
+export default function SmartInsight({
+  customers = [],
+  transactions = [],
+}) {
+  const insight = generateSmartInsight(customers, transactions)
 
   return (
     <div
@@ -27,9 +13,8 @@ export default function SmartInsight({ customers = [] }) {
         marginBottom: 16,
         padding: 16,
         borderRadius: 16,
-        background:
-          'linear-gradient(135deg, rgba(91,159,240,.12), rgba(91,159,240,.05))',
-        border: '1px solid rgba(91,159,240,.18)',
+        background: `${insight.color}15`,
+        border: `1px solid ${insight.color}40`,
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
       }}
@@ -46,7 +31,7 @@ export default function SmartInsight({ customers = [] }) {
             width: 36,
             height: 36,
             borderRadius: 12,
-            background: 'rgba(91,159,240,.18)',
+            background: `${insight.color}25`,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -54,9 +39,9 @@ export default function SmartInsight({ customers = [] }) {
           }}
         >
           <Icon
-            name="sparkles"
+            name={insight.icon}
             size={18}
-            color="#5B9FF0"
+            color={insight.color}
           />
         </div>
 
@@ -66,12 +51,12 @@ export default function SmartInsight({ customers = [] }) {
               fontSize: 10,
               textTransform: 'uppercase',
               letterSpacing: '.08em',
-              color: '#5B9FF0',
+              color: insight.color,
               fontWeight: 700,
               marginBottom: 6,
             }}
           >
-            {title}
+            {insight.title}
           </p>
 
           <p
@@ -81,7 +66,7 @@ export default function SmartInsight({ customers = [] }) {
               color: 'var(--text-hi)',
             }}
           >
-            {message}
+            {insight.message}
           </p>
         </div>
       </div>

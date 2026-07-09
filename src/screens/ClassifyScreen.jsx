@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import Icon from '../components/ui/Icon'
 import Avatar from '../components/ui/Avatar'
 import { fmtKES, fmtTime } from '../utils/formatters'
-import { EXPENSE_CATEGORIES } from '../data/mockData'
+import { EXPENSE_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/mockData'
 
 const TYPE_OPTS = [
   { id: 'sale', icon: 'bottle', label: 'Sale', color: '#F0A93D' },
@@ -14,11 +14,7 @@ const TYPE_OPTS = [
   { id: 'expense', icon: 'receiptOff', label: 'Expense', color: '#FF6B5B' },
 ]
 
-const CATEGORIES = {
-  beer: '🍺 Beer', whisky: '🥃 Whisky', gin: '🍸 Gin',
-  vodka: '🍹 Vodka', cognac: '🥂 Cognac', wine: '🍷 Wine',
-  liqueur: '🍶 Liqueur', rum: '🍾 Rum',
-}
+const CATEGORIES = PRODUCT_CATEGORY_LABELS
 
 export default function ClassifyScreen() {
   const { id } = useParams()
@@ -28,6 +24,7 @@ export default function ClassifyScreen() {
   const products = useAppStore((s) => s.products)
   const classifyTransaction = useAppStore((s) => s.classifyTransaction)
   const addCustomer = useAppStore((s) => s.addCustomer)
+  const addPendingStockPurchase = useAppStore((s) => s.addPendingStockPurchase)
 
   const txn = transactions.find((t) => t.id === id)
 
@@ -116,7 +113,21 @@ export default function ClassifyScreen() {
 
       await classifyTransaction(txn.id, cls)
       setDone(true)
-      setTimeout(() => navigate('/inbox'), 700)
+
+      if (type === 'expense' && category === 'stock') {
+        addPendingStockPurchase({
+          transactionId: txn.id,
+          amount: txn.amount,
+          createdAt: new Date().toISOString(),
+        })
+        setTimeout(() => {
+          navigate('/inventory-investment', {
+            state: { budget: txn.amount, linkedTransactionId: txn.id },
+          })
+        }, 700)
+      } else {
+        setTimeout(() => navigate('/inbox'), 700)
+      }
     } catch (err) {
       console.error('Classify error:', err)
       setSaving(false)
@@ -178,6 +189,12 @@ export default function ClassifyScreen() {
               <div
                 key={o.id}
                 onClick={() => {
+                  if (o.id === 'sale') {
+                    navigate('/new-sale', {
+                      state: { paymentAmount: txn.amount, linkedTransactionId: txn.id },
+                    })
+                    return
+                  }
                   setType(o.id)
                   setCategory(null)
                   setCustomerId(null)

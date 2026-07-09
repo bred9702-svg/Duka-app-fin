@@ -4,7 +4,6 @@ import DebtCard from '../components/debts/DebtCard'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import Card from '../components/ui/Card'
-import Avatar from '../components/ui/Avatar'
 import Icon from '../components/ui/Icon'
 import { fmtKES } from '../utils/formatters'
 import { fmtRelativeDay, getActiveDebtCount, getLastPaymentDate } from '../utils/debtInsights'
@@ -86,7 +85,12 @@ return (
 <DebtHero
   total={total}
   customers={active.length}
-  overdue={overdue}
+  activeDebts={activeDebts}
+/>
+
+<SmartInsight
+  customers={customers}
+  transactions={transactions}
 />
       <button
         onClick={startNewDebt}

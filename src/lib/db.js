@@ -13,6 +13,24 @@ export async function getProducts() {
   return data
 }
 
+export async function addProduct({ name, category, costPrice, unitPrice, stockCurrent = 0, stockAlert = 5 }) {
+  const { data, error } = await supabase
+    .from('products')
+    .insert({
+      name,
+      category,
+      cost_price: costPrice,
+      unit_price: unitPrice,
+      stock_current: stockCurrent,
+      stock_alert: stockAlert,
+      active: true,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 export async function searchProducts(query) {
   const { data, error } = await supabase
     .from('products')
@@ -39,6 +57,51 @@ export async function updateStock(productId, quantity) {
     .eq('id', productId)
   if (error) throw error
   return newStock
+}
+
+export async function addStock(productId, quantity) {
+  const { data: product, error: fetchError } = await supabase
+    .from('products')
+    .select('stock_current')
+    .eq('id', productId)
+    .single()
+  if (fetchError) throw fetchError
+
+  const newStock = (product.stock_current || 0) + quantity
+  const { error } = await supabase
+    .from('products')
+    .update({ stock_current: newStock })
+    .eq('id', productId)
+  if (error) throw error
+  return newStock
+}
+
+export async function updateProductPrice(productId, unitPrice) {
+  const { error } = await supabase
+    .from('products')
+    .update({ unit_price: unitPrice })
+    .eq('id', productId)
+  if (error) throw error
+  return unitPrice
+}
+
+export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit }) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({
+      classified: true,
+      operation_type: 'sale',
+      product_id: items.length === 1 ? items[0].productId : null,
+      quantity: items.length === 1 ? items[0].quantity : null,
+      unit_price: items.length === 1 ? items[0].unitPrice : null,
+      total_price: grandTotal,
+      profit: totalProfit,
+    })
+    .eq('id', transactionId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
 // ── TRANSACTIONS ──────────────────────────────────────────────

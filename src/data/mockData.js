@@ -104,6 +104,21 @@ export const INIT_TRANSACTIONS = [
   },
 ]
 
+export const PRODUCT_CATEGORIES = [
+  { id: 'beer', label: '🍺 Beer' },
+  { id: 'whisky', label: '🥃 Whisky' },
+  { id: 'gin', label: '🍸 Gin' },
+  { id: 'vodka', label: '🍹 Vodka' },
+  { id: 'cognac', label: '🥂 Cognac' },
+  { id: 'wine', label: '🍷 Wine' },
+  { id: 'liqueur', label: '🍶 Liqueur' },
+  { id: 'rum', label: '🍾 Rum' },
+]
+
+export const PRODUCT_CATEGORY_LABELS = Object.fromEntries(
+  PRODUCT_CATEGORIES.map((c) => [c.id, c.label])
+)
+
 export const EXPENSE_CATEGORIES = [
   { id: 'stock', label: 'Stock', icon: 'package' },
   { id: 'rent', label: 'Rent', icon: 'home' },

@@ -10,6 +10,7 @@ import PaymentInput from '../components/customer/PaymentInput'
 import ActiveDebts from '../components/customer/ActiveDebts'
 import PaymentTimeline from '../components/customer/PaymentTimeline'
 import PurchaseHistory from '../components/customer/PurchaseHistory'
+import CustomerTimeline from '../components/customer/CustomerTimeline'
 
 export default function CustomerDetailScreen() {
   const transactions = useAppStore((s) => s.transactions)
