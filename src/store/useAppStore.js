@@ -52,6 +52,7 @@ bootstrap: async () => {
       const saved = await dbAddTransaction(txn)
       set((s) => ({ transactions: [saved, ...s.transactions] }))
       await get().refreshTodayStats()
+      return saved
     } catch (err) {
       console.error('Add transaction error:', err)
     }
@@ -61,11 +62,19 @@ bootstrap: async () => {
     try {
       const updated = await dbClassify(id, classification)
       set((s) => ({
-        transactions: s.transactions.map((t) =>
-          t.id === id ? { ...t, ...updated } : t
-        ),
+        transactions: s.transactions.map((t) => {
+          const debtUpdate = updated.debtUpdates?.find((d) => d.id === t.id)
+          if (debtUpdate) return { ...t, ...debtUpdate }
+          return t.id === id ? { ...t, ...updated } : t
+        }),
+        customers: updated.customerUpdate
+          ? s.customers.map((c) =>
+              c.id === updated.customerUpdate.id ? { ...c, ...updated.customerUpdate } : c
+            )
+          : s.customers,
       }))
       await get().refreshTodayStats()
+      return updated
     } catch (err) {
       console.error('Classify error:', err)
     }
@@ -81,14 +90,30 @@ bootstrap: async () => {
     }
   },
 
-  addDebtPayment: async (customerId, amount) => {
+  addDebtPayment: async (customerId, amount, paymentTransactionId = null) => {
     try {
-      const updated = await dbAddDebtPayment(customerId, amount)
+      const updated = await dbAddDebtPayment(customerId, amount, paymentTransactionId)
       set((s) => ({
         customers: s.customers.map((c) =>
-          c.id === customerId ? { ...c, ...updated } : c
+          c.id === customerId ? { ...c, ...updated.customer } : c
         ),
+        transactions: s.transactions.map((t) => {
+          const debtUpdate = updated.debts?.find((d) => d.id === t.id)
+          if (debtUpdate) return { ...t, ...debtUpdate }
+          if (paymentTransactionId && t.id === paymentTransactionId) {
+            return {
+              ...t,
+              classified: true,
+              operation_type: 'debt_payment',
+              customer_id: customerId,
+              is_debt: false,
+              remaining_amount: 0,
+            }
+          }
+          return t
+        }),
       }))
+      return updated
     } catch (err) {
       console.error('Debt payment error:', err)
     }

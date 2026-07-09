@@ -1,7 +1,7 @@
 import Card from '../ui/Card'
-import { fmtKES, fmtShortDate } from '../../utils/formatters'
+import { fmtKES } from '../../utils/formatters'
 
-export default function CustomerStats({ customer }) {
+export default function CustomerStats({ customer, lastPaymentLabel = 'Never' }) {
   return (
     <div
       style={{
@@ -94,9 +94,7 @@ export default function CustomerStats({ customer }) {
             color: 'var(--text-hi)',
           }}
         >
-          {customer.payments?.length
-            ? fmtShortDate(customer.payments[customer.payments.length - 1].ts)
-            : '--'}
+          {lastPaymentLabel}
         </p>
       </Card>
     </div>

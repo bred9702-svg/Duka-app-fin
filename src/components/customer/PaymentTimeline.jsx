@@ -57,7 +57,7 @@ export default function PaymentTimeline({ payments = [] }) {
                   color: 'var(--text-low)',
                 }}
               >
-                {fmtShortDate(payment.date || payment.ts)}
+                {fmtShortDate(payment.paid_at || payment.created_at || payment.date || payment.ts)}
               </p>
             </div>
 
