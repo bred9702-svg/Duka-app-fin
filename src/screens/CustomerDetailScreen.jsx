@@ -12,6 +12,17 @@ import PaymentTimeline from '../components/customer/PaymentTimeline'
 import PurchaseHistory from '../components/customer/PurchaseHistory'
 import CustomerTimeline from '../components/customer/CustomerTimeline'
 
+function getTransactionProductName(transaction, productById) {
+  return (
+    transaction.product?.name ||
+    productById.get(transaction.product_id)?.name ||
+    transaction.product_name ||
+    transaction.productName ||
+    transaction.classification?.productName ||
+    'Unknown product'
+  )
+}
+
 export default function CustomerDetailScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
@@ -30,23 +41,8 @@ export default function CustomerDetailScreen() {
     getLastPaymentDate(customer, transactions),
     'Never'
   )
-    const productById = new Map(products.map((product) => [product.id, product]))
-  const getProductName = (transaction) =>
-    transaction.product?.name ||
-    productById.get(transaction.product_id)?.name ||
-    transaction.product_name ||
-    transaction.productName ||
-    transaction.classification?.productName ||
-    'Unknown product'
 
   const productById = new Map(products.map((product) => [product.id, product]))
-  const getProductName = (transaction) =>
-    transaction.product?.name ||
-    productById.get(transaction.product_id)?.name ||
-    transaction.product_name ||
-    transaction.productName ||
-    transaction.classification?.productName ||
-    'Unknown product'
 
   const purchaseHistory = transactions
     .filter((t) =>
@@ -56,7 +52,7 @@ export default function CustomerDetailScreen() {
     )
     .map((t) => ({
       id: t.id,
-      product: getProductName(t),
+      product: getTransactionProductName(t, productById),
       date: fmtRelativeDay(t.created_at || t.ts, ''),
       amount: t.total_price || t.amount,
       quantity: t.quantity || 1,
@@ -81,7 +77,7 @@ export default function CustomerDetailScreen() {
     .map((t) => ({
       ...t,
       product: t.product || productById.get(t.product_id) || null,
-      product_name: getProductName(t),
+      product_name: getTransactionProductName(t, productById),
     }))
     .sort(
       (a, b) =>
