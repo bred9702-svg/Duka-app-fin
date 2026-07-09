@@ -16,10 +16,63 @@ import {
   addProduct,
 } from '../lib/db'
 
+const TRIAL_DAYS = 15
+const TRIAL_ENDED_MESSAGE = 'Your trial has ended. Upgrade to continue.'
+
+function addDays(date, days) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + days)
+  return next
+}
+
+function createTrialDates() {
+  const trialStart = new Date()
+  const trialEnd = addDays(trialStart, TRIAL_DAYS)
+
+  return {
+    trialStart: trialStart.toISOString(),
+    trialEnd: trialEnd.toISOString(),
+  }
+}
+
+function isPastDate(value) {
+  if (!value) return false
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+  return date.getTime() < Date.now()
+}
+
+function applyTrialExpiration(session) {
+  if (!session) return null
+  if (session.subscriptionStatus === 'active') return session
+
+  if (isPastDate(session.trialEnd)) {
+    return {
+      ...session,
+      subscriptionStatus: 'expired',
+    }
+  }
+
+  return session
+}
+
+function isWriteBlockedSession(session) {
+  return session?.subscriptionStatus === 'expired'
+}
+
 function loadSession() {
   try {
     const raw = localStorage.getItem('duka-session')
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    const session = applyTrialExpiration(parsed)
+
+    if (session && session.subscriptionStatus !== parsed.subscriptionStatus) {
+      localStorage.setItem('duka-session', JSON.stringify(session))
+    }
+
+    return session
   } catch {
     return null
   }
@@ -43,6 +96,8 @@ function clearLocalAppData() {
   LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
 }
 
+const initialSession = loadSession()
+
 const useAppStore = create((set, get) => ({
   transactions: [],
   customers: [],
@@ -51,7 +106,9 @@ const useAppStore = create((set, get) => ({
   loading: false,
   error: null,
   theme: localStorage.getItem('duka-theme') || 'dark',
-  session: loadSession(),
+  session: initialSession,
+  writeBlocked: isWriteBlockedSession(initialSession),
+  trialEndedMessage: TRIAL_ENDED_MESSAGE,
 
 setTheme: (theme) => {
   localStorage.setItem('duka-theme', theme)
@@ -59,14 +116,30 @@ setTheme: (theme) => {
   set({ theme })
 },
 
+refreshSubscriptionStatus: () => {
+  const current = get().session
+  const session = applyTrialExpiration(current)
+
+  if (!session) {
+    set({ session: null, writeBlocked: false })
+    return null
+  }
+
+  localStorage.setItem('duka-session', JSON.stringify(session))
+  set({
+    session,
+    writeBlocked: isWriteBlockedSession(session),
+  })
+
+  return session
+},
+
 registerOwner: async (data) => {
   // A brand new account must never inherit a previous account's local
   // settings cache (shop profile, purchase history, preferences, etc.)
   clearLocalAppData()
 
-  const trialStart = new Date()
-  const trialEnd = new Date(trialStart)
-  trialEnd.setDate(trialStart.getDate() + 15)
+  const { trialStart, trialEnd } = createTrialDates()
 
   const session = {
     role: 'owner',
@@ -76,8 +149,8 @@ registerOwner: async (data) => {
     shopAddress: data.shopAddress,
     photo: data.photo || null,
     isOnboarded: false,
-    trialStart: trialStart.toISOString(),
-    trialEnd: trialEnd.toISOString(),
+    trialStart,
+    trialEnd,
     subscriptionStatus: 'trial',
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
@@ -93,24 +166,36 @@ registerOwner: async (data) => {
     timezone: 'Africa/Nairobi',
   }))
 
-  set({ session })
+  set({
+    session,
+    writeBlocked: false,
+  })
+
   // In case registration follows a signOut() that emptied the data —
   // bootstrap() only runs once on initial app mount otherwise.
   await get().bootstrap()
 },
 
 signIn: async (data) => {
-  const session = {
-    role: data.role || 'owner',
-    name: data.name || 'Shop Owner',
-    phone: data.phone,
-    shopName: data.shopName || null,
-    shopAddress: data.shopAddress || null,
-    photo: null,
+  const existing = loadSession()
+
+  const session = applyTrialExpiration({
+    ...(existing || {}),
+    role: data.role || existing?.role || 'owner',
+    name: data.name || existing?.name || 'Shop Owner',
+    phone: data.phone || existing?.phone,
+    shopName: data.shopName || existing?.shopName || null,
+    shopAddress: data.shopAddress || existing?.shopAddress || null,
+    photo: existing?.photo || null,
     isOnboarded: true,
-  }
+  })
+
   localStorage.setItem('duka-session', JSON.stringify(session))
-  set({ session })
+  set({
+    session,
+    writeBlocked: isWriteBlockedSession(session),
+  })
+
   // signOut() empties products/transactions/customers — reload them now
   // that a session is active again, since bootstrap() only runs once
   // on initial app mount.
@@ -120,9 +205,12 @@ signIn: async (data) => {
 completeOnboarding: () => {
   set((s) => {
     if (!s.session) return {}
-    const session = { ...s.session, isOnboarded: true }
+    const session = applyTrialExpiration({ ...s.session, isOnboarded: true })
     localStorage.setItem('duka-session', JSON.stringify(session))
-    return { session }
+    return {
+      session,
+      writeBlocked: isWriteBlockedSession(session),
+    }
   })
 },
 
@@ -131,6 +219,7 @@ signOut: () => {
   clearLocalAppData()
   set({
     session: null,
+    writeBlocked: false,
     transactions: [],
     customers: [],
     products: [],
@@ -145,7 +234,10 @@ bootstrap: async () => {
   const savedTheme = localStorage.getItem('duka-theme') || 'dark'
   document.documentElement.setAttribute('data-theme', savedTheme)
   set({ theme: savedTheme })
-  // ... reste du code bootstrap    
+
+  get().refreshSubscriptionStatus()
+
+  // ... reste du code bootstrap
   set({ loading: true, error: null })
     try {
       const [transactions, customers, products, todayStats] = await Promise.all([
