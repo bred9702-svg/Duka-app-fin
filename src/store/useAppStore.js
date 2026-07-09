@@ -433,7 +433,7 @@ bootstrap: async () => {
     }
   },
 
-  completeSale: async ({ linkedTransactionId, items }) => {
+  completeSale: async ({ linkedTransactionId, items, customerId = null }) => {
     try {
       if (!linkedTransactionId) {
         throw new Error('A sale must be linked to a payment transaction.')
@@ -459,7 +459,7 @@ bootstrap: async () => {
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
       const updatedTxn = await completeSalePayment(linkedTransactionId, {
-        items, grandTotal, totalProfit,
+        items, grandTotal, totalProfit, customerId,
       })
 
       set((s) => ({
