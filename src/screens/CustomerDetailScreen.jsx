@@ -30,6 +30,14 @@ export default function CustomerDetailScreen() {
     getLastPaymentDate(customer, transactions),
     'Never'
   )
+    const productById = new Map(products.map((product) => [product.id, product]))
+  const getProductName = (transaction) =>
+    transaction.product?.name ||
+    productById.get(transaction.product_id)?.name ||
+    transaction.product_name ||
+    transaction.productName ||
+    transaction.classification?.productName ||
+    'Unknown product'
 
   const productById = new Map(products.map((product) => [product.id, product]))
   const getProductName = (transaction) =>
