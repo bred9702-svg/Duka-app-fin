@@ -34,6 +34,27 @@ function SectionTitle({ children }) {
   )
 }
 
+function TrialBlockedMessage({ message }) {
+  return (
+    <div
+      style={{
+        background: 'rgba(255,107,91,0.10)',
+        border: '1px solid rgba(255,107,91,0.28)',
+        borderRadius: 12,
+        padding: '10px 12px',
+        marginBottom: 12,
+      }}
+    >
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#FF6B5B' }}>
+        Trial Expired
+      </p>
+      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.45 }}>
+        {message}
+      </p>
+    </div>
+  )
+}
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -48,6 +69,8 @@ export default function InventoryInvestmentScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
   const recordPurchase = useAppStore((s) => s.recordPurchase)
+  const writeBlocked = useAppStore((s) => s.writeBlocked)
+  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
 
   const [supplier, setSupplier] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(todayISO())
@@ -55,10 +78,11 @@ export default function InventoryInvestmentScreen() {
 
   const [query, setQuery] = useState('')
   const [showCreateProduct, setShowCreateProduct] = useState(false)
-  const [items, setItems] = useState([]) // { productId, name, unitPrice, purchasePrice, quantity }
+  const [items, setItems] = useState([])
 
   const [saving, setSaving] = useState(false)
   const [summary, setSummary] = useState(null)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!summary) return
@@ -79,6 +103,12 @@ export default function InventoryInvestmentScreen() {
   }, [query, products, items])
 
   function addProduct(product) {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+
+    setError('')
     setItems((prev) => [
       ...prev,
       {
@@ -116,11 +146,19 @@ export default function InventoryInvestmentScreen() {
   const expectedProfit = expectedRevenue - totalInvestment
   const margin = expectedRevenue > 0 ? Math.round((expectedProfit / expectedRevenue) * 100) : 0
 
-  const canSave = validItems.length > 0 && !saving
+  const canSave = validItems.length > 0 && !saving && !writeBlocked
 
   async function handleSave() {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+
     if (!canSave) return
+
     setSaving(true)
+    setError('')
+
     try {
       const payloadItems = validItems.map((it) => ({
         productId: it.productId,
@@ -140,7 +178,6 @@ export default function InventoryInvestmentScreen() {
         budget,
       })
 
-      // Estimate how long this inventory should last based on historical sales velocity
       const now = Date.now()
       const days30 = 30 * 24 * 60 * 60 * 1000
       const sales = transactions.filter(
@@ -170,6 +207,7 @@ export default function InventoryInvestmentScreen() {
       })
     } catch (err) {
       console.error('Save purchase failed:', err)
+      setError('Could not save purchase. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -244,7 +282,7 @@ export default function InventoryInvestmentScreen() {
                 {summary.productCount} product{summary.productCount > 1 ? 's' : ''} added to inventory.{' '}
                 {summary.weeksEstimate
                   ? `Based on your historical sales, this inventory should last approximately ${summary.weeksEstimate} week${summary.weeksEstimate > 1 ? 's' : ''}.`
-                  : "Not enough sales history yet to estimate how long this inventory will last."}
+                  : 'Not enough sales history yet to estimate how long this inventory will last.'}
               </p>
             </div>
           </FadeIn>
@@ -273,7 +311,22 @@ export default function InventoryInvestmentScreen() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="Inventory Investment" />
 
-        {/* Purchase details */}
+        {writeBlocked && <TrialBlockedMessage message={trialEndedMessage} />}
+
+        {error && (
+          <div style={{
+            background: 'rgba(255,107,91,0.10)',
+            border: '1px solid rgba(255,107,91,0.25)',
+            borderRadius: 12,
+            padding: '9px 11px',
+            marginBottom: 10,
+          }}>
+            <p style={{ margin: 0, fontSize: 11, color: '#FF6B5B', fontWeight: 600 }}>
+              {error}
+            </p>
+          </div>
+        )}
+
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
             <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Supplier (optional)</p>
@@ -304,7 +357,6 @@ export default function InventoryInvestmentScreen() {
           </div>
         </GlassCard>
 
-        {/* Add product */}
         <SectionTitle>Add Products</SectionTitle>
         <div style={{ position: 'relative', marginBottom: 8 }}>
           <div style={{
@@ -352,7 +404,14 @@ export default function InventoryInvestmentScreen() {
               boxShadow: 'var(--card-shadow)',
             }}>
               <div
-                onClick={() => setShowCreateProduct(true)}
+                onClick={() => {
+                  if (writeBlocked) {
+                    setError(trialEndedMessage)
+                    return
+                  }
+                  setError('')
+                  setShowCreateProduct(true)
+                }}
                 style={{
                   padding: '11px 12px', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 8,
@@ -378,7 +437,6 @@ export default function InventoryInvestmentScreen() {
           />
         )}
 
-        {/* Line items */}
         {items.length > 0 && (
           <StaggerContainer step={40}>
             {items.map((item) => {
@@ -497,7 +555,6 @@ export default function InventoryInvestmentScreen() {
           </>
         )}
 
-        {/* Live summary */}
         {validItems.length > 0 && (
           <>
             <SectionTitle>Purchase Summary</SectionTitle>
@@ -548,7 +605,7 @@ export default function InventoryInvestmentScreen() {
             opacity: canSave ? 1 : 0.4, transition: 'opacity 200ms ease',
           }}
         >
-          {saving ? 'Saving...' : 'Save Purchase'}
+          {saving ? 'Saving...' : writeBlocked ? 'Trial Expired' : 'Save Purchase'}
         </button>
       </div>
     </div>
