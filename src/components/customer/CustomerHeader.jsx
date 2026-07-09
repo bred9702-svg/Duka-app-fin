@@ -3,6 +3,12 @@ import Avatar from '../ui/Avatar'
 import { fmtKES } from '../../utils/formatters'
 
 export default function CustomerHeader({ customer }) {
+  if (!customer) {
+    return null
+  }
+
+  const totalOwed = customer?.total_owed ?? 0
+
   return (
     <Card style={{ marginBottom: 16 }}>
       <div
@@ -13,7 +19,7 @@ export default function CustomerHeader({ customer }) {
         }}
       >
         <Avatar
-          name={customer.name}
+          name={customer?.name || 'Customer'}
           color="blue"
           size={60}
         />
@@ -28,7 +34,7 @@ export default function CustomerHeader({ customer }) {
               color: 'var(--text-hi)',
             }}
           >
-            {customer.name}
+            {customer?.name || 'Unknown customer'}
           </h2>
 
           <p
@@ -38,7 +44,7 @@ export default function CustomerHeader({ customer }) {
               color: 'var(--text-low)',
             }}
           >
-            {customer.phone || 'No phone number'}
+            {customer?.phone || 'No phone number'}
           </p>
 
           <div
@@ -49,18 +55,18 @@ export default function CustomerHeader({ customer }) {
               padding: '4px 10px',
               borderRadius: 999,
               background:
-                customer.total_owed > 0
+                totalOwed > 0
                   ? 'rgba(255,107,91,.15)'
                   : 'rgba(95,217,122,.15)',
               color:
-                customer.total_owed > 0
+                totalOwed > 0
                   ? '#FF6B5B'
                   : '#5FD97A',
               fontSize: 11,
               fontWeight: 600,
             }}
           >
-            {customer.total_owed > 0 ? 'Active debt' : 'Paid'}
+            {totalOwed > 0 ? 'Active debt' : 'Paid'}
           </div>
         </div>
       </div>
@@ -79,7 +85,7 @@ export default function CustomerHeader({ customer }) {
             marginBottom: 6,
           }}
         >
-          Outstanding balance
+          Outstanding Balance
         </p>
 
         <h1
@@ -88,13 +94,10 @@ export default function CustomerHeader({ customer }) {
             fontFamily: 'var(--font-display)',
             fontSize: 34,
             fontWeight: 700,
-            color:
-              customer.total_owed > 0
-                ? '#FF6B5B'
-                : '#5FD97A',
+            color: totalOwed > 0 ? '#FF6B5B' : '#5FD97A',
           }}
         >
-          {fmtKES(customer.total_owed)}
+          {fmtKES(totalOwed)}
         </h1>
       </div>
     </Card>

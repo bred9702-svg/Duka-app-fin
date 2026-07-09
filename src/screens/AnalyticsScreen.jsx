@@ -14,17 +14,16 @@ function fmtHour(h) {
 }
 
 const PERIODS = [
-  { id: 7, label: '7 days' },
-  { id: 30, label: '30 days' },
-  { id: 90, label: '3 months' },
+  { id: 1, label: 'Today' },
+  { id: 7, label: 'Week' },
+  { id: 30, label: 'Month' },
 ]
 
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: 'barChart' },
-  { id: 'products', label: 'Products', icon: 'bottle' },
-  { id: 'clients', label: 'Clients', icon: 'users' },
-  { id: 'time', label: 'Time', icon: 'pieChart' },
-]
+function compareLabel(period) {
+  if (period === 1) return 'vs yesterday'
+  if (period === 7) return 'vs last week'
+  return 'vs last month'
+}
 
 function SectionTitle({ children }) {
   return (
@@ -58,29 +57,123 @@ function GlassCard({ children, style = {} }) {
   )
 }
 
-function BarChart({ data, colorFn, labelKey, valueKey }) {
-  if (!data || data.length === 0) return (
-    <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', padding: '12px 0' }}>
-      Not enough data yet
+function Delta({ value, label }) {
+  if (value === null || value === undefined) return null
+  const up = value >= 0
+  const color = up ? '#5FD97A' : '#FF6B5B'
+  return (
+    <p style={{ fontSize: 9, fontWeight: 600, color, marginTop: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <span>{up ? '↑' : '↓'}</span>
+      <span>{Math.abs(value)}% {label}</span>
     </p>
   )
-  const max = Math.max(...data.map(d => d[valueKey] || 0), 1)
+}
+
+function AreaChart({ data, color = '#F0A93D' }) {
+  const hasData = data && data.some(d => d.amount > 0)
+
+  if (!hasData) {
+    return (
+      <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', padding: '34px 0' }}>
+        Not enough data yet
+      </p>
+    )
+  }
+
+  const W = 300
+  const H = 92
+  const padX = 6
+  const padY = 12
+  const max = Math.max(...data.map(d => d.amount), 1)
+  const stepX = (W - padX * 2) / (data.length - 1)
+
+  const points = data.map((d, i) => ({
+    x: padX + i * stepX,
+    y: padY + (H - padY * 2) * (1 - d.amount / max),
+    ...d,
+  }))
+
+  let linePath = `M ${points[0].x} ${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i]
+    const p1 = points[i + 1]
+    const midX = (p0.x + p1.x) / 2
+    linePath += ` C ${midX} ${p0.y}, ${midX} ${p1.y}, ${p1.x} ${p1.y}`
+  }
+
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${H} L ${points[0].x} ${H} Z`
+  const maxIdx = points.reduce((best, p, i) => (p.amount > points[best].amount ? i : best), 0)
+
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80, marginTop: 8 }}>
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 108, overflow: 'visible', display: 'block' }}>
+        <defs>
+          <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.38" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        <path d={areaPath} fill="url(#revenueFill)" />
+        <path d={linePath} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+
+        {points.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r={i === maxIdx ? 3.5 : 2.2}
+            fill={i === maxIdx ? color : 'var(--bg-deep)'}
+            stroke={color}
+            strokeWidth={i === maxIdx ? 0 : 1.4}
+          />
+        ))}
+      </svg>
+
+      <div style={{ display: 'flex', marginTop: 4 }}>
+        {points.map((p, i) => (
+          <span
+            key={i}
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: 8,
+              color: i === maxIdx ? color : 'var(--text-low)',
+              fontWeight: i === maxIdx ? 700 : 400,
+            }}
+          >
+            {p.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MiniBars({ data, color = '#F0A93D' }) {
+  if (!data || data.every(d => d.amount === 0)) {
+    return (
+      <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', padding: '20px 0' }}>
+        Not enough data yet
+      </p>
+    )
+  }
+  const max = Math.max(...data.map(d => d.amount), 1)
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 60, marginTop: 4 }}>
       {data.map((d, i) => {
-        const pct = ((d[valueKey] || 0) / max) * 100
-        const color = colorFn ? colorFn(d, i) : '#F0A93D'
+        const pct = (d.amount / max) * 100
+        const isMax = d.amount === max
         return (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}>
             <div style={{
               width: '100%',
               height: `${Math.max(pct, 4)}%`,
-              background: color,
+              background: isMax ? color : `${color}55`,
               borderRadius: '4px 4px 0 0',
-              boxShadow: `0 0 8px ${color}55`,
             }} />
-            <span style={{ fontSize: 8, color: 'var(--text-low)', textAlign: 'center', lineHeight: 1.2 }}>
-              {d[labelKey]}
+            <span style={{ fontSize: 7, color: isMax ? color : 'var(--text-low)', fontWeight: isMax ? 700 : 400 }}>
+              {d.label}
             </span>
           </div>
         )
@@ -90,14 +183,18 @@ function BarChart({ data, colorFn, labelKey, valueKey }) {
 }
 
 export default function AnalyticsScreen() {
-  const [activeTab, setActiveTab] = useState('overview')
-  const [period, setPeriod] = useState(30)
+  const [period, setPeriod] = useState(7)
   const [loading, setLoading] = useState(true)
   const [topProducts, setTopProducts] = useState([])
   const [byDay, setByDay] = useState([])
-  const [byHour, setByHour] = useState([])
+  const [byHourChart, setByHourChart] = useState([])
   const [topCustomers, setTopCustomers] = useState([])
-  const [summary, setSummary] = useState({ totalSales: 0, totalProfit: 0, totalTransactions: 0, avgBasket: 0 })
+  const [customerCount, setCustomerCount] = useState(0)
+  const [summary, setSummary] = useState({
+    totalSales: 0, totalProfit: 0, totalTransactions: 0, avgBasket: 0,
+    salesDelta: null, profitDelta: null, ordersDelta: null, basketDelta: null,
+  })
+  const [aiTip, setAiTip] = useState('Add more sales data for insights.')
 
   useEffect(() => { loadData() }, [period])
 
@@ -112,7 +209,7 @@ export default function AnalyticsScreen() {
         getTransactions(200),
       ])
 
-      // Top products
+      // Top products (with relative dominance for progress bar)
       const productMap = {}
       products.forEach(t => {
         const name = t.product?.name || 'Unknown'
@@ -120,50 +217,81 @@ export default function AnalyticsScreen() {
         productMap[name].qty += t.quantity || 1
         productMap[name].profit += t.profit || 0
       })
-      setTopProducts(Object.values(productMap).sort((a, b) => b.qty - a.qty).slice(0, 8))
+      const top3 = Object.values(productMap).sort((a, b) => b.qty - a.qty).slice(0, 3)
+      const topQty = top3[0]?.qty || 1
+      setTopProducts(top3.map(p => ({ ...p, pct: Math.round((p.qty / topQty) * 100) })))
 
-      // By day
+      // By day (revenue trend)
       const dayMap = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
       dayData.forEach(t => { if (t.day_of_week !== null) dayMap[t.day_of_week] += t.amount })
       setByDay(Object.entries(dayMap).map(([day, amount]) => ({ label: fmtDay(parseInt(day)), amount })))
 
-      // By hour
+      // By hour (sampled, for Sale by Hour chart)
       const hourMap = {}
       for (let i = 0; i < 24; i++) hourMap[i] = 0
       hourData.forEach(t => { if (t.hour_of_day !== null) hourMap[t.hour_of_day] += t.amount })
-      setByHour(
-        Object.entries(hourMap)
-          .map(([h, amount]) => ({ label: fmtHour(parseInt(h)), hour: parseInt(h), amount }))
-          .filter(h => h.amount > 0)
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 5)
+      setByHourChart(
+        [6, 9, 12, 15, 18, 21].map(h => ({ label: fmtHour(h), amount: hourMap[h] || 0 }))
       )
 
       // Top customers
-      setTopCustomers(
-        customers
-          .map(c => {
-            const spent = transactions
-              .filter(t => t.customer_id === c.id && t.classified && t.direction === 'in')
-              .reduce((a, t) => a + t.amount, 0)
-            const visits = transactions.filter(t => t.customer_id === c.id).length
-            return { ...c, spent, visits }
-          })
-          .filter(c => c.spent > 0 || c.total_owed > 0)
-          .sort((a, b) => b.spent - a.spent)
-          .slice(0, 8)
-      )
+      const customersWithSpend = customers
+        .map(c => {
+          const spent = transactions
+            .filter(t => t.customer_id === c.id && t.classified && t.direction === 'in')
+            .reduce((a, t) => a + t.amount, 0)
+          const visits = transactions.filter(t => t.customer_id === c.id).length
+          return { ...c, spent, visits }
+        })
+        .filter(c => c.spent > 0 || c.total_owed > 0)
+        .sort((a, b) => b.spent - a.spent)
 
-      // Summary
-      const sales = transactions.filter(t => t.operation_type === 'sale')
-      const totalSales = sales.reduce((a, t) => a + t.amount, 0)
-      const totalProfit = sales.reduce((a, t) => a + (t.profit || 0), 0)
-      setSummary({
-        totalSales,
-        totalProfit,
-        totalTransactions: sales.length,
-        avgBasket: sales.length > 0 ? Math.round(totalSales / sales.length) : 0,
-      })
+      setTopCustomers(customersWithSpend.slice(0, 3))
+      setCustomerCount(customers.length)
+
+      // Summary + period-over-period deltas
+      const getTime = (t) => new Date(t.created_at || t.ts || Date.now()).getTime()
+      const now = Date.now()
+      const periodMs = period * 24 * 60 * 60 * 1000
+      const currentStart = now - periodMs
+      const prevStart = now - periodMs * 2
+
+      const allSales = transactions.filter(t => t.operation_type === 'sale')
+      const currentSales = allSales.filter(t => getTime(t) >= currentStart)
+      const prevSales = allSales.filter(t => getTime(t) >= prevStart && getTime(t) < currentStart)
+
+      const totalSales = currentSales.reduce((a, t) => a + t.amount, 0)
+      const totalProfit = currentSales.reduce((a, t) => a + (t.profit || 0), 0)
+      const totalTransactions = currentSales.length
+      const avgBasket = totalTransactions > 0 ? Math.round(totalSales / totalTransactions) : 0
+
+      const prevSalesTotal = prevSales.reduce((a, t) => a + t.amount, 0)
+      const prevProfitTotal = prevSales.reduce((a, t) => a + (t.profit || 0), 0)
+      const prevOrders = prevSales.length
+      const prevBasket = prevOrders > 0 ? Math.round(prevSalesTotal / prevOrders) : 0
+
+      const pctDelta = (curr, prev) =>
+        prev > 0 ? Math.round(((curr - prev) / prev) * 100) : null
+
+      const salesDelta = pctDelta(totalSales, prevSalesTotal)
+      const profitDelta = pctDelta(totalProfit, prevProfitTotal)
+      const ordersDelta = pctDelta(totalTransactions, prevOrders)
+      const basketDelta = pctDelta(avgBasket, prevBasket)
+
+      setSummary({ totalSales, totalProfit, totalTransactions, avgBasket, salesDelta, profitDelta, ordersDelta, basketDelta })
+
+      // AI Business — a more natural, data-driven line
+      if (salesDelta !== null && salesDelta >= 15) {
+        setAiTip(`Revenue is up ${salesDelta}% ${compareLabel(period)}.`)
+      } else if (salesDelta !== null && salesDelta <= -15) {
+        setAiTip(`Revenue dipped ${Math.abs(salesDelta)}% ${compareLabel(period)}.`)
+      } else if (top3[0]) {
+        setAiTip(`${top3[0].name} is your top mover this period.`)
+      } else if (profitDelta !== null && profitDelta >= 0) {
+        setAiTip(`Profit margin is healthy ${compareLabel(period)}.`)
+      } else {
+        setAiTip('Add more sales data for insights.')
+      }
     } catch (err) {
       console.error('Analytics error:', err)
     } finally {
@@ -171,9 +299,11 @@ export default function AnalyticsScreen() {
     }
   }
 
+  const topCustomer = topCustomers[0]
+  const cmpLabel = compareLabel(period)
+
   return (<div style={{ flex: 1, padding: '16px 14px 8px', position: 'relative' }}>
-      <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -30, background: 'rgba(240,169,61,0.2)' }} />
-      <div className="bg-blob" style={{ width: 110, height: 110, bottom: 100, left: -30, background: 'rgba(91,159,240,0.15)', animationDelay: '3s' }} />
+      <div className="bg-blob" style={{ width: 220, height: 220, top: -40, left: -40, background: 'rgba(240,169,61,0.14)' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -195,171 +325,86 @@ export default function AnalyticsScreen() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: activeTab === tab.id ? 'rgba(240,169,61,0.18)' : 'var(--glass-fill-soft)',
-              border: activeTab === tab.id ? '1px solid rgba(240,169,61,0.5)' : '1px solid var(--glass-border)',
-              borderRadius: 10, padding: '7px 12px',
-              fontSize: 11, fontFamily: 'var(--font-display)', fontWeight: 600,
-              color: activeTab === tab.id ? '#F0A93D' : 'var(--text-low)',
-              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-            }}>
-              <Icon name={tab.icon} size={13} color={activeTab === tab.id ? '#F0A93D' : 'var(--text-low)'} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Icon name="loader" size={24} color="var(--text-low)" spin />
           </div>
         ) : (
           <>
-            {activeTab === 'overview' && (
-              <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                  {[
-                    { label: 'Total sales', value: fmtKES(summary.totalSales) + ' KES', color: '#5FD97A' },
-                    { label: 'Total profit', value: fmtKES(summary.totalProfit) + ' KES', color: '#F0A93D' },
-                    { label: 'Transactions', value: summary.totalTransactions, color: '#5B9FF0' },
-                    { label: 'Avg basket', value: fmtKES(summary.avgBasket) + ' KES', color: 'var(--text-hi)' },
-                  ].map((s, i) => (
-                    <GlassCard key={i} style={{ marginBottom: 0 }}>
-                      <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>{s.label}</p>
-                      <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</p>
-                    </GlassCard>
-                  ))}
+            <SectionTitle>Revenue Trend</SectionTitle>
+            <GlassCard style={{ padding: '14px 14px 10px' }}>
+              <AreaChart data={byDay} color="#F0A93D" />
+            </GlassCard>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginBottom: 14 }}>
+              {[
+                { label: 'Revenue', value: fmtKES(summary.totalSales) + ' KES', color: '#5FD97A', delta: summary.salesDelta },
+                { label: 'Profit', value: fmtKES(summary.totalProfit) + ' KES', color: '#F0A93D', delta: summary.profitDelta },
+                { label: 'Orders', value: summary.totalTransactions, color: '#5B9FF0', delta: summary.ordersDelta },
+                { label: 'Avg Basket', value: fmtKES(summary.avgBasket) + ' KES', color: 'var(--text-hi)', delta: summary.basketDelta },
+              ].map((s, i) => (
+                <GlassCard key={i} style={{ marginBottom: 0 }}>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>{s.label}</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</p>
+                  <Delta value={s.delta} label={cmpLabel} />
+                </GlassCard>
+              ))}
+            </div>
+
+            <SectionTitle>Top 3 products</SectionTitle>
+            {topProducts.length === 0 ? (
+              <GlassCard style={{ textAlign: 'center', padding: 16 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
+              </GlassCard>
+            ) : topProducts.map((p, i) => (
+              <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(240,169,61,0.2)' : 'var(--glass-fill-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-low)', flexShrink: 0 }}>
+                  {i + 1}
                 </div>
-                <SectionTitle>Best day of the week</SectionTitle>
-                <GlassCard>
-                  <BarChart data={byDay} labelKey="label" valueKey="amount"
-                    colorFn={(d) => {
-                      const max = Math.max(...byDay.map(x => x.amount))
-                      return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
-                    }}
-                  />
-                </GlassCard>
-                <SectionTitle>Top 3 products</SectionTitle>
-                {topProducts.slice(0, 3).length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 16 }}>
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
-                  </GlassCard>
-                ) : topProducts.slice(0, 3).map((p, i) => (
-                  <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: i === 0 ? 'rgba(240,169,61,0.2)' : 'var(--glass-fill-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-low)' }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold</p>
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A' }}>
-                      +{fmtKES(p.profit)} KES
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
+                  <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', margin: '5px 0' }}>
+                    <div style={{ height: '100%', width: `${p.pct}%`, background: i === 0 ? 'linear-gradient(90deg,#F0A93D,#FFD98A)' : 'rgba(240,169,61,0.4)', borderRadius: 2 }} />
+                  </div>
+                  <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold</p>
+                </div>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A', flexShrink: 0 }}>
+                  +{fmtKES(p.profit)} KES
+                </p>
+              </GlassCard>
+            ))}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginTop: 6, marginBottom: 8 }}>
+              <GlassCard style={{ marginBottom: 0 }}>
+                <Icon name="users" size={16} color="#5B9FF0" style={{ marginBottom: 6 }} />
+                <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Customer Ins.</p>
+                {topCustomer ? (
+                  <>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {topCustomer.name}
                     </p>
-                  </GlassCard>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'products' && (
-              <div>
-                <SectionTitle>Top products by volume</SectionTitle>
-                {topProducts.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 24 }}>
-                    <Icon name="bottle" size={28} color="var(--text-low)" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No sales data yet</p>
-                  </GlassCard>
-                ) : topProducts.map((p, i) => {
-                  const pct = (p.qty / (topProducts[0]?.qty || 1)) * 100
-                  return (
-                    <GlassCard key={i}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</p>
-                          <p style={{ fontSize: 10, color: 'var(--text-low)' }}>{p.qty} sold · {fmtKES(p.profit)} KES profit</p>
-                        </div>
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', marginLeft: 8 }}>×{p.qty}</p>
-                      </div>
-                      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#F0A93D,#FFD98A)', borderRadius: 2 }} />
-                      </div>
-                    </GlassCard>
-                  )
-                })}
-              </div>
-            )}
-
-            {activeTab === 'clients' && (
-              <div>
-                <SectionTitle>Top customers</SectionTitle>
-                {topCustomers.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 24 }}>
-                    <Icon name="users" size={28} color="var(--text-low)" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>No customer data yet</p>
-                  </GlassCard>
-                ) : topCustomers.map((c, i) => (
-                  <GlassCard key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: i === 0 ? 'rgba(240,169,61,0.2)' : 'rgba(255,255,255,0.06)', border: i === 0 ? '1px solid rgba(240,169,61,0.4)' : '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: i === 0 ? '#F0A93D' : 'var(--text-mid)', flexShrink: 0 }}>
-                      {c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text-low)' }}>
-                        {c.visits} visit{c.visits !== 1 ? 's' : ''}
-                        {c.total_owed > 0 && <span style={{ color: '#FF6B5B', marginLeft: 6 }}>· {fmtKES(c.total_owed)} owed</span>}
-                      </p>
-                    </div>
-                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A', flexShrink: 0 }}>
-                      {fmtKES(c.spent)} KES
+                    <p style={{ fontSize: 9, color: '#5FD97A', marginTop: 2 }}>
+                      {fmtKES(topCustomer.spent)} KES top
                     </p>
-                  </GlassCard>
-                ))}
-              </div>
-            )}
+                  </>
+                ) : (
+                  <p style={{ fontSize: 11, color: 'var(--text-low)' }}>{customerCount} customers</p>
+                )}
+              </GlassCard>
 
-            {activeTab === 'time' && (
-              <div>
-                <SectionTitle>Sales by day of week</SectionTitle>
-                <GlassCard>
-                  <BarChart data={byDay} labelKey="label" valueKey="amount"
-                    colorFn={(d) => {
-                      const max = Math.max(...byDay.map(x => x.amount))
-                      return d.amount === max && max > 0 ? '#F0A93D' : 'rgba(240,169,61,0.35)'
-                    }}
-                  />
-                  {byDay.some(d => d.amount > 0) && (() => {
-                    const best = byDay.reduce((a, b) => b.amount > a.amount ? b : a, byDay[0])
-                    return (
-                      <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 8, textAlign: 'center' }}>
-                        Best day: <span style={{ color: '#F0A93D', fontWeight: 600 }}>{best.label}</span> — {fmtKES(best.amount)} KES
-                      </p>
-                    )
-                  })()}
-                </GlassCard>
-                <SectionTitle>Peak hours</SectionTitle>
-                {byHour.length === 0 ? (
-                  <GlassCard style={{ textAlign: 'center', padding: 16 }}>
-                    <p style={{ fontSize: 12, color: 'var(--text-low)' }}>Not enough data yet</p>
-                  </GlassCard>
-                ) : byHour.map((h, i) => {
-                  const pct = (h.amount / (byHour[0]?.amount || 1)) * 100
-                  return (
-                    <GlassCard key={i}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, color: i === 0 ? '#F0A93D' : 'var(--text-hi)' }}>{h.label}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-low)' }}>{fmtKES(h.amount)} KES</p>
-                      </div>
-                      <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? 'linear-gradient(90deg,#F0A93D,#FFD98A)' : 'rgba(240,169,61,0.35)', borderRadius: 2 }} />
-                      </div>
-                    </GlassCard>
-                  )
-                })}
-              </div>
-            )}
+              <GlassCard style={{ marginBottom: 0 }}>
+                <Icon name="bell" size={16} color="#FF6B5B" style={{ marginBottom: 6 }} />
+                <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>AI Business</p>
+                <p style={{ fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.4 }}>
+                  {aiTip}
+                </p>
+              </GlassCard>
+            </div>
+
+            <SectionTitle>Sale by Hour</SectionTitle>
+            <GlassCard>
+              <MiniBars data={byHourChart} color="#F0A93D" />
+            </GlassCard>
           </>
         )}
       </div>

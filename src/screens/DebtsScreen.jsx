@@ -4,7 +4,6 @@ import DebtCard from '../components/debts/DebtCard'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import Card from '../components/ui/Card'
-import Avatar from '../components/ui/Avatar'
 import Icon from '../components/ui/Icon'
 import { fmtKES, newId } from '../utils/formatters'
 
@@ -36,6 +35,20 @@ export default function DebtsScreen() {
       mpesa_reference: null,
     })
     navigate(`/classify/${id}`)
+  }
+
+  async function startNewDebt() {
+    const txn = await addTransaction({
+      amount: 0,
+      source: 'manual',
+      direction: 'out',
+      classified: false,
+      mpesa_sender_name: null,
+      mpesa_sender_phone: null,
+      mpesa_reference: null,
+    })
+
+    if (txn?.id) navigate(`/classify/${txn.id}`)
   }
 
 return (
@@ -165,6 +178,8 @@ return (
           customer={customer}
           color={AVATAR_COLORS[index % AVATAR_COLORS.length]}
           delay={index * .05}
+          activeDebtCount={getActiveDebtCount(customer.id, transactions)}
+          lastPaymentLabel={fmtRelativeDay(getLastPaymentDate(customer, transactions), 'Never')}
           onClick={() => navigate(`/customer/${customer.id}`)}
         />
       ))}
@@ -192,6 +207,8 @@ return (
               customer={customer}
               color="green"
               delay={index * .03}
+              activeDebtCount={getActiveDebtCount(customer.id, transactions)}
+              lastPaymentLabel={fmtRelativeDay(getLastPaymentDate(customer, transactions), 'Never')}
               onClick={() => navigate(`/customer/${customer.id}`)}
             />
           ))}
