@@ -66,8 +66,12 @@ export default function WelcomeScreen() {
             color: '#0F1117', background: '#F0A93D', marginBottom: 10,
           }}
         >
-          Get Started
+          Start 15-day free trial
         </button>
+
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-low)', marginBottom: 12 }}>
+          No card required
+        </p>
 
         <button
           onClick={() => navigate('/sign-in')}
