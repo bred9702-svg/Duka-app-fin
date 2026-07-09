@@ -14,6 +14,7 @@ import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
 import AdvisorScreen from './screens/AdvisorScreen'
 import InventoryInvestmentScreen from './screens/InventoryInvestmentScreen'
 import NewSaleScreen from './screens/NewSaleScreen'
+import NewDebtScreen from './screens/NewDebtScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
@@ -104,6 +105,7 @@ export default function App() {
   const hideNav =
     isOnboardingRoute ||
     location.pathname.startsWith('/classify') ||
+    location.pathname.startsWith('/new-debt') ||
     location.pathname.startsWith('/customer')
 
   if (loading) {
@@ -199,6 +201,11 @@ export default function App() {
             <Route
               path="/new-sale"
               element={<NewSaleScreen />}
+            />
+
+            <Route
+              path="/new-debt"
+              element={<NewDebtScreen />}
             />
 
             <Route

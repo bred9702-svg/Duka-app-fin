@@ -349,7 +349,91 @@ bootstrap: async () => {
     }
   },
 
-  completeSale: async ({ linkedTransactionId, items }) => {
+  createDebtSale: async ({ items, customerId }) => {
+    try {
+      if (!customerId) {
+        throw new Error('A customer is required for a debt sale.')
+      }
+      if (!items?.length) {
+        throw new Error('Add at least one product before confirming debt.')
+      }
+
+      const grandTotal = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
+      const totalProfit = items.reduce(
+        (a, it) => a + (it.unitPrice - (it.costPrice || 0)) * it.quantity,
+        0
+      )
+
+      const updatedStocks = {}
+      for (const item of items) {
+        const newStock = await updateStock(item.productId, item.quantity)
+        updatedStocks[item.productId] = newStock
+      }
+
+      const productById = new Map(get().products.map((product) => [product.id, product]))
+      const savedTxns = []
+
+      for (const item of items) {
+        const lineTotal = item.unitPrice * item.quantity
+        const lineProfit = (item.unitPrice - (item.costPrice || 0)) * item.quantity
+        const savedTxn = await dbAddTransaction({
+          amount: lineTotal,
+          source: 'cash',
+          direction: 'out',
+          classified: true,
+          operation_type: 'debt',
+          customer_id: customerId,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total_price: lineTotal,
+          profit: lineProfit,
+          is_debt: true,
+          original_amount: lineTotal,
+          paid_amount: 0,
+          remaining_amount: lineTotal,
+          debt_status: 'active',
+          mpesa_sender_name: null,
+          mpesa_sender_phone: null,
+          mpesa_reference: null,
+        })
+
+        savedTxns.push({
+          ...savedTxn,
+          product: productById.get(item.productId) || null,
+        })
+      }
+
+      const updatedCustomer = await dbIncreaseDebt(customerId, grandTotal)
+
+      set((s) => ({
+        products: s.products.map((p) =>
+          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
+        ),
+        transactions: [...savedTxns, ...s.transactions],
+        customers: s.customers.map((c) =>
+          c.id === customerId ? { ...c, ...updatedCustomer } : c
+        ),
+      }))
+
+      await get().refreshTodayStats()
+
+      return {
+        grandTotal,
+        totalProfit,
+        itemCount: items.length,
+        totalQuantity: items.reduce((a, it) => a + it.quantity, 0),
+        transaction: savedTxns[0] || null,
+        transactions: savedTxns,
+        customer: updatedCustomer,
+      }
+    } catch (err) {
+      console.error('Create debt sale error:', err)
+      throw err
+    }
+  },
+
+  completeSale: async ({ linkedTransactionId, items, customerId = null }) => {
     try {
       if (!linkedTransactionId) {
         throw new Error('A sale must be linked to a payment transaction.')
@@ -375,7 +459,7 @@ bootstrap: async () => {
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
       const updatedTxn = await completeSalePayment(linkedTransactionId, {
-        items, grandTotal, totalProfit,
+        items, grandTotal, totalProfit, customerId,
       })
 
       set((s) => ({

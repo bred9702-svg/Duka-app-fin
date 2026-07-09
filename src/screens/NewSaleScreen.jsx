@@ -41,8 +41,15 @@ export default function NewSaleScreen() {
   const linkedTransactionId = location.state?.linkedTransactionId ?? null
 
   const products = useAppStore((s) => s.products)
+  const customers = useAppStore((s) => s.customers)
+  const addCustomer = useAppStore((s) => s.addCustomer)
   const completeSale = useAppStore((s) => s.completeSale)
 
+  const [customerQuery, setCustomerQuery] = useState('')
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [addingCustomer, setAddingCustomer] = useState(false)
+  const [newCustomerName, setNewCustomerName] = useState('')
+  const [newCustomerPhone, setNewCustomerPhone] = useState('')
   const [query, setQuery] = useState('')
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [productCreatedNote, setProductCreatedNote] = useState(null)
@@ -68,6 +75,14 @@ export default function NewSaleScreen() {
     const t = setTimeout(() => navigate('/inbox'), 2200)
     return () => clearTimeout(t)
   }, [result, navigate])
+
+  const customerMatches = useMemo(() => {
+    const q = customerQuery.trim().toLowerCase()
+    if (!q) return customers.slice(0, 5)
+    return customers
+      .filter((c) => [c.name, c.phone, c.mpesa_name].filter(Boolean).some((value) => value.toLowerCase().includes(q)))
+      .slice(0, 5)
+  }, [customers, customerQuery])
 
   const suggestions = useMemo(() => {
     if (!query.trim()) return []
@@ -112,7 +127,8 @@ export default function NewSaleScreen() {
   const grandTotal = cart.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
   const difference = paymentAmount !== null ? paymentAmount - grandTotal : null
 
-  const canSave = cart.length > 0 && !saving
+  const hasCustomer = !!selectedCustomer || (addingCustomer && newCustomerName.trim())
+  const canSave = cart.length > 0 && hasCustomer && !saving
 
   async function handleConfirm() {
     if (!canSave) return
@@ -127,7 +143,19 @@ export default function NewSaleScreen() {
         quantity: it.quantity,
       }))
 
-      const summary = await completeSale({ linkedTransactionId, items })
+      let customerId = selectedCustomer?.id || null
+
+      if (!customerId && addingCustomer && newCustomerName.trim()) {
+        const customer = await addCustomer({
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim() || null,
+        })
+        if (!customer?.id) throw new Error('Could not create customer.')
+        customerId = customer.id
+        setSelectedCustomer(customer)
+      }
+
+      const summary = await completeSale({ linkedTransactionId, items, customerId })
       setResult(summary)
     } catch (err) {
       console.error('Confirm sale failed:', err)
@@ -228,6 +256,84 @@ export default function NewSaleScreen() {
               </p>
             </div>
             <Icon name="circleCheck" size={20} color="#5FD97A" />
+          </GlassCard>
+        )}
+
+        {/* Customer */}
+        <SectionTitle>Customer</SectionTitle>
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
+            borderRadius: 12, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
+          }}>
+            <Icon name="search" size={15} color="var(--text-low)" />
+            <input
+              value={customerQuery}
+              onChange={(e) => setCustomerQuery(e.target.value)}
+              placeholder="Search customer..."
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit' }}
+            />
+          </div>
+        </div>
+
+        {customerMatches.map((customer) => {
+          const selected = selectedCustomer?.id === customer.id
+          return (
+            <div
+              key={customer.id}
+              onClick={() => {
+                setSelectedCustomer(customer)
+                setCustomerQuery(customer.name)
+                setAddingCustomer(false)
+              }}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '10px 12px', marginBottom: 8, borderRadius: 12, cursor: 'pointer',
+                background: selected ? 'rgba(95,217,122,.14)' : 'var(--glass-fill-soft)',
+                border: selected ? '1px solid rgba(95,217,122,.55)' : '1px solid var(--glass-border)',
+              }}
+            >
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{customer.name}</p>
+                {customer.phone && <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2 }}>{customer.phone}</p>}
+              </div>
+              {selected && <Icon name="circleCheck" size={18} color="#5FD97A" />}
+            </div>
+          )
+        })}
+
+        <button
+          onClick={() => {
+            setAddingCustomer((open) => !open)
+            setSelectedCustomer(null)
+          }}
+          style={{
+            width: '100%', marginBottom: addingCustomer ? 8 : 16, padding: '10px 12px',
+            borderRadius: 12, border: '1px dashed var(--text-low)', background: 'transparent',
+            color: 'var(--text-low)', fontSize: 12, cursor: 'pointer', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}
+        >
+          <Icon name="plus" size={14} /> + New Customer
+        </button>
+
+        {addingCustomer && (
+          <GlassCard style={{ marginBottom: 16 }}>
+            <input
+              value={newCustomerName}
+              onChange={(e) => setNewCustomerName(e.target.value)}
+              placeholder="Name"
+              style={inputStyle}
+            />
+            <input
+              value={newCustomerPhone}
+              onChange={(e) => setNewCustomerPhone(e.target.value)}
+              placeholder="Phone"
+              style={{ ...inputStyle, marginTop: 8 }}
+            />
+            <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 8 }}>
+              This customer will be saved automatically when you confirm the sale.
+            </p>
           </GlassCard>
         )}
 
@@ -450,4 +556,16 @@ export default function NewSaleScreen() {
       </div>
     </div>
   )
+}
+
+
+const inputStyle = {
+  width: '100%',
+  border: '1px solid var(--glass-border)',
+  borderRadius: 10,
+  padding: '10px 12px',
+  fontSize: 13,
+  background: 'var(--glass-fill-soft)',
+  color: 'var(--text-hi)',
+  outline: 'none',
 }
