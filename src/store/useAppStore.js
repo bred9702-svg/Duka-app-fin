@@ -370,27 +370,39 @@ bootstrap: async () => {
         updatedStocks[item.productId] = newStock
       }
 
-      const savedTxn = await dbAddTransaction({
-        amount: grandTotal,
-        source: 'cash',
-        direction: 'out',
-        classified: true,
-        operation_type: 'debt',
-        customer_id: customerId,
-        product_id: items.length === 1 ? items[0].productId : null,
-        quantity: items.length === 1 ? items[0].quantity : null,
-        unit_price: items.length === 1 ? items[0].unitPrice : null,
-        total_price: grandTotal,
-        profit: totalProfit,
-        is_debt: true,
-        original_amount: grandTotal,
-        paid_amount: 0,
-        remaining_amount: grandTotal,
-        debt_status: 'active',
-        mpesa_sender_name: null,
-        mpesa_sender_phone: null,
-        mpesa_reference: null,
-      })
+      const productById = new Map(get().products.map((product) => [product.id, product]))
+      const savedTxns = []
+
+      for (const item of items) {
+        const lineTotal = item.unitPrice * item.quantity
+        const lineProfit = (item.unitPrice - (item.costPrice || 0)) * item.quantity
+        const savedTxn = await dbAddTransaction({
+          amount: lineTotal,
+          source: 'cash',
+          direction: 'out',
+          classified: true,
+          operation_type: 'debt',
+          customer_id: customerId,
+          product_id: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total_price: lineTotal,
+          profit: lineProfit,
+          is_debt: true,
+          original_amount: lineTotal,
+          paid_amount: 0,
+          remaining_amount: lineTotal,
+          debt_status: 'active',
+          mpesa_sender_name: null,
+          mpesa_sender_phone: null,
+          mpesa_reference: null,
+        })
+
+        savedTxns.push({
+          ...savedTxn,
+          product: productById.get(item.productId) || null,
+        })
+      }
 
       const updatedCustomer = await dbIncreaseDebt(customerId, grandTotal)
 
@@ -398,7 +410,7 @@ bootstrap: async () => {
         products: s.products.map((p) =>
           p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
         ),
-        transactions: [savedTxn, ...s.transactions],
+        transactions: [...savedTxns, ...s.transactions],
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updatedCustomer } : c
         ),
@@ -411,7 +423,8 @@ bootstrap: async () => {
         totalProfit,
         itemCount: items.length,
         totalQuantity: items.reduce((a, it) => a + it.quantity, 0),
-        transaction: savedTxn,
+        transaction: savedTxns[0] || null,
+        transactions: savedTxns,
         customer: updatedCustomer,
       }
     } catch (err) {
