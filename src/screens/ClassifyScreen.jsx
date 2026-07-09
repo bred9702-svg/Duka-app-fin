@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import Icon from '../components/ui/Icon'
 import Avatar from '../components/ui/Avatar'
 import { fmtKES, fmtTime } from '../utils/formatters'
-import { EXPENSE_CATEGORIES } from '../data/mockData'
+import { EXPENSE_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/mockData'
 
 const TYPE_OPTS = [
   { id: 'sale', icon: 'bottle', label: 'Sale', color: '#F0A93D' },
@@ -14,11 +14,7 @@ const TYPE_OPTS = [
   { id: 'expense', icon: 'receiptOff', label: 'Expense', color: '#FF6B5B' },
 ]
 
-const CATEGORIES = {
-  beer: '🍺 Beer', whisky: '🥃 Whisky', gin: '🍸 Gin',
-  vodka: '🍹 Vodka', cognac: '🥂 Cognac', wine: '🍷 Wine',
-  liqueur: '🍶 Liqueur', rum: '🍾 Rum',
-}
+const CATEGORIES = PRODUCT_CATEGORY_LABELS
 
 export default function ClassifyScreen() {
   const { id } = useParams()
