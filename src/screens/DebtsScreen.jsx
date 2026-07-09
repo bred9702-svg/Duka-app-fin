@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import Card from '../components/ui/Card'
 import Icon from '../components/ui/Icon'
-import { fmtKES, newId } from '../utils/formatters'
 
 const AVATAR_COLORS = ['blue', 'amber', 'red', 'purple', 'green']
 
@@ -21,21 +20,6 @@ export default function DebtsScreen() {
   const cleared = customers.filter((c) => (c.total_owed || 0) === 0)
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
   const overdue = activeDebts.filter(c => (c.total_owed || 0) > 5000).length
-
-  async function startNewDebt() {
-    const id = newId('t')
-    await addTransaction({
-      id,
-      amount: 0,
-      source: 'manual',
-      direction: 'out',
-      classified: false,
-      mpesa_sender_name: null,
-      mpesa_sender_phone: null,
-      mpesa_reference: null,
-    })
-    navigate(`/classify/${id}`)
-  }
 
   async function startNewDebt() {
     const txn = await addTransaction({
@@ -178,8 +162,6 @@ return (
           customer={customer}
           color={AVATAR_COLORS[index % AVATAR_COLORS.length]}
           delay={index * .05}
-          activeDebtCount={getActiveDebtCount(customer.id, transactions)}
-          lastPaymentLabel={fmtRelativeDay(getLastPaymentDate(customer, transactions), 'Never')}
           onClick={() => navigate(`/customer/${customer.id}`)}
         />
       ))}
@@ -207,8 +189,6 @@ return (
               customer={customer}
               color="green"
               delay={index * .03}
-              activeDebtCount={getActiveDebtCount(customer.id, transactions)}
-              lastPaymentLabel={fmtRelativeDay(getLastPaymentDate(customer, transactions), 'Never')}
               onClick={() => navigate(`/customer/${customer.id}`)}
             />
           ))}
