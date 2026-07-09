@@ -93,6 +93,7 @@ export default function ClassifyScreen() {
     setSaving(true)
     try {
       const cls = {
+        type,
         type: isDebtPayment ? 'debt_payment' : type,
         product_id: isDebtPayment ? null : selectedProduct?.id || null,
         quantity: isDebtPayment ? null : parsedQty,
@@ -101,14 +102,34 @@ export default function ClassifyScreen() {
         unit_price: isDebtPayment ? null : selectedProduct?.unit_price || null,
       }
 
-      if ((type === 'sale' || type === 'debt') && !isDebtPayment && addingNew && newName.trim()) {
-        // FIX: on vérifie que addCustomer a bien retourné un id avant de continuer
+      if (type === 'sale' && addingNew && newName.trim()) {
         const newCust = await addCustomer({
           name: newName.trim(),
           phone: newPhone.trim() || null,
         })
         if (!newCust?.id) throw new Error('Failed to create customer')
         cls.customer_id = newCust.id
+      }
+
+      if (type === 'debt') {
+        if (!isDebtPayment && addingNew && newName.trim()) {
+          // FIX: on vérifie que addCustomer a bien retourné un id avant de continuer
+          const newCust = await addCustomer({
+            name: newName.trim(),
+            phone: newPhone.trim() || null,
+          })
+          if (!newCust?.id) throw new Error('Failed to create customer')
+          cls.customer_id = newCust.id
+        } else if (customerId) {
+          if (isDebtPayment) {
+            await addDebtPayment(customerId, txn.amount)
+          } else {
+            await increaseDebt(
+  customerId,
+  selectedProduct.unit_price * parsedQty
+)
+          }
+        }
       }
 
       await classifyTransaction(txn.id, cls)
@@ -445,15 +466,15 @@ export default function ClassifyScreen() {
 
             {!isDebtPayment && (
               <div
-                onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
-                style={{
-                  border: '1px dashed var(--text-low)', borderRadius: 11, padding: 10,
-                  textAlign: 'center', fontSize: 12, color: 'var(--text-low)', cursor: 'pointer',
-                  marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                }}
-              >
-                <Icon name="plus" size={14} /> New customer
-              </div>
+              onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
+              style={{
+                border: '1px dashed var(--text-low)', borderRadius: 11, padding: 10,
+                textAlign: 'center', fontSize: 12, color: 'var(--text-low)', cursor: 'pointer',
+                marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+              }}
+            >
+              <Icon name="plus" size={14} /> New customer
+            </div>
             )}
 
             {addingNew && !isDebtPayment && (

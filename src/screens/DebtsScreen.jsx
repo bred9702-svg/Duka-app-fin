@@ -5,24 +5,37 @@ import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import Card from '../components/ui/Card'
 import Icon from '../components/ui/Icon'
-import { fmtKES } from '../utils/formatters'
-import { fmtRelativeDay, getActiveDebtCount, getLastPaymentDate } from '../utils/debtInsights'
+import { fmtKES, newId } from '../utils/formatters'
 
 const AVATAR_COLORS = ['blue', 'amber', 'red', 'purple', 'green']
 
 export default function DebtsScreen() {
   const navigate = useNavigate()
   const customers = useAppStore((s) => s.customers)
-  const transactions = useAppStore((s) => s.transactions)
   const addTransaction = useAppStore((s) => s.addTransaction)
 
   // Supabase retourne total_owed (avec underscore)
-  const active = [...customers]
+  const activeDebts = [...customers]
     .filter((c) => (c.total_owed || 0) > 0)
     .sort((a, b) => b.total_owed - a.total_owed)
   const cleared = customers.filter((c) => (c.total_owed || 0) === 0)
   const total = customers.reduce((a, c) => a + (c.total_owed || 0), 0)
-  const overdue = active.filter(c => (c.total_owed || 0) > 5000).length
+  const overdue = activeDebts.filter(c => (c.total_owed || 0) > 5000).length
+
+  async function startNewDebt() {
+    const id = newId('t')
+    await addTransaction({
+      id,
+      amount: 0,
+      source: 'manual',
+      direction: 'out',
+      classified: false,
+      mpesa_sender_name: null,
+      mpesa_sender_phone: null,
+      mpesa_reference: null,
+    })
+    navigate(`/classify/${id}`)
+  }
 
   async function startNewDebt() {
     const txn = await addTransaction({
@@ -84,13 +97,8 @@ return (
 
 <DebtHero
   total={total}
-  customers={active.length}
-  activeDebts={activeDebts}
-/>
-
-<SmartInsight
-  customers={customers}
-  transactions={transactions}
+  customers={activeDebts.length}
+  overdue={overdue}
 />
       <button
         onClick={startNewDebt}
@@ -164,7 +172,7 @@ return (
         </Card>
       )}
 
-      {active.map((customer, index) => (
+      {activeDebts.map((customer, index) => (
         <DebtCard
           key={customer.id}
           customer={customer}
