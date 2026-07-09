@@ -16,65 +16,31 @@ import {
   addProduct,
 } from '../lib/db'
 
-const TRIAL_DAYS = 15
-const TRIAL_ENDED_MESSAGE = 'Your trial has ended. Upgrade to continue.'
-
-function addDays(date, days) {
-  const next = new Date(date)
-  next.setDate(next.getDate() + days)
-  return next
-}
-
-function createTrialDates() {
-  const trialStart = new Date()
-  const trialEnd = addDays(trialStart, TRIAL_DAYS)
-
-  return {
-    trialStart: trialStart.toISOString(),
-    trialEnd: trialEnd.toISOString(),
-  }
-}
-
-function isPastDate(value) {
-  if (!value) return false
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return false
-  return date.getTime() < Date.now()
-}
-
-function applyTrialExpiration(session) {
-  if (!session) return null
-  if (session.subscriptionStatus === 'active') return session
-
-  if (isPastDate(session.trialEnd)) {
-    return {
-      ...session,
-      subscriptionStatus: 'expired',
-    }
-  }
-
-  return session
-}
-
-function isWriteBlockedSession(session) {
-  return session?.subscriptionStatus === 'expired'
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  lowStockAlerts: true,
+  newDebtAlerts: true,
+  debtPaymentAlerts: true,
+  dailySummary: true,
+  weeklySummary: true,
 }
 
 function loadSession() {
   try {
     const raw = localStorage.getItem('duka-session')
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw)
-    const session = applyTrialExpiration(parsed)
-
-    if (session && session.subscriptionStatus !== parsed.subscriptionStatus) {
-      localStorage.setItem('duka-session', JSON.stringify(session))
-    }
-
-    return session
+    return raw ? JSON.parse(raw) : null
   } catch {
     return null
+  }
+}
+
+function loadNotificationSettings() {
+  try {
+    const raw = localStorage.getItem('duka-notifications')
+    return raw
+      ? { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(raw) }
+      : DEFAULT_NOTIFICATION_SETTINGS
+  } catch {
+    return DEFAULT_NOTIFICATION_SETTINGS
   }
 }
 
@@ -96,8 +62,6 @@ function clearLocalAppData() {
   LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
 }
 
-const initialSession = loadSession()
-
 const useAppStore = create((set, get) => ({
   transactions: [],
   customers: [],
@@ -106,139 +70,134 @@ const useAppStore = create((set, get) => ({
   loading: false,
   error: null,
   theme: localStorage.getItem('duka-theme') || 'dark',
-  session: initialSession,
-  writeBlocked: isWriteBlockedSession(initialSession),
-  trialEndedMessage: TRIAL_ENDED_MESSAGE,
+  session: loadSession(),
+  notificationSettings: loadNotificationSettings(),
 
-setTheme: (theme) => {
-  localStorage.setItem('duka-theme', theme)
-  document.documentElement.setAttribute('data-theme', theme)
-  set({ theme })
-},
+  setTheme: (theme) => {
+    localStorage.setItem('duka-theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
+    set({ theme })
+  },
 
-refreshSubscriptionStatus: () => {
-  const current = get().session
-  const session = applyTrialExpiration(current)
+  updateNotificationSetting: (key, value) => {
+    set((s) => {
+      const notificationSettings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        ...s.notificationSettings,
+        [key]: value,
+      }
 
-  if (!session) {
-    set({ session: null, writeBlocked: false })
-    return null
-  }
+      localStorage.setItem('duka-notifications', JSON.stringify(notificationSettings))
 
-  localStorage.setItem('duka-session', JSON.stringify(session))
-  set({
-    session,
-    writeBlocked: isWriteBlockedSession(session),
-  })
+      return { notificationSettings }
+    })
+  },
 
-  return session
-},
+  registerOwner: async (data) => {
+    // A brand new account must never inherit a previous account's local
+    // settings cache (shop profile, purchase history, preferences, etc.)
+    clearLocalAppData()
 
-registerOwner: async (data) => {
-  // A brand new account must never inherit a previous account's local
-  // settings cache (shop profile, purchase history, preferences, etc.)
-  clearLocalAppData()
+    const trialStart = new Date()
+    const trialEnd = new Date(trialStart)
+    trialEnd.setDate(trialStart.getDate() + 15)
 
-  const { trialStart, trialEnd } = createTrialDates()
-
-  const session = {
-    role: 'owner',
-    name: data.name,
-    phone: data.phone,
-    shopName: data.shopName,
-    shopAddress: data.shopAddress,
-    photo: data.photo || null,
-    isOnboarded: false,
-    trialStart,
-    trialEnd,
-    subscriptionStatus: 'trial',
-  }
-  localStorage.setItem('duka-session', JSON.stringify(session))
-
-  // Seed the Shop Profile screen with what was just entered, so it
-  // reflects this account immediately instead of stale defaults.
-  localStorage.setItem('duka-shop-profile', JSON.stringify({
-    name: data.shopName,
-    type: 'Wines & Spirits',
-    phone: data.phone,
-    address: data.shopAddress || '',
-    currency: 'KES — Kenyan Shilling',
-    timezone: 'Africa/Nairobi',
-  }))
-
-  set({
-    session,
-    writeBlocked: false,
-  })
-
-  // In case registration follows a signOut() that emptied the data —
-  // bootstrap() only runs once on initial app mount otherwise.
-  await get().bootstrap()
-},
-
-signIn: async (data) => {
-  const existing = loadSession()
-
-  const session = applyTrialExpiration({
-    ...(existing || {}),
-    role: data.role || existing?.role || 'owner',
-    name: data.name || existing?.name || 'Shop Owner',
-    phone: data.phone || existing?.phone,
-    shopName: data.shopName || existing?.shopName || null,
-    shopAddress: data.shopAddress || existing?.shopAddress || null,
-    photo: existing?.photo || null,
-    isOnboarded: true,
-  })
-
-  localStorage.setItem('duka-session', JSON.stringify(session))
-  set({
-    session,
-    writeBlocked: isWriteBlockedSession(session),
-  })
-
-  // signOut() empties products/transactions/customers — reload them now
-  // that a session is active again, since bootstrap() only runs once
-  // on initial app mount.
-  await get().bootstrap()
-},
-
-completeOnboarding: () => {
-  set((s) => {
-    if (!s.session) return {}
-    const session = applyTrialExpiration({ ...s.session, isOnboarded: true })
-    localStorage.setItem('duka-session', JSON.stringify(session))
-    return {
-      session,
-      writeBlocked: isWriteBlockedSession(session),
+    const session = {
+      role: 'owner',
+      name: data.name,
+      phone: data.phone,
+      shopName: data.shopName,
+      shopAddress: data.shopAddress,
+      photo: data.photo || null,
+      isOnboarded: false,
+      trialStart: trialStart.toISOString(),
+      trialEnd: trialEnd.toISOString(),
+      subscriptionStatus: 'trial',
     }
-  })
-},
 
-signOut: () => {
-  localStorage.removeItem('duka-session')
-  clearLocalAppData()
-  set({
-    session: null,
-    writeBlocked: false,
-    transactions: [],
-    customers: [],
-    products: [],
-    todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
-    loading: false,
-    error: null,
-  })
-},
+    localStorage.setItem('duka-session', JSON.stringify(session))
+    localStorage.setItem('duka-notifications', JSON.stringify(DEFAULT_NOTIFICATION_SETTINGS))
 
-bootstrap: async () => {
-  // Applique le thème sauvegardé
-  const savedTheme = localStorage.getItem('duka-theme') || 'dark'
-  document.documentElement.setAttribute('data-theme', savedTheme)
-  set({ theme: savedTheme })
+    // Seed the Shop Profile screen with what was just entered, so it
+    // reflects this account immediately instead of stale defaults.
+    localStorage.setItem('duka-shop-profile', JSON.stringify({
+      name: data.shopName,
+      type: 'Wines & Spirits',
+      phone: data.phone,
+      address: data.shopAddress || '',
+      currency: 'KES — Kenyan Shilling',
+      timezone: 'Africa/Nairobi',
+    }))
 
-  get().refreshSubscriptionStatus()
+    set({
+      session,
+      notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+    })
 
-  // ... reste du code bootstrap
-  set({ loading: true, error: null })
+    // In case registration follows a signOut() that emptied the data —
+    // bootstrap() only runs once on initial app mount otherwise.
+    await get().bootstrap()
+  },
+
+  signIn: async (data) => {
+    const session = {
+      role: data.role || 'owner',
+      name: data.name || 'Shop Owner',
+      phone: data.phone,
+      shopName: data.shopName || null,
+      shopAddress: data.shopAddress || null,
+      photo: null,
+      isOnboarded: true,
+    }
+
+    localStorage.setItem('duka-session', JSON.stringify(session))
+
+    set({
+      session,
+      notificationSettings: loadNotificationSettings(),
+    })
+
+    // signOut() empties products/transactions/customers — reload them now
+    // that a session is active again, since bootstrap() only runs once
+    // on initial app mount.
+    await get().bootstrap()
+  },
+
+  completeOnboarding: () => {
+    set((s) => {
+      if (!s.session) return {}
+      const session = { ...s.session, isOnboarded: true }
+      localStorage.setItem('duka-session', JSON.stringify(session))
+      return { session }
+    })
+  },
+
+  signOut: () => {
+    localStorage.removeItem('duka-session')
+    clearLocalAppData()
+    set({
+      session: null,
+      transactions: [],
+      customers: [],
+      products: [],
+      todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
+      notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+      loading: false,
+      error: null,
+    })
+  },
+
+  bootstrap: async () => {
+    // Applique le thème sauvegardé
+    const savedTheme = localStorage.getItem('duka-theme') || 'dark'
+    document.documentElement.setAttribute('data-theme', savedTheme)
+    set({
+      theme: savedTheme,
+      notificationSettings: loadNotificationSettings(),
+    })
+
+    set({ loading: true, error: null })
+
     try {
       const [transactions, customers, products, todayStats] = await Promise.all([
         getTransactions(50),
@@ -423,6 +382,7 @@ bootstrap: async () => {
         linkedTransactionId,
         budget,
       }
+
       try {
         const key = 'duka-purchase-history'
         const existing = JSON.parse(localStorage.getItem(key) || '[]')
@@ -453,6 +413,7 @@ bootstrap: async () => {
       if (!customerId) {
         throw new Error('A customer is required for a debt sale.')
       }
+
       if (!items?.length) {
         throw new Error('Add at least one product before confirming debt.')
       }
@@ -475,6 +436,7 @@ bootstrap: async () => {
       for (const item of items) {
         const lineTotal = item.unitPrice * item.quantity
         const lineProfit = (item.unitPrice - (item.costPrice || 0)) * item.quantity
+
         const savedTxn = await dbAddTransaction({
           amount: lineTotal,
           source: 'cash',
@@ -549,6 +511,7 @@ bootstrap: async () => {
         const newStock = await updateStock(item.productId, item.quantity)
         updatedStocks[item.productId] = newStock
       }
+
       set((s) => ({
         products: s.products.map((p) =>
           p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
@@ -558,7 +521,10 @@ bootstrap: async () => {
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
       const updatedTxn = await completeSalePayment(linkedTransactionId, {
-        items, grandTotal, totalProfit, customerId,
+        items,
+        grandTotal,
+        totalProfit,
+        customerId,
       })
 
       set((s) => ({
