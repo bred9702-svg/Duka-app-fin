@@ -315,15 +315,11 @@ signIn: async (data) => {
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
   set({ session })
-  if (session.role === 'employee' && session.employeeId && session.shopId) {
-    upsertEmployee({
-      employeeId: session.employeeId,
-      shopId: session.shopId,
-      name: session.name,
-      phone: session.phone,
-      inviteCode: data.inviteCode || null,
-    }).catch((err) => console.error('Employee sync failed:', err))
-  }
+  // signOut() empties products/transactions/customers — reload them now
+  // that a session is active again, since bootstrap() only runs once
+  // on initial app mount.
+  await get().bootstrap()
+},
   // signOut() empties products/transactions/customers — reload them now
   // that a session is active again, since bootstrap() only runs once
   // on initial app mount.
