@@ -14,7 +14,6 @@ const SECTIONS = [
   {
     title: 'Application',
     items: [
-      { label: 'Notification Center', icon: 'bell', color: '#F0A93D', path: '/notification-center' },
       { label: 'Notification', icon: 'bell', color: '#FF6B5B', path: '/notifications' },
       { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
       { label: 'Language', icon: 'globe', color: '#4FC3F7', path: '/language' },
@@ -106,14 +105,9 @@ function Row({ item, onClick, isFirst, isLast }) {
 }
 
 function getTrialDaysRemaining(session) {
-  if (!session) return null
-
-  const status = session.subscriptionStatus || 'trial'
-  if (status !== 'trial') return null
-  if (!session.trialEnd) return 15
-
+  if (session?.subscriptionStatus !== 'trial' || !session?.trialEnd) return null
   const diffMs = new Date(session.trialEnd).getTime() - Date.now()
-  if (Number.isNaN(diffMs)) return 15
+  if (Number.isNaN(diffMs)) return null
   return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
 }
 
@@ -121,9 +115,12 @@ export default function MeScreen() {
   const navigate = useNavigate()
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
-  const notifications = useAppStore((s) => s.notifications)
   const trialDaysRemaining = getTrialDaysRemaining(session)
-  const unreadNotifications = notifications.filter((notification) => !notification.read).length
+
+  const shopName = session?.shopName || 'Shop Owner'
+  const shopType = session?.shopType || 'Owner'
+  const shopLogo = session?.shopLogo || session?.photo || null
+  const shopCity = session?.shopCity || null
 
   return (
     <div
@@ -177,14 +174,27 @@ export default function MeScreen() {
               width: 50,
               height: 50,
               borderRadius: '50%',
-              background: 'rgba(240,169,61,.18)',
+              background: shopLogo ? 'transparent' : 'rgba(240,169,61,.18)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              overflow: 'hidden',
             }}
           >
-            <Icon name="users" size={22} color="#F0A93D" />
+            {shopLogo ? (
+              <img
+                src={shopLogo}
+                alt="Shop logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <Icon name="users" size={22} color="#F0A93D" />
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -200,7 +210,7 @@ export default function MeScreen() {
                 textOverflow: 'ellipsis',
               }}
             >
-              {session?.name || 'Shop Owner'}
+              {shopName}
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -216,11 +226,9 @@ export default function MeScreen() {
                 {session?.role === 'employee' ? 'Employee' : 'Owner'}
               </span>
 
-              {session?.shopName && (
-                <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
-                  {session.shopName}
-                </span>
-              )}
+              <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
+                {shopCity ? `${shopType} · ${shopCity}` : shopType}
+              </span>
             </div>
           </div>
         </div>
@@ -240,54 +248,15 @@ export default function MeScreen() {
             }}
           >
             <div>
-              <p
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: '#F0A93D',
-                  margin: 0,
-                }}
-              >
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', margin: 0 }}>
                 Pro Trial
               </p>
-
               <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
                 {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
               </p>
             </div>
-
             <Icon name="star" size={20} color="#F0A93D" />
           </div>
-        )}
-
-        {unreadNotifications > 0 && (
-          <button
-            type="button"
-            onClick={() => navigate('/notification-center')}
-            style={{
-              width: '100%',
-              marginTop: 10,
-              padding: '11px 12px',
-              borderRadius: 14,
-              border: '1px solid rgba(240,169,61,0.28)',
-              background: 'rgba(240,169,61,0.10)',
-              color: '#F0A93D',
-              fontFamily: 'var(--font-display)',
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}
-          >
-            <span>
-              {unreadNotifications} unread notification{unreadNotifications === 1 ? '' : 's'}
-            </span>
-            <Icon name="chevronRight" size={15} color="#F0A93D" />
-          </button>
         )}
 
         {SECTIONS.map((section) => (
