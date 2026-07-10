@@ -183,12 +183,20 @@ export default function App() {
 
             <Route
               path="/analytics"
-              element={<AnalyticsScreen />}
+              element={
+                <RequireOwner title="Analytics">
+                  <AnalyticsScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
               path="/inventory"
-              element={<InventoryInsightsScreen />}
+              element={
+                <RequireOwner title="Inventory Insights">
+                  <InventoryInsightsScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
@@ -202,17 +210,29 @@ export default function App() {
 
             <Route
               path="/trends"
-              element={<BusinessTrendsScreen />}
+              element={
+                <RequireOwner title="Business Trends">
+                  <BusinessTrendsScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
               path="/advisor"
-              element={<AdvisorScreen />}
+              element={
+                <RequireOwner title="AI Advisor">
+                  <AdvisorScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
               path="/inventory-investment"
-              element={<InventoryInvestmentScreen />}
+              element={
+                <RequireOwner title="Inventory Investment">
+                  <InventoryInvestmentScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
@@ -244,8 +264,22 @@ export default function App() {
               }
             />
 
-            <Route path="/shop" element={<ShopProfileScreen />} />
-            <Route path="/payment-mode" element={<PaymentModeScreen />} />
+            <Route
+              path="/shop"
+              element={
+                <RequireOwner title="Shop Profile">
+                  <ShopProfileScreen />
+                </RequireOwner>
+              }
+            />
+            <Route
+              path="/payment-mode"
+              element={
+                <RequireOwner title="Payment Mode">
+                  <PaymentModeScreen />
+                </RequireOwner>
+              }
+            />
 
             <Route
               path="/business-preferences"
