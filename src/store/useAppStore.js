@@ -21,6 +21,9 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   newDebtAlerts: true,
   debtPaymentAlerts: true,
   paymentReceivedAlerts: true,
+  saleAlerts: true,
+  stockPurchaseAlerts: true,
+  cashOutAlerts: true,
   dailySummary: false,
   weeklySummary: true,
 }
@@ -45,12 +48,13 @@ function loadNotificationSettings() {
   }
 }
 
-function createInAppNotification({ type, title, message }) {
+function createInAppNotification({ type, title, message, dedupeKey = null }) {
   return {
     id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     type,
     title,
     message,
+    dedupeKey,
     createdAt: new Date().toISOString(),
   }
 }
@@ -69,6 +73,10 @@ function isNotificationEnabled(settings, key, fallbackKeys = []) {
   }
 
   return true
+}
+
+function formatAmount(amount) {
+  return `${Number(amount || 0).toLocaleString('en-KE')} KES`
 }
 
 // All the account-scoped local caches used across settings/purchase
@@ -124,9 +132,18 @@ const useAppStore = create((set, get) => ({
   pushInAppNotification: (notification) => {
     const saved = createInAppNotification(notification)
 
-    set((s) => ({
-      inAppNotifications: [saved, ...s.inAppNotifications].slice(0, 5),
-    }))
+    set((s) => {
+      if (
+        saved.dedupeKey &&
+        s.inAppNotifications.some((existing) => existing.dedupeKey === saved.dedupeKey)
+      ) {
+        return {}
+      }
+
+      return {
+        inAppNotifications: [saved, ...s.inAppNotifications].slice(0, 5),
+      }
+    })
 
     return saved
   },
@@ -156,6 +173,7 @@ const useAppStore = create((set, get) => ({
       type: 'low_stock',
       title: 'Low Stock Alert',
       message: `${product.name} is running low. ${currentStock} unit${currentStock === 1 ? '' : 's'} left.`,
+      dedupeKey: `low-stock:${productId}:${currentStock}`,
     })
   },
 
@@ -311,8 +329,13 @@ const useAppStore = create((set, get) => ({
           : s.customers,
       }))
 
-      const direction = existingTransaction?.direction || updated.direction
       const settings = get().notificationSettings
+      const direction = existingTransaction?.direction || updated.direction
+      const operationType = updated.operation_type || classification?.type || classification?.operation_type
+      const expenseCategory =
+        updated.expense_category ||
+        classification?.expense_category ||
+        classification?.category
 
       if (
         direction === 'in' &&
@@ -321,7 +344,29 @@ const useAppStore = create((set, get) => ({
         get().pushInAppNotification({
           type: 'payment_received',
           title: 'Payment Received',
-          message: `${updated.amount || existingTransaction?.amount || 0} KES cash in has been classified.`,
+          message: `${formatAmount(updated.amount || existingTransaction?.amount)} cash in has been classified.`,
+          dedupeKey: `payment-received:${id}`,
+        })
+      }
+
+      if (
+        direction === 'out' &&
+        operationType === 'expense' &&
+        ['rent', 'salary', 'utilities', 'other'].includes(expenseCategory) &&
+        isNotificationEnabled(settings, 'cashOutAlerts', ['dailySummary'])
+      ) {
+        const labelMap = {
+          rent: 'Rent',
+          salary: 'Salary',
+          utilities: 'Utilities',
+          other: 'Other',
+        }
+
+        get().pushInAppNotification({
+          type: 'cash_out',
+          title: 'Cash Out Classified',
+          message: `${formatAmount(updated.amount || existingTransaction?.amount)} was classified as ${labelMap[expenseCategory] || 'Expense'}.`,
+          dedupeKey: `cash-out-expense:${id}`,
         })
       }
 
@@ -374,7 +419,10 @@ const useAppStore = create((set, get) => ({
         get().pushInAppNotification({
           type: 'debt_payment',
           title: 'Debt Payment Received',
-          message: `${customer?.name || 'Customer'} paid ${amount} KES toward their debt.`,
+          message: `${customer?.name || 'Customer'} paid ${formatAmount(amount)} toward their debt.`,
+          dedupeKey: paymentTransactionId
+            ? `debt-payment:${paymentTransactionId}`
+            : `debt-payment:${customerId}:${amount}:${Date.now()}`,
         })
       }
 
@@ -491,6 +539,17 @@ const useAppStore = create((set, get) => ({
         console.error('Purchase history save error:', e)
       }
 
+      const settings = get().notificationSettings
+
+      if (isNotificationEnabled(settings, 'stockPurchaseAlerts', ['dailySummary'])) {
+        get().pushInAppNotification({
+          type: 'stock_purchase',
+          title: 'Stock Purchase Saved',
+          message: `${items.length} product${items.length === 1 ? '' : 's'} added to inventory. Total investment: ${formatAmount(totalInvestment)}.`,
+          dedupeKey: `stock-purchase:${record.id}`,
+        })
+      }
+
       return record
     } catch (err) {
       console.error('Record purchase error:', err)
@@ -588,7 +647,8 @@ const useAppStore = create((set, get) => ({
         get().pushInAppNotification({
           type: 'new_debt',
           title: 'New Debt Created',
-          message: `${customer?.name || 'Customer'} now owes ${grandTotal} KES.`,
+          message: `${customer?.name || 'Customer'} now owes ${formatAmount(grandTotal)}.`,
+          dedupeKey: `new-debt:${savedTxns.map((txn) => txn.id).join(',') || customerId}`,
         })
       }
 
@@ -651,6 +711,17 @@ const useAppStore = create((set, get) => ({
           t.id === linkedTransactionId ? { ...t, ...updatedTxn } : t
         ),
       }))
+
+      const settings = get().notificationSettings
+
+      if (isNotificationEnabled(settings, 'saleAlerts', ['paymentReceivedAlerts', 'paymentReceived'])) {
+        get().pushInAppNotification({
+          type: 'sale',
+          title: 'Sale Confirmed',
+          message: `Sale of ${formatAmount(grandTotal)} was recorded successfully.`,
+          dedupeKey: `sale:${linkedTransactionId}`,
+        })
+      }
 
       await get().refreshTodayStats()
 
