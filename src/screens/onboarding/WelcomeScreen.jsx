@@ -74,6 +74,18 @@ export default function WelcomeScreen() {
         </p>
 
         <button
+          onClick={() => navigate('/sign-in?mode=join')}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 12,
+            border: '1px solid rgba(91,159,240,0.34)', background: 'rgba(91,159,240,0.1)',
+            cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700,
+            color: '#7DB7FF', marginBottom: 10,
+          }}
+        >
+          Join a Shop
+        </button>
+
+        <button
           onClick={() => navigate('/sign-in')}
           style={{
             width: '100%', padding: '14px', borderRadius: 12,
