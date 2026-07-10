@@ -47,7 +47,7 @@ export default function HomeScreen() {
   const products = useAppStore((s) => s.products)
   const todayStats = useAppStore((s) => s.todayStats)
   const addTransaction = useAppStore((s) => s.addTransaction)
-  const businessPreferences = useAppStore((s) => s.businessPreferences)
+ const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
 

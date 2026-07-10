@@ -71,8 +71,8 @@ export default function AdvisorScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const businessPreferences = useAppStore((s) => s.businessPreferences)
-  const showDailyAiBrief = businessPreferences.dailyAiBrief !== false
-  const showAiRecommendations = businessPreferences.aiRecommendations !== false
+  const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
+  const showAiRecommendations = businessPreferences?.aiRecommendations !== false
 
   const health = getInventoryHealth(products)
   const bestSeller = getBestSeller(products, transactions)

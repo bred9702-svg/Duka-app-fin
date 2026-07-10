@@ -1,7 +1,7 @@
 import SubScreenHeader from '../../components/layout/SubScreenHeader'
 import Icon from '../../components/ui/Icon'
 import Toggle from '../../components/ui/Toggle'
-import useAppStore from '../../store/useAppStore'
+import useAppStore, { DEFAULT_BUSINESS_PREFERENCES } from '../../store/useAppStore'
 
 const CURRENCIES = [
   { value: 'KES', label: 'KES — Kenyan Shilling' },
