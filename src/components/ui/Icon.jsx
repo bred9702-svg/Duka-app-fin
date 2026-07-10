@@ -33,11 +33,14 @@ const PATHS = {
   helpCircle: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  x: 'M18 6L6 18M6 6l12 12',
 }
 
 export default function Icon({ name, size = 18, color = 'currentColor', spin = false, style = {} }) {
   const d = PATHS[name]
+
   if (!d) return null
+
   return (
     <svg
       width={size}
@@ -48,7 +51,11 @@ export default function Icon({ name, size = 18, color = 'currentColor', spin = f
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ flexShrink: 0, animation: spin ? 'spin 1s linear infinite' : 'none', ...style }}
+      style={{
+        flexShrink: 0,
+        animation: spin ? 'spin 1s linear infinite' : 'none',
+        ...style,
+      }}
     >
       <path d={d} />
     </svg>
