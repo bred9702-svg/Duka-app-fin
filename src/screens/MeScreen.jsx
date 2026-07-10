@@ -116,6 +116,12 @@ export default function MeScreen() {
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
   const trialDaysRemaining = getTrialDaysRemaining(session)
+  const visibleSections = session?.role === 'employee'
+    ? SECTIONS.map((section) => section.title === 'Business'
+      ? { ...section, items: [] }
+      : section)
+        .filter((section) => section.items.length > 0)
+    : SECTIONS
 
   const shopName = session?.shopName || 'Shop Owner'
   const shopType = session?.shopType || 'Owner'
@@ -259,7 +265,7 @@ export default function MeScreen() {
           </div>
         )}
 
-        {SECTIONS.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.title}>
             <SectionTitle>{section.title}</SectionTitle>
 
