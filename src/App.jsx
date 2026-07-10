@@ -18,6 +18,7 @@ import NewDebtScreen from './screens/NewDebtScreen'
 import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
+import NotificationCenterScreen from './screens/NotificationCenterScreen'
 
 import ShopProfileScreen from './screens/settings/ShopProfileScreen'
 import PaymentModeScreen from './screens/settings/PaymentModeScreen'
@@ -227,8 +228,14 @@ export default function App() {
               element={<MeScreen />}
             />
 
+            <Route
+              path="/notification-center"
+              element={<NotificationCenterScreen />}
+            />
+
             <Route path="/shop" element={<ShopProfileScreen />} />
             <Route path="/payment-mode" element={<PaymentModeScreen />} />
+
             <Route
               path="/business-preferences"
               element={
@@ -237,6 +244,7 @@ export default function App() {
                 </RequireOwner>
               }
             />
+
             <Route path="/notifications" element={<NotificationsScreen />} />
             <Route path="/appearance" element={<ThemeScreen />} />
             <Route path="/language" element={<LanguageScreen />} />
