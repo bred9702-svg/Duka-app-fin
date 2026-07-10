@@ -404,9 +404,10 @@ bootstrap: async () => {
   },
 
   classifyTransaction: async (id, classification) => {
-    try {
-      const updated = await dbClassify(id, classification)
-      set((s) => ({
+  try {
+    const attribution = getSessionUserAttribution(get().session)
+    const updated = await dbClassify(id, { ...classification, ...attribution })
+    set((s) => ({
         transactions: s.transactions.map((t) => {
           const debtUpdate = updated.debtUpdates?.find((d) => d.id === t.id)
           if (debtUpdate) return { ...t, ...debtUpdate }
@@ -460,9 +461,10 @@ bootstrap: async () => {
   },
 
   addDebtPayment: async (customerId, amount, paymentTransactionId = null) => {
-    try {
-      const updated = await dbAddDebtPayment(customerId, amount, paymentTransactionId)
-      set((s) => ({
+  try {
+    const attribution = getSessionUserAttribution(get().session)
+    const updated = await dbAddDebtPayment(customerId, amount, paymentTransactionId, attribution)
+    set((s) => ({
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updated.customer } : c
         ),
@@ -566,17 +568,19 @@ bootstrap: async () => {
         // Standalone purchase (not started from Cash Out) — record its own
         // expense, using the exact same transaction shape as the proven
         // working Cash In/Out flow.
-        const savedTxn = await dbAddTransaction({
-          amount: totalInvestment,
-          source: 'cash',
-          direction: 'out',
-          classified: true,
-          operation_type: 'expense',
-          expense_category: 'stock',
-          mpesa_sender_name: null,
-          mpesa_sender_phone: null,
-          mpesa_reference: null,
-        })
+     const attribution = getSessionUserAttribution(get().session)
+const savedTxn = await dbAddTransaction({
+  amount: totalInvestment,
+  source: 'cash',
+  direction: 'out',
+  classified: true,
+  operation_type: 'expense',
+  expense_category: 'stock',
+  mpesa_sender_name: null,
+  mpesa_sender_phone: null,
+  mpesa_reference: null,
+  ...attribution,
+})
         set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
 
         if (get().notificationSettings.stockPurchaseAlerts !== false) {
@@ -650,7 +654,8 @@ bootstrap: async () => {
       }
 
       const productById = new Map(get().products.map((product) => [product.id, product]))
-      const savedTxns = []
+const attribution = getSessionUserAttribution(get().session)
+const savedTxns = []
 
       for (const item of items) {
         const lineTotal = item.unitPrice * item.quantity
@@ -675,6 +680,7 @@ bootstrap: async () => {
           mpesa_sender_name: null,
           mpesa_sender_phone: null,
           mpesa_reference: null,
+          ...attribution,
         })
 
         savedTxns.push({
@@ -745,9 +751,10 @@ bootstrap: async () => {
 
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
-      const updatedTxn = await completeSalePayment(linkedTransactionId, {
-        items, grandTotal, totalProfit, customerId,
-      })
+     const attribution = getSessionUserAttribution(get().session)
+const updatedTxn = await completeSalePayment(linkedTransactionId, {
+  items, grandTotal, totalProfit, customerId, ...attribution,
+})
 
       set((s) => ({
         transactions: s.transactions.map((t) =>
