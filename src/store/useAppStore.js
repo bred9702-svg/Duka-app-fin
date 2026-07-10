@@ -28,6 +28,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   weeklySummary: true,
 }
 
+const NOTIFICATIONS_STORAGE_KEY = 'duka-in-app-notifications'
 const LAST_DAILY_SUMMARY_KEY = 'duka-last-daily-summary'
 const LAST_WEEKLY_SUMMARY_KEY = 'duka-last-weekly-summary'
 
@@ -51,6 +52,19 @@ function loadNotificationSettings() {
   }
 }
 
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveNotifications(notifications) {
+  localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications.slice(0, 100)))
+}
+
 function createInAppNotification({ type, title, message, dedupeKey = null }) {
   return {
     id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -58,6 +72,7 @@ function createInAppNotification({ type, title, message, dedupeKey = null }) {
     title,
     message,
     dedupeKey,
+    read: false,
     createdAt: new Date().toISOString(),
   }
 }
@@ -134,6 +149,7 @@ const LOCAL_APP_DATA_KEYS = [
   'duka-language',
   'duka-purchase-history',
   'duka-pending-stock-purchases',
+  NOTIFICATIONS_STORAGE_KEY,
 ]
 
 function clearLocalAppData() {
@@ -152,6 +168,7 @@ const useAppStore = create((set, get) => ({
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
   notificationSettings: loadNotificationSettings(),
+  notifications: loadNotifications(),
   inAppNotifications: [],
 
   setTheme: (theme) => {
@@ -184,12 +201,16 @@ const useAppStore = create((set, get) => ({
     set((s) => {
       if (
         saved.dedupeKey &&
-        s.inAppNotifications.some((existing) => existing.dedupeKey === saved.dedupeKey)
+        s.notifications.some((existing) => existing.dedupeKey === saved.dedupeKey)
       ) {
         return {}
       }
 
+      const notifications = [saved, ...s.notifications].slice(0, 100)
+      saveNotifications(notifications)
+
       return {
+        notifications,
         inAppNotifications: [saved, ...s.inAppNotifications].slice(0, 5),
       }
     })
@@ -201,6 +222,52 @@ const useAppStore = create((set, get) => ({
     set((s) => ({
       inAppNotifications: s.inAppNotifications.filter((notification) => notification.id !== id),
     }))
+  },
+
+  markNotificationAsRead: (id) => {
+    set((s) => {
+      const notifications = s.notifications.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+
+      saveNotifications(notifications)
+
+      return { notifications }
+    })
+  },
+
+  markAllNotificationsAsRead: () => {
+    set((s) => {
+      const notifications = s.notifications.map((notification) => ({
+        ...notification,
+        read: true,
+      }))
+
+      saveNotifications(notifications)
+
+      return { notifications }
+    })
+  },
+
+  deleteNotification: (id) => {
+    set((s) => {
+      const notifications = s.notifications.filter((notification) => notification.id !== id)
+      saveNotifications(notifications)
+
+      return {
+        notifications,
+        inAppNotifications: s.inAppNotifications.filter((notification) => notification.id !== id),
+      }
+    })
+  },
+
+  clearAllNotifications: () => {
+    localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY)
+
+    set({
+      notifications: [],
+      inAppNotifications: [],
+    })
   },
 
   notifyLowStockIfNeeded: (productId, newStock) => {
@@ -372,6 +439,7 @@ const useAppStore = create((set, get) => ({
     set({
       session,
       notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+      notifications: [],
       inAppNotifications: [],
     })
 
@@ -396,6 +464,7 @@ const useAppStore = create((set, get) => ({
     set({
       session,
       notificationSettings: loadNotificationSettings(),
+      notifications: loadNotifications(),
       inAppNotifications: [],
     })
 
@@ -424,6 +493,7 @@ const useAppStore = create((set, get) => ({
       products: [],
       todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
       notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+      notifications: [],
       inAppNotifications: [],
       loading: false,
       error: null,
@@ -438,6 +508,7 @@ const useAppStore = create((set, get) => ({
     set({
       theme: savedTheme,
       notificationSettings: loadNotificationSettings(),
+      notifications: loadNotifications(),
     })
 
     set({ loading: true, error: null })
