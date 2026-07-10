@@ -20,6 +20,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   lowStockAlerts: true,
   newDebtAlerts: true,
   debtPaymentAlerts: true,
+  paymentReceivedAlerts: true,
   dailySummary: false,
   weeklySummary: true,
 }
@@ -42,6 +43,32 @@ function loadNotificationSettings() {
   } catch {
     return DEFAULT_NOTIFICATION_SETTINGS
   }
+}
+
+function createInAppNotification({ type, title, message }) {
+  return {
+    id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    type,
+    title,
+    message,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+function isNotificationEnabled(settings, key, fallbackKeys = []) {
+  if (!settings) return true
+
+  if (typeof settings[key] === 'boolean') {
+    return settings[key]
+  }
+
+  for (const fallbackKey of fallbackKeys) {
+    if (typeof settings[fallbackKey] === 'boolean') {
+      return settings[fallbackKey]
+    }
+  }
+
+  return true
 }
 
 // All the account-scoped local caches used across settings/purchase
@@ -72,6 +99,7 @@ const useAppStore = create((set, get) => ({
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
   notificationSettings: loadNotificationSettings(),
+  inAppNotifications: [],
 
   setTheme: (theme) => {
     localStorage.setItem('duka-theme', theme)
@@ -90,6 +118,44 @@ const useAppStore = create((set, get) => ({
       localStorage.setItem('duka-notifications', JSON.stringify(notificationSettings))
 
       return { notificationSettings }
+    })
+  },
+
+  pushInAppNotification: (notification) => {
+    const saved = createInAppNotification(notification)
+
+    set((s) => ({
+      inAppNotifications: [saved, ...s.inAppNotifications].slice(0, 5),
+    }))
+
+    return saved
+  },
+
+  dismissInAppNotification: (id) => {
+    set((s) => ({
+      inAppNotifications: s.inAppNotifications.filter((notification) => notification.id !== id),
+    }))
+  },
+
+  notifyLowStockIfNeeded: (productId, newStock) => {
+    const settings = get().notificationSettings
+
+    if (!isNotificationEnabled(settings, 'lowStockAlerts', ['lowStock'])) {
+      return
+    }
+
+    const product = get().products.find((p) => p.id === productId)
+    if (!product) return
+
+    const alertLevel = Number(product.stock_alert ?? 0)
+    const currentStock = Number(newStock ?? product.stock_current ?? 0)
+
+    if (currentStock > alertLevel) return
+
+    get().pushInAppNotification({
+      type: 'low_stock',
+      title: 'Low Stock Alert',
+      message: `${product.name} is running low. ${currentStock} unit${currentStock === 1 ? '' : 's'} left.`,
     })
   },
 
@@ -132,6 +198,7 @@ const useAppStore = create((set, get) => ({
     set({
       session,
       notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+      inAppNotifications: [],
     })
 
     // In case registration follows a signOut() that emptied the data —
@@ -155,6 +222,7 @@ const useAppStore = create((set, get) => ({
     set({
       session,
       notificationSettings: loadNotificationSettings(),
+      inAppNotifications: [],
     })
 
     // signOut() empties products/transactions/customers — reload them now
@@ -182,6 +250,7 @@ const useAppStore = create((set, get) => ({
       products: [],
       todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
       notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+      inAppNotifications: [],
       loading: false,
       error: null,
     })
@@ -226,7 +295,9 @@ const useAppStore = create((set, get) => ({
 
   classifyTransaction: async (id, classification) => {
     try {
+      const existingTransaction = get().transactions.find((t) => t.id === id)
       const updated = await dbClassify(id, classification)
+
       set((s) => ({
         transactions: s.transactions.map((t) => {
           const debtUpdate = updated.debtUpdates?.find((d) => d.id === t.id)
@@ -239,6 +310,21 @@ const useAppStore = create((set, get) => ({
             )
           : s.customers,
       }))
+
+      const direction = existingTransaction?.direction || updated.direction
+      const settings = get().notificationSettings
+
+      if (
+        direction === 'in' &&
+        isNotificationEnabled(settings, 'paymentReceivedAlerts', ['paymentReceived'])
+      ) {
+        get().pushInAppNotification({
+          type: 'payment_received',
+          title: 'Payment Received',
+          message: `${updated.amount || existingTransaction?.amount || 0} KES cash in has been classified.`,
+        })
+      }
+
       await get().refreshTodayStats()
       return updated
     } catch (err) {
@@ -259,6 +345,7 @@ const useAppStore = create((set, get) => ({
   addDebtPayment: async (customerId, amount, paymentTransactionId = null) => {
     try {
       const updated = await dbAddDebtPayment(customerId, amount, paymentTransactionId)
+
       set((s) => ({
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updated.customer } : c
@@ -279,6 +366,18 @@ const useAppStore = create((set, get) => ({
           return t
         }),
       }))
+
+      const settings = get().notificationSettings
+      const customer = updated.customer || get().customers.find((c) => c.id === customerId)
+
+      if (isNotificationEnabled(settings, 'debtPaymentAlerts', ['paymentReceived'])) {
+        get().pushInAppNotification({
+          type: 'debt_payment',
+          title: 'Debt Payment Received',
+          message: `${customer?.name || 'Customer'} paid ${amount} KES toward their debt.`,
+        })
+      }
+
       return updated
     } catch (err) {
       console.error('Debt payment error:', err)
@@ -478,6 +577,21 @@ const useAppStore = create((set, get) => ({
         ),
       }))
 
+      Object.entries(updatedStocks).forEach(([productId, newStock]) => {
+        get().notifyLowStockIfNeeded(productId, newStock)
+      })
+
+      const settings = get().notificationSettings
+      const customer = updatedCustomer || get().customers.find((c) => c.id === customerId)
+
+      if (isNotificationEnabled(settings, 'newDebtAlerts', ['newDebt'])) {
+        get().pushInAppNotification({
+          type: 'new_debt',
+          title: 'New Debt Created',
+          message: `${customer?.name || 'Customer'} now owes ${grandTotal} KES.`,
+        })
+      }
+
       await get().refreshTodayStats()
 
       return {
@@ -518,6 +632,10 @@ const useAppStore = create((set, get) => ({
           p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
         ),
       }))
+
+      Object.entries(updatedStocks).forEach(([productId, newStock]) => {
+        get().notifyLowStockIfNeeded(productId, newStock)
+      })
 
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
