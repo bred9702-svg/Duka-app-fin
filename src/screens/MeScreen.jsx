@@ -14,6 +14,7 @@ const SECTIONS = [
   {
     title: 'Application',
     items: [
+      { label: 'Notification Center', icon: 'bell', color: '#F0A93D', path: '/notification-center' },
       { label: 'Notification', icon: 'bell', color: '#FF6B5B', path: '/notifications' },
       { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
       { label: 'Language', icon: 'globe', color: '#4FC3F7', path: '/language' },
@@ -104,56 +105,25 @@ function Row({ item, onClick, isFirst, isLast }) {
   )
 }
 
-function getSubscriptionStatus(session) {
-  if (!session) {
-    return null
-  }
+function getTrialDaysRemaining(session) {
+  if (!session) return null
 
-  if (session.subscriptionStatus === 'active') {
-    return {
-      title: 'Pro Active',
-      detail: 'Your subscription is active',
-      color: '#5FD97A',
-      bg: 'linear-gradient(160deg, rgba(95,217,122,.16), rgba(255,255,255,.03))',
-      border: '1px solid rgba(95,217,122,.28)',
-    }
-  }
+  const status = session.subscriptionStatus || 'trial'
+  if (status !== 'trial') return null
+  if (!session.trialEnd) return 15
 
-  if (session.subscriptionStatus === 'expired') {
-    return {
-      title: 'Trial Expired',
-      detail: 'Your trial has ended. Upgrade to continue.',
-      color: '#FF6B5B',
-      bg: 'linear-gradient(160deg, rgba(255,107,91,.16), rgba(255,255,255,.03))',
-      border: '1px solid rgba(255,107,91,.28)',
-    }
-  }
-
-  const diffMs = session.trialEnd
-    ? new Date(session.trialEnd).getTime() - Date.now()
-    : 15 * 24 * 60 * 60 * 1000
-
-  const daysRemaining = Number.isNaN(diffMs)
-    ? 15
-    : Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
-
-  return {
-    title: 'Pro Trial',
-    detail: `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} remaining`,
-    color: '#F0A93D',
-    bg: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
-    border: '1px solid rgba(240,169,61,.28)',
-  }
+  const diffMs = new Date(session.trialEnd).getTime() - Date.now()
+  if (Number.isNaN(diffMs)) return 15
+  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
 }
 
 export default function MeScreen() {
   const navigate = useNavigate()
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
-  const refreshSubscriptionStatus = useAppStore((s) => s.refreshSubscriptionStatus)
-
-  const currentSession = refreshSubscriptionStatus?.() || session
-  const subscription = getSubscriptionStatus(currentSession)
+  const notifications = useAppStore((s) => s.notifications)
+  const trialDaysRemaining = getTrialDaysRemaining(session)
+  const unreadNotifications = notifications.filter((notification) => !notification.read).length
 
   return (
     <div
@@ -230,7 +200,7 @@ export default function MeScreen() {
                 textOverflow: 'ellipsis',
               }}
             >
-              {currentSession?.name || 'Shop Owner'}
+              {session?.name || 'Shop Owner'}
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -239,29 +209,30 @@ export default function MeScreen() {
                   fontSize: 8,
                   fontWeight: 600,
                   padding: '2px 7px',
-                  background: currentSession?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
-                  color: currentSession?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
+                  background: session?.role === 'employee' ? 'rgba(91,159,240,.14)' : 'rgba(240,169,61,.14)',
+                  color: session?.role === 'employee' ? '#5B9FF0' : '#F0A93D',
                 }}
               >
-                {currentSession?.role === 'employee' ? 'Employee' : 'Owner'}
+                {session?.role === 'employee' ? 'Employee' : 'Owner'}
               </span>
-              {currentSession?.shopName && (
+
+              {session?.shopName && (
                 <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
-                  {currentSession.shopName}
+                  {session.shopName}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {subscription && (
+        {trialDaysRemaining !== null && (
           <div
             style={{
               marginTop: 10,
               padding: '12px 14px',
               borderRadius: 14,
-              background: subscription.bg,
-              border: subscription.border,
+              background: 'linear-gradient(160deg, rgba(240,169,61,.16), rgba(255,255,255,.03))',
+              border: '1px solid rgba(240,169,61,.28)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -269,15 +240,54 @@ export default function MeScreen() {
             }}
           >
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: subscription.color, margin: 0 }}>
-                {subscription.title}
+              <p
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#F0A93D',
+                  margin: 0,
+                }}
+              >
+                Pro Trial
               </p>
+
               <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
-                {subscription.detail}
+                {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
               </p>
             </div>
-            <Icon name="star" size={20} color={subscription.color} />
+
+            <Icon name="star" size={20} color="#F0A93D" />
           </div>
+        )}
+
+        {unreadNotifications > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('/notification-center')}
+            style={{
+              width: '100%',
+              marginTop: 10,
+              padding: '11px 12px',
+              borderRadius: 14,
+              border: '1px solid rgba(240,169,61,0.28)',
+              background: 'rgba(240,169,61,0.10)',
+              color: '#F0A93D',
+              fontFamily: 'var(--font-display)',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
+            <span>
+              {unreadNotifications} unread notification{unreadNotifications === 1 ? '' : 's'}
+            </span>
+            <Icon name="chevronRight" size={15} color="#F0A93D" />
+          </button>
         )}
 
         {SECTIONS.map((section) => (
@@ -304,9 +314,16 @@ export default function MeScreen() {
             navigate('/splash')
           }}
           style={{
-            width: '100%', marginTop: 20, padding: '12px', borderRadius: 12,
-            border: '1px solid rgba(255,107,91,0.25)', background: 'rgba(255,107,91,0.08)',
-            cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600,
+            width: '100%',
+            marginTop: 20,
+            padding: '12px',
+            borderRadius: 12,
+            border: '1px solid rgba(255,107,91,0.25)',
+            background: 'rgba(255,107,91,0.08)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-display)',
+            fontSize: 12,
+            fontWeight: 600,
             color: '#FF6B5B',
           }}
         >
