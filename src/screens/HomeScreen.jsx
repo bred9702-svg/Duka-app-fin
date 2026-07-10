@@ -48,6 +48,7 @@ export default function HomeScreen() {
   const todayStats = useAppStore((s) => s.todayStats)
   const addTransaction = useAppStore((s) => s.addTransaction)
   const businessPreferences = useAppStore((s) => s.businessPreferences)
+  const session = useAppStore((s) => s.session)
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
 
@@ -65,6 +66,8 @@ export default function HomeScreen() {
   const lowStock = Array.isArray(lowStockResult) ? lowStockResult : []
   const firstLowStock = lowStock[0] || null
   const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
+  const isEmployee = session?.role === 'employee'
+  const contextualStats = isEmployee ? { ...todayStats, profit: 0 } : todayStats
 
   useEffect(() => {
     getTopProducts(7).then(data => {
@@ -133,7 +136,7 @@ export default function HomeScreen() {
         {/* Message contextuel */}
         {showDailyAiBrief && (
           <ContextualMessage
-            stats={todayStats}
+            stats={contextualStats}
             topProduct={topProduct}
             topCustomer={topCustomer}
             lowStock={lowStock}
@@ -141,12 +144,14 @@ export default function HomeScreen() {
         )}
 
         {/* Profit ring */}
-        <div style={{ marginBottom: 6 }}>
-          <ProfitRing profit={profit} income={income} marginPct={marginPct} />
-        </div>
+        {!isEmployee && (
+          <div style={{ marginBottom: 6 }}>
+            <ProfitRing profit={profit} income={income} marginPct={marginPct} />
+          </div>
+        )}
 
         {/* Stars rating */}
-        {income > 0 && (
+        {!isEmployee && income > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, paddingLeft: 4 }}>
             <Stars count={rating} />
             <p style={{ fontSize: 11, color: 'var(--text-low)' }}>
