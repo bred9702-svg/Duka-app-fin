@@ -47,7 +47,7 @@ export default function HomeScreen() {
   const products = useAppStore((s) => s.products)
   const todayStats = useAppStore((s) => s.todayStats)
   const addTransaction = useAppStore((s) => s.addTransaction)
- const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
+  const businessPreferences = useAppStore((s) => s.businessPreferences)
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
 
@@ -62,7 +62,7 @@ export default function HomeScreen() {
     .sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0))[0] || null
 
   const lowStock = getLowStock(products)
-  const showDailyAiBrief = businessPreferences.dailyAiBrief !== false
+  const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
 
   useEffect(() => {
     getTopProducts(7).then(data => {
@@ -154,49 +154,46 @@ export default function HomeScreen() {
         )}
 
         {/* Stat cards — langage humain */}
-       <div
-  style={{
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 8,
-    marginBottom: 14,
-  }}
->
- <StatCard
-  label="Money in"
-  value={fmtKES(income)}
-  sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
-  color="green"
-  delay={0.05}
-/>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+            marginBottom: 14,
+          }}
+        >
+          <StatCard
+            label="Money in"
+            value={fmtKES(income)}
+            sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
+            color="green"
+            delay={0.05}
+          />
 
-<StatCard
-  label="Money out"
-  value={fmtKES(expenses)}
-  sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
-  color="red"
-  delay={0.1}
-/>
+          <StatCard
+            label="Money out"
+            value={fmtKES(expenses)}
+            sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
+            color="red"
+            delay={0.1}
+          />
 
-<StatCard
-  label="Customer debt"
-  value={fmtKES(totalOwed)}
-  sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
-  color="amber"
-  delay={0.15}
-/>
+          <StatCard
+            label="Customer debt"
+            value={fmtKES(totalOwed)}
+            sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
+            color="amber"
+            delay={0.15}
+          />
 
-<StatCard
-  label="Needs review"
-  value={unclassifiedCount}
-  sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
-  color={unclassifiedCount ? 'red' : 'green'}
-  delay={0.2}
-/>
-
-</div>
-
-{/* Quick insights */}
+          <StatCard
+            label="Needs review"
+            value={unclassifiedCount}
+            sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
+            color={unclassifiedCount ? 'red' : 'green'}
+            delay={0.2}
+          />
+        </div>
 
         {/* Quick insights */}
         {(topProduct || topCustomer || lowStock.length > 0) && (
@@ -239,10 +236,17 @@ export default function HomeScreen() {
             background: simulating ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
             color: simulating ? '#FFD98A' : '#2A1A05',
             border: simulating ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
-            borderRadius: 12, padding: 11,
-            fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', marginBottom: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            borderRadius: 12,
+            padding: 11,
+            fontFamily: 'var(--font-display)',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginBottom: 14,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
             boxShadow: simulating ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
           }}
         >
