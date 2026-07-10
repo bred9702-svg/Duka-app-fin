@@ -1,22 +1,55 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
+import { getEmployeeInviteByCode, normalizeInviteCode } from '../../utils/employeeInvitations'
 
 export default function SignInScreen() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const signIn = useAppStore((s) => s.signIn)
 
-  const [phone, setPhone] = useState('')
-  const [role, setRole] = useState('owner')
+  const inviteFromLink = normalizeInviteCode(searchParams.get('invite') || '')
+  const startsInJoinMode = searchParams.get('mode') === 'join' || Boolean(inviteFromLink)
 
-  const canSubmit = phone.trim().length > 0
+  const [phone, setPhone] = useState('')
+  const [role, setRole] = useState(startsInJoinMode ? 'employee' : 'owner')
+  const [inviteCode, setInviteCode] = useState(inviteFromLink)
+  const [inviteError, setInviteError] = useState('')
+
+  const isJoinMode = role === 'employee'
+  const canSubmit = isJoinMode ? inviteCode.trim().length > 0 : phone.trim().length > 0
 
   async function handleContinue() {
     if (!canSubmit) return
+
+    if (isJoinMode) {
+      const invite = getEmployeeInviteByCode(inviteCode)
+
+      if (!invite) {
+        setInviteError('Invalid invitation code. Ask the shop owner to send a new invite.')
+        return
+      }
+
+      await signIn({
+        role: 'employee',
+        name: 'Employee',
+        phone: phone.trim(),
+        shopName: invite.shopName,
+        shopAddress: null,
+      })
+      navigate('/')
+      return
+    }
+
     await signIn({ phone: phone.trim(), role })
     navigate('/')
+  }
+
+  function updateInviteCode(value) {
+    setInviteCode(value)
+    setInviteError('')
   }
 
   return (
@@ -37,48 +70,78 @@ export default function SignInScreen() {
 
         <FadeIn duration={280} y={12}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            Welcome back
+            {isJoinMode ? 'Join a shop' : 'Welcome back'}
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text-low)', marginBottom: 24 }}>
-            Sign in to continue to your shop
+            {isJoinMode ? 'Enter the invitation code shared by the shop owner' : 'Sign in to continue to your shop'}
           </p>
         </FadeIn>
 
         <FadeIn delay={60} duration={280} y={12}>
-          <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+254 7XX XXX XXX"
-            style={{
-              width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
-              borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-              fontFamily: 'inherit', outline: 'none', marginBottom: 14,
-            }}
-          />
+          {!isJoinMode && (
+            <>
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+254 7XX XXX XXX"
+                style={{
+                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
+                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
+                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
+                }}
+              />
+            </>
+          )}
 
-          <button
-            disabled
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '11px', borderRadius: 10, border: '1px solid var(--glass-border)',
-              background: 'var(--faint-fill)', cursor: 'default', marginBottom: 20,
-              fontSize: 12, fontWeight: 600, color: 'var(--text-low)', opacity: 0.6,
-            }}
-          >
-            <Icon name="circleCheck" size={14} color="var(--text-low)" />
-            Continue with Google
-            <span style={{
-              marginLeft: 4, fontSize: 8, fontWeight: 700, padding: '2px 6px',
-              background: 'var(--glass-fill-soft)', color: 'var(--text-low)', letterSpacing: '.03em',
-            }}>
-              COMING SOON
-            </span>
-          </button>
+          {isJoinMode && (
+            <>
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Invitation Code</p>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) => updateInviteCode(e.target.value)}
+                placeholder="DUKA-XXXXXX"
+                autoCapitalize="characters"
+                style={{
+                  width: '100%', background: 'var(--glass-fill-soft)', border: inviteError ? '1px solid rgba(255,107,91,0.55)' : '1px solid var(--glass-border)',
+                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
+                  fontFamily: 'var(--font-display)', outline: 'none', marginBottom: inviteError ? 6 : 14,
+                  letterSpacing: '0.04em', textTransform: 'uppercase',
+                }}
+              />
+              {inviteError && (
+                <p style={{ margin: '0 0 14px', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+                  {inviteError}
+                </p>
+              )}
+            </>
+          )}
+
+          {!isJoinMode && (
+            <button
+              disabled
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '11px', borderRadius: 10, border: '1px solid var(--glass-border)',
+                background: 'var(--faint-fill)', cursor: 'default', marginBottom: 20,
+                fontSize: 12, fontWeight: 600, color: 'var(--text-low)', opacity: 0.6,
+              }}
+            >
+              <Icon name="circleCheck" size={14} color="var(--text-low)" />
+              Continue with Google
+              <span style={{
+                marginLeft: 4, fontSize: 8, fontWeight: 700, padding: '2px 6px',
+                background: 'var(--glass-fill-soft)', color: 'var(--text-low)', letterSpacing: '.03em',
+              }}>
+                COMING SOON
+              </span>
+            </button>
+          )}
 
           <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 6, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-            Signing in as
+            {isJoinMode ? 'Joining as' : 'Signing in as'}
           </p>
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
             {[
@@ -87,7 +150,10 @@ export default function SignInScreen() {
             ].map((r) => (
               <button
                 key={r.id}
-                onClick={() => setRole(r.id)}
+                onClick={() => {
+                  setRole(r.id)
+                  setInviteError('')
+                }}
                 style={{
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   padding: '10px', borderRadius: 10, cursor: 'pointer',
@@ -115,7 +181,7 @@ export default function SignInScreen() {
               opacity: canSubmit ? 1 : 0.4, transition: 'opacity 200ms ease',
             }}
           >
-            Continue
+            {isJoinMode ? 'Join Shop' : 'Continue'}
           </button>
         </FadeIn>
       </div>
