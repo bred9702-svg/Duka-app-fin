@@ -26,6 +26,20 @@ function loadSession() {
 }
 
 const STORE_SETTINGS_KEY = 'duka-store-settings'
+const NOTIFICATIONS_KEY = 'duka-notifications'
+const NOTIFICATION_SETTINGS_KEY = 'duka-notification-settings'
+
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  lowStockAlerts: true,
+  newDebtAlerts: true,
+  debtPaymentAlerts: true,
+  dailySummary: true,
+  weeklySummary: true,
+  paymentReceivedAlerts: true,
+  saleAlerts: true,
+  stockPurchaseAlerts: true,
+  cashOutAlerts: true,
+}
 
 export const DEFAULT_BUSINESS_PREFERENCES = {
   currency: 'KES',
@@ -67,6 +81,50 @@ function saveBusinessPreferences(settings) {
   return normalized
 }
 
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveNotifications(notifications) {
+  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications))
+}
+
+function loadNotificationSettings() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_SETTINGS_KEY)
+    return {
+      ...DEFAULT_NOTIFICATION_SETTINGS,
+      ...(raw ? JSON.parse(raw) : {}),
+    }
+  } catch {
+    return DEFAULT_NOTIFICATION_SETTINGS
+  }
+}
+
+function saveNotificationSettings(settings) {
+  const normalized = { ...DEFAULT_NOTIFICATION_SETTINGS, ...settings }
+  localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(normalized))
+  return normalized
+}
+
+function createNotification(payload) {
+  return {
+    id: `notification-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: payload.title,
+    message: payload.message,
+    type: payload.type || 'info',
+    read: false,
+    createdAt: new Date().toISOString(),
+    ...payload,
+  }
+}
+
 // All the account-scoped local caches used across settings/purchase
 // screens. Kept in one place so registration and sign-out never miss one.
 // duka-theme is intentionally excluded — it's a device preference, not
@@ -75,7 +133,8 @@ const LOCAL_APP_DATA_KEYS = [
   'duka-shop-profile',
   'duka-payment-methods',
   STORE_SETTINGS_KEY,
-  'duka-notifications',
+  NOTIFICATIONS_KEY,
+  NOTIFICATION_SETTINGS_KEY,
   'duka-language',
   'duka-purchase-history',
   'duka-pending-stock-purchases',
@@ -95,6 +154,9 @@ const useAppStore = create((set, get) => ({
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
   businessPreferences: loadBusinessPreferences(),
+  notifications: loadNotifications(),
+  inAppNotifications: [],
+  notificationSettings: loadNotificationSettings(),
 
 setTheme: (theme) => {
   localStorage.setItem('duka-theme', theme)
@@ -115,6 +177,72 @@ updateBusinessPreference: (field, value) => {
 updateBusinessPreferences: (settings) => {
   const businessPreferences = saveBusinessPreferences(settings)
   set({ businessPreferences })
+},
+
+addNotification: (notification) => {
+  const saved = createNotification(notification)
+
+  set((s) => {
+    const notifications = [saved, ...(s.notifications || [])].slice(0, 100)
+    saveNotifications(notifications)
+
+    return {
+      notifications,
+      inAppNotifications: [saved, ...(s.inAppNotifications || [])].slice(0, 3),
+    }
+  })
+
+  return saved
+},
+
+dismissInAppNotification: (id) => {
+  set((s) => ({
+    inAppNotifications: (s.inAppNotifications || []).filter((notification) => notification.id !== id),
+  }))
+},
+
+markNotificationAsRead: (id) => {
+  set((s) => {
+    const notifications = (s.notifications || []).map((notification) =>
+      notification.id === id ? { ...notification, read: true } : notification
+    )
+    saveNotifications(notifications)
+    return { notifications }
+  })
+},
+
+markAllNotificationsAsRead: () => {
+  set((s) => {
+    const notifications = (s.notifications || []).map((notification) => ({
+      ...notification,
+      read: true,
+    }))
+    saveNotifications(notifications)
+    return { notifications }
+  })
+},
+
+deleteNotification: (id) => {
+  set((s) => {
+    const notifications = (s.notifications || []).filter((notification) => notification.id !== id)
+    saveNotifications(notifications)
+    return { notifications }
+  })
+},
+
+clearAllNotifications: () => {
+  saveNotifications([])
+  set({ notifications: [] })
+},
+
+updateNotificationSetting: (id, value) => {
+  set((s) => {
+    const notificationSettings = saveNotificationSettings({
+      ...s.notificationSettings,
+      [id]: value,
+    })
+    return { notificationSettings }
+  })
 },
 
 registerOwner: async (data) => {
@@ -190,6 +318,9 @@ signOut: () => {
   set({
     session: null,
     businessPreferences: DEFAULT_BUSINESS_PREFERENCES,
+    notifications: [],
+    inAppNotifications: [],
+    notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
     transactions: [],
     customers: [],
     products: [],
@@ -206,6 +337,8 @@ bootstrap: async () => {
   set({
     theme: savedTheme,
     businessPreferences: loadBusinessPreferences(),
+    notifications: loadNotifications(),
+    notificationSettings: loadNotificationSettings(),
   })
   // ... reste du code bootstrap    
   set({ loading: true, error: null })
@@ -227,6 +360,23 @@ bootstrap: async () => {
     try {
       const saved = await dbAddTransaction(txn)
       set((s) => ({ transactions: [saved, ...s.transactions] }))
+
+      const settings = get().notificationSettings
+      if (saved.direction === 'in' && settings.paymentReceivedAlerts !== false) {
+        get().addNotification({
+          type: 'payment_received',
+          title: 'Payment received',
+          message: `Cash in of KES ${Number(saved.amount || 0).toLocaleString()} was recorded.`,
+        })
+      }
+      if (saved.direction === 'out' && settings.cashOutAlerts !== false) {
+        get().addNotification({
+          type: 'cash_out',
+          title: 'Cash out recorded',
+          message: `Cash out of KES ${Number(saved.amount || 0).toLocaleString()} was recorded.`,
+        })
+      }
+
       await get().refreshTodayStats()
       return saved
     } catch (err) {
@@ -250,6 +400,30 @@ bootstrap: async () => {
           : s.customers,
       }))
       await get().refreshTodayStats()
+
+      const settings = get().notificationSettings
+      if (classification === 'debt' && settings.newDebtAlerts !== false) {
+        get().addNotification({
+          type: 'new_debt',
+          title: 'New debt recorded',
+          message: `A debt of KES ${Number(updated.amount || 0).toLocaleString()} was added.`,
+        })
+      }
+      if (classification === 'debt_payment' && settings.debtPaymentAlerts !== false) {
+        get().addNotification({
+          type: 'debt_payment',
+          title: 'Debt payment recorded',
+          message: `Debt payment of KES ${Number(updated.amount || 0).toLocaleString()} was recorded.`,
+        })
+      }
+      if (classification === 'sale' && settings.saleAlerts !== false) {
+        get().addNotification({
+          type: 'sale',
+          title: 'Sale recorded',
+          message: `Sale of KES ${Number(updated.amount || 0).toLocaleString()} was recorded.`,
+        })
+      }
+
       return updated
     } catch (err) {
       console.error('Classify error:', err)
@@ -289,6 +463,15 @@ bootstrap: async () => {
           return t
         }),
       }))
+
+      if (get().notificationSettings.debtPaymentAlerts !== false) {
+        get().addNotification({
+          type: 'debt_payment',
+          title: 'Debt payment recorded',
+          message: `Debt payment of KES ${Number(amount || 0).toLocaleString()} was recorded.`,
+        })
+      }
+
       return updated
     } catch (err) {
       console.error('Debt payment error:', err)
@@ -376,6 +559,14 @@ bootstrap: async () => {
           mpesa_reference: null,
         })
         set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
+
+        if (get().notificationSettings.stockPurchaseAlerts !== false) {
+          get().addNotification({
+            type: 'stock_purchase',
+            title: 'Stock purchase recorded',
+            message: `Stock purchase of KES ${Number(totalInvestment || 0).toLocaleString()} was recorded.`,
+          })
+        }
       }
 
       await get().refreshTodayStats()
@@ -487,6 +678,14 @@ bootstrap: async () => {
 
       await get().refreshTodayStats()
 
+      if (get().notificationSettings.newDebtAlerts !== false) {
+        get().addNotification({
+          type: 'new_debt',
+          title: 'New debt recorded',
+          message: `Debt sale of KES ${Number(grandTotal || 0).toLocaleString()} was recorded.`,
+        })
+      }
+
       return {
         grandTotal,
         totalProfit,
@@ -538,6 +737,14 @@ bootstrap: async () => {
       }))
 
       await get().refreshTodayStats()
+
+      if (get().notificationSettings.saleAlerts !== false) {
+        get().addNotification({
+          type: 'sale',
+          title: 'Sale recorded',
+          message: `Sale of KES ${Number(grandTotal || 0).toLocaleString()} was recorded.`,
+        })
+      }
 
       return {
         grandTotal,
