@@ -24,8 +24,6 @@ const SECTIONS = [
     title: 'Support',
     items: [
       { label: 'Help', icon: 'helpCircle', color: '#F0A93D', path: '/help' },
-      { label: 'Privacy', icon: 'shield', color: '#5B9FF0', path: '/privacy' },
-      { label: 'Rate Duka', icon: 'star', color: '#FFD166', path: '/rate' },
     ],
   },
 ]
