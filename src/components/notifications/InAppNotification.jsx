@@ -36,7 +36,7 @@ const TYPE_STYLES = {
 }
 
 export default function InAppNotification() {
-  const notifications = useAppStore((s) => s.inAppNotifications)
+  const notifications = useAppStore((s) => s.inAppNotifications || [])
   const dismissInAppNotification = useAppStore((s) => s.dismissInAppNotification)
 
   const notification = notifications[0]
