@@ -19,6 +19,7 @@ import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
 import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
 import NotificationCenterScreen from './screens/NotificationCenterScreen'
+import EmployeesScreen from './screens/EmployeesScreen'
 
 import ShopProfileScreen from './screens/settings/ShopProfileScreen'
 import PaymentModeScreen from './screens/settings/PaymentModeScreen'
@@ -232,6 +233,15 @@ export default function App() {
             <Route
               path="/notification-center"
               element={<NotificationCenterScreen />}
+            />
+
+            <Route
+              path="/employees"
+              element={
+                <RequireOwner title="Employees">
+                  <EmployeesScreen />
+                </RequireOwner>
+              }
             />
 
             <Route path="/shop" element={<ShopProfileScreen />} />
