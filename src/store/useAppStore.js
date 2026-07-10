@@ -28,6 +28,9 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   weeklySummary: true,
 }
 
+const LAST_DAILY_SUMMARY_KEY = 'duka-last-daily-summary'
+const LAST_WEEKLY_SUMMARY_KEY = 'duka-last-weekly-summary'
+
 function loadSession() {
   try {
     const raw = localStorage.getItem('duka-session')
@@ -79,6 +82,46 @@ function formatAmount(amount) {
   return `${Number(amount || 0).toLocaleString('en-KE')} KES`
 }
 
+function getDateKey(date = new Date()) {
+  return date.toISOString().slice(0, 10)
+}
+
+function getWeekKey(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
+}
+
+function getTransactionTime(transaction) {
+  return new Date(transaction.created_at || transaction.ts || Date.now()).getTime()
+}
+
+function isToday(transaction) {
+  const transactionDateKey = getDateKey(new Date(getTransactionTime(transaction)))
+  return transactionDateKey === getDateKey()
+}
+
+function isWithinLastDays(transaction, days) {
+  const now = Date.now()
+  const rangeMs = days * 24 * 60 * 60 * 1000
+  return getTransactionTime(transaction) >= now - rangeMs
+}
+
+function getProductNameFromTransaction(transaction, products = []) {
+  if (transaction.product?.name) return transaction.product.name
+  if (transaction.product_name) return transaction.product_name
+  if (transaction.productName) return transaction.productName
+  if (transaction.classification?.productName) return transaction.classification.productName
+
+  const product = products.find((p) => p.id === transaction.product_id)
+  return product?.name || 'Unknown product'
+}
+
 // All the account-scoped local caches used across settings/purchase
 // screens. Kept in one place so registration and sign-out never miss one.
 // duka-theme is intentionally excluded — it's a device preference, not
@@ -95,6 +138,8 @@ const LOCAL_APP_DATA_KEYS = [
 
 function clearLocalAppData() {
   LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
+  localStorage.removeItem(LAST_DAILY_SUMMARY_KEY)
+  localStorage.removeItem(LAST_WEEKLY_SUMMARY_KEY)
 }
 
 const useAppStore = create((set, get) => ({
@@ -127,6 +172,10 @@ const useAppStore = create((set, get) => ({
 
       return { notificationSettings }
     })
+
+    setTimeout(() => {
+      get().generateScheduledSummaries()
+    }, 0)
   },
 
   pushInAppNotification: (notification) => {
@@ -175,6 +224,113 @@ const useAppStore = create((set, get) => ({
       message: `${product.name} is running low. ${currentStock} unit${currentStock === 1 ? '' : 's'} left.`,
       dedupeKey: `low-stock:${productId}:${currentStock}`,
     })
+  },
+
+  generateDailySummary: () => {
+    const settings = get().notificationSettings
+
+    if (!isNotificationEnabled(settings, 'dailySummary')) {
+      return
+    }
+
+    const todayKey = getDateKey()
+    const lastDailySummary = localStorage.getItem(LAST_DAILY_SUMMARY_KEY)
+
+    if (lastDailySummary === todayKey) {
+      return
+    }
+
+    const transactions = get().transactions
+    const products = get().products
+    const todayStats = get().todayStats
+
+    const todaysTransactions = transactions.filter(isToday)
+
+    const sales = todaysTransactions.filter((t) => t.operation_type === 'sale')
+    const expenses = todaysTransactions.filter((t) => t.operation_type === 'expense')
+    const newDebts = todaysTransactions.filter((t) => t.operation_type === 'debt' || t.is_debt)
+    const lowStockProducts = products.filter((p) => {
+      const stock = Number(p.stock_current ?? 0)
+      const alert = Number(p.stock_alert ?? 0)
+      return stock <= alert
+    })
+
+    const expensesTotal = expenses.reduce((sum, t) => sum + Number(t.amount || 0), 0)
+    const profit = Number(todayStats.profit || 0)
+
+    get().pushInAppNotification({
+      type: 'daily_summary',
+      title: 'Daily Summary',
+      message: `${sales.length} sale${sales.length === 1 ? '' : 's'}, expenses ${formatAmount(expensesTotal)}, profit ${formatAmount(profit)}, ${newDebts.length} new debt${newDebts.length === 1 ? '' : 's'}, ${lowStockProducts.length} low-stock product${lowStockProducts.length === 1 ? '' : 's'}.`,
+      dedupeKey: `daily-summary:${todayKey}`,
+    })
+
+    localStorage.setItem(LAST_DAILY_SUMMARY_KEY, todayKey)
+  },
+
+  generateWeeklySummary: () => {
+    const settings = get().notificationSettings
+
+    if (!isNotificationEnabled(settings, 'weeklySummary', ['weeklyReport'])) {
+      return
+    }
+
+    const weekKey = getWeekKey()
+    const lastWeeklySummary = localStorage.getItem(LAST_WEEKLY_SUMMARY_KEY)
+
+    if (lastWeeklySummary === weekKey) {
+      return
+    }
+
+    const transactions = get().transactions
+    const products = get().products
+
+    const weeklyTransactions = transactions.filter((t) => isWithinLastDays(t, 7))
+    const weeklySales = weeklyTransactions.filter((t) => t.operation_type === 'sale')
+    const weeklyExpenses = weeklyTransactions.filter((t) => t.operation_type === 'expense')
+    const weeklyDebtPayments = weeklyTransactions.filter((t) => t.operation_type === 'debt_payment')
+
+    const totalRevenue = weeklySales.reduce((sum, t) => sum + Number(t.amount || t.total_price || 0), 0)
+    const totalExpenses = weeklyExpenses.reduce((sum, t) => sum + Number(t.amount || 0), 0)
+    const profitFromTransactions = weeklySales.reduce((sum, t) => sum + Number(t.profit || 0), 0)
+    const totalProfit = profitFromTransactions || (totalRevenue - totalExpenses)
+    const debtCollected = weeklyDebtPayments.reduce((sum, t) => sum + Number(t.amount || 0), 0)
+
+    const productSales = {}
+
+    weeklySales.forEach((transaction) => {
+      const productName = getProductNameFromTransaction(transaction, products)
+      const quantity = Number(transaction.quantity || 1)
+
+      if (!productSales[productName]) {
+        productSales[productName] = 0
+      }
+
+      productSales[productName] += quantity
+    })
+
+    const bestSellingProduct =
+      Object.entries(productSales).sort((a, b) => b[1] - a[1])[0]?.[0] || 'No sales yet'
+
+    const stockAlerts = products.filter((p) => {
+      const stock = Number(p.stock_current ?? 0)
+      const alert = Number(p.stock_alert ?? 0)
+      return stock <= alert
+    })
+
+    get().pushInAppNotification({
+      type: 'weekly_summary',
+      title: 'Weekly Report',
+      message: `Revenue ${formatAmount(totalRevenue)}, profit ${formatAmount(totalProfit)}, best seller: ${bestSellingProduct}, debt collected ${formatAmount(debtCollected)}, ${stockAlerts.length} stock alert${stockAlerts.length === 1 ? '' : 's'}.`,
+      dedupeKey: `weekly-summary:${weekKey}`,
+    })
+
+    localStorage.setItem(LAST_WEEKLY_SUMMARY_KEY, weekKey)
+  },
+
+  generateScheduledSummaries: () => {
+    get().generateDailySummary()
+    get().generateWeeklySummary()
   },
 
   registerOwner: async (data) => {
@@ -293,7 +449,12 @@ const useAppStore = create((set, get) => ({
         getProducts(),
         getTodayStats(),
       ])
+
       set({ transactions, customers, products, todayStats, loading: false })
+
+      setTimeout(() => {
+        get().generateScheduledSummaries()
+      }, 0)
     } catch (err) {
       console.error('Bootstrap error:', err)
       set({ error: err.message, loading: false })
