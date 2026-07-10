@@ -1,15 +1,26 @@
+import { useNavigate } from 'react-router-dom'
 import SubScreenHeader from '../../components/layout/SubScreenHeader'
 import Icon from '../../components/ui/Icon'
 
 const ITEMS = [
-  { label: 'FAQ', sub: 'Common questions answered', icon: 'helpCircle', color: '#F0A93D', action: () => {} },
+  { label: 'FAQ', sub: 'Common questions answered', icon: 'helpCircle', color: '#F0A93D', path: '/faq' },
   { label: 'Contact us', sub: 'Reach the Duka team', icon: 'phone', color: '#5B9FF0', action: () => {} },
   { label: 'WhatsApp', sub: 'Chat with support', icon: 'phone', color: '#5FD97A', action: () => window.open('https://wa.me/', '_blank') },
   { label: 'Email', sub: 'support@duka.app', icon: 'inbox', color: '#7C5CFC', action: () => window.location.href = 'mailto:support@duka.app' },
-  { label: 'Report a bug', sub: 'Something not working right?', icon: 'alertTriangle', color: '#FF6B5B', action: () => {} },
 ]
 
 export default function HelpScreen() {
+  const navigate = useNavigate()
+
+  function handleItemClick(item) {
+    if (item.path) {
+      navigate(item.path)
+      return
+    }
+
+    item.action?.()
+  }
+
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -20, background: 'rgba(240,169,61,0.16)' }} />
@@ -20,7 +31,7 @@ export default function HelpScreen() {
         {ITEMS.map((item) => (
           <div
             key={item.label}
-            onClick={item.action}
+            onClick={() => handleItemClick(item)}
             style={{
               display: 'flex',
               alignItems: 'center',
