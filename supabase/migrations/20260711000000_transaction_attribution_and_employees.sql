@@ -10,7 +10,10 @@ alter table public.transactions
   add column if not exists employee_name text,
   add column if not exists shop_id text;
 
-create table if not exists public.employees (
+-- Clean slate: this table is brand new and unused, safe to drop/recreate.
+drop table if exists public.employees cascade;
+
+create table public.employees (
   employee_id text primary key,
   shop_id text not null,
   name text,
@@ -20,11 +23,9 @@ create table if not exists public.employees (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists employees_shop_id_idx
+create index employees_shop_id_idx
   on public.employees (shop_id);
 
--- Matches the current permissive access pattern used by the rest of the
--- schema (no RLS yet — see pending "per-shop isolation + RLS" work).
 alter table public.employees enable row level security;
 
 drop policy if exists "employees_allow_all" on public.employees;
