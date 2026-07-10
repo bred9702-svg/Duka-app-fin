@@ -9,6 +9,26 @@ function pickAttribution(source = {}) {
   }
 }
 
+// Applies an attribution-tagged update to a transaction. If the attribution
+// columns aren't available yet (migration not applied), retries the same
+// update without attribution instead of blocking the whole operation.
+async function updateTransactionSafe(transactionId, basePayload, attribution, { select = true } = {}) {
+  let query = supabase
+    .from('transactions')
+    .update({ ...basePayload, ...pickAttribution(attribution) })
+    .eq('id', transactionId)
+  if (select) query = query.select().single()
+  const { data, error } = await query
+  if (!error) return data
+
+  console.error('Update transaction with attribution failed, retrying without attribution:', error)
+  let retryQuery = supabase.from('transactions').update(basePayload).eq('id', transactionId)
+  if (select) retryQuery = retryQuery.select().single()
+  const retry = await retryQuery
+  if (retry.error) throw retry.error
+  return retry.data
+}
+
 // ── EMPLOYEES ─────────────────────────────────────────────────
 
 export async function upsertEmployee({ employeeId, shopId, name, phone, inviteCode }) {
@@ -135,9 +155,9 @@ export async function updateProductPrice(productId, unitPrice) {
 }
 
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
-  const { data, error } = await supabase
-    .from('transactions')
-    .update({
+  return updateTransactionSafe(
+    transactionId,
+    {
       classified: true,
       operation_type: 'sale',
       product_id: items.length === 1 ? items[0].productId : null,
@@ -146,13 +166,9 @@ export async function completeSalePayment(transactionId, { items, grandTotal, to
       total_price: grandTotal,
       profit: totalProfit,
       customer_id: customerId,
-      ...pickAttribution(attribution),
-    })
-    .eq('id', transactionId)
-    .select()
-    .single()
-  if (error) throw error
-  return data
+    },
+    attribution
+  )
 }
 
 // ── TRANSACTIONS ──────────────────────────────────────────────
@@ -187,9 +203,9 @@ export async function addTransaction(txn, attribution = {}) {
 
   if (!error) return data
 
-  // Si les colonnes d'attribution ne sont pas encore là (migration pas
-  // appliquée), ça ne doit jamais bloquer Cash In / Cash Out — on retente
-  // sans attribution pour que la transaction soit quand même enregistrée.
+  // If the attribution columns aren't available yet (e.g. migration not
+  // applied), never let that block Cash In / Cash Out — retry without
+  // attribution so the transaction still gets recorded.
   console.error('Add transaction with attribution failed, retrying without attribution:', error)
   const retry = await supabase
     .from('transactions')
@@ -267,9 +283,9 @@ export async function addDebtPayment(customerId, amount, paymentTransactionId = 
   }
 
   if (paymentTransactionId) {
-    const { error: paymentError } = await supabase
-      .from('transactions')
-      .update({
+    await updateTransactionSafe(
+      paymentTransactionId,
+      {
         classified: true,
         operation_type: 'debt_payment',
         customer_id: customerId,
@@ -277,10 +293,10 @@ export async function addDebtPayment(customerId, amount, paymentTransactionId = 
         remaining_amount: 0,
         paid_amount: paymentAmount - unapplied,
         debt_status: 'payment',
-        ...pickAttribution(attribution),
-      })
-      .eq('id', paymentTransactionId)
-    if (paymentError) throw paymentError
+      },
+      attribution,
+      { select: false }
+    )
   }
 
   const customer = await recalculateCustomerDebt(customerId)
@@ -330,9 +346,9 @@ export async function classifyTransaction(id, classification) {
 
   const debtOriginal = classification.type === 'debt' ? total_price ?? txn.amount : null
 
-  const { data, error } = await supabase
-    .from('transactions')
-    .update({
+  const data = await updateTransactionSafe(
+    id,
+    {
       classified: true,
       operation_type: classification.type,
       product_id: classification.product_id || null,
@@ -349,12 +365,9 @@ export async function classifyTransaction(id, classification) {
       remaining_amount: classification.type === 'debt' ? debtOriginal : 0,
       debt_status: classification.type === 'debt' ? 'active' : null,
       closed_at: null,
-      ...pickAttribution(classification),
-    })
-    .eq('id', id)
-    .select()
-    .single()
-  if (error) throw error
+    },
+    classification
+  )
 
   if (classification.type === 'debt' && classification.customer_id) {
     const customer = await recalculateCustomerDebt(classification.customer_id)
