@@ -40,6 +40,11 @@ export default function BottomNav() {
   const location = useLocation()
 
   const transactions = useAppStore((s) => s.transactions)
+  const session = useAppStore((s) => s.session)
+
+  const visibleTabs = session?.role === 'employee'
+    ? TABS.filter((tab) => tab.id !== 'insights')
+    : TABS
 
   const unclassifiedCount = transactions.filter(
     (t) => !t.classified
@@ -67,7 +72,7 @@ export default function BottomNav() {
         zIndex: 10,
       }}
     >
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const active = location.pathname === tab.path
 
         return (
