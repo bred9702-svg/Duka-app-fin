@@ -790,7 +790,7 @@ const updatedTxn = await completeSalePayment(linkedTransactionId, {
     }
   },
 
-  createProduct: async (data) => {
+   createProduct: async (data) => {
     try {
       const saved = await addProduct(data)
       set((s) => ({ products: [...s.products, saved] }))
@@ -801,5 +801,7 @@ const updatedTxn = await completeSalePayment(linkedTransactionId, {
     }
   },
 }))
+
+export default useAppStore
 
 export default useAppStore
