@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
-import { getEmployeeInviteByCode, normalizeInviteCode } from '../../utils/employeeInvitations'
+import { getEmployeeInviteByCode, normalizeInviteCode, saveJoinedEmployee } from '../../utils/employeeInvitations'
 
 function createEmployeeId(inviteCode) {
   const normalizedCode = normalizeInviteCode(inviteCode)
@@ -52,8 +52,7 @@ export default function SignInScreen() {
       }
 
       const normalizedCode = normalizeInviteCode(validatedInvite.code || inviteCode)
-
-      await signIn({
+      const employeeProfile = saveJoinedEmployee({
         role: 'employee',
         employeeId: createEmployeeId(normalizedCode),
         employeeName: employeeName.trim(),
@@ -63,7 +62,9 @@ export default function SignInScreen() {
         shopName: validatedInvite.shopName,
         shopAddress: null,
       })
-      navigate('/')
+
+      await signIn(employeeProfile)
+      navigate('/', { replace: true })
       return
     }
 
