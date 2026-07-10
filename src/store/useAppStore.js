@@ -195,6 +195,21 @@ addNotification: (notification) => {
   return saved
 },
 
+function getSessionUserAttribution(session = {}) {
+  const isEmployee = session.role === 'employee'
+  const ownerUserId = session.phone || session.name || 'owner'
+  const employeeUserId = session.employeeId || session.phone || session.name || 'employee'
+
+  return {
+    performedByUserId: isEmployee ? employeeUserId : ownerUserId,
+    employeeId: isEmployee ? employeeUserId : null,
+    employeeName: isEmployee
+      ? session.employeeName || session.name || 'Employee'
+      : session.name || 'Owner',
+    shopId: session.shopId || session.shopName || null,
+  }
+}
+
 dismissInAppNotification: (id) => {
   set((s) => ({
     inAppNotifications: (s.inAppNotifications || []).filter((notification) => notification.id !== id),
@@ -360,9 +375,10 @@ bootstrap: async () => {
   },
 
   addTransaction: async (txn) => {
-    try {
-      const saved = await dbAddTransaction(txn)
-      set((s) => ({ transactions: [saved, ...s.transactions] }))
+  try {
+    const attribution = getSessionUserAttribution(get().session)
+    const saved = await dbAddTransaction({ ...txn, ...attribution })
+    set((s) => ({ transactions: [saved, ...s.transactions] }))
 
       const settings = get().notificationSettings
       if (saved.direction === 'in' && settings.paymentReceivedAlerts !== false) {
