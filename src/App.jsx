@@ -96,7 +96,9 @@ export default function App() {
   // on an onboarding screen → send the merchant through Splash first.
   useEffect(() => {
     if (loading) return
+
     const needsOnboarding = !session || !session.isOnboarded
+
     if (needsOnboarding && !isOnboardingRoute) {
       navigate('/splash', { replace: true })
     }
@@ -135,7 +137,12 @@ export default function App() {
           key={location.pathname}
           duration={260}
           y={14}
-          style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            width: '100%',
+          }}
         >
           <Routes>
             <Route path="/splash" element={<SplashScreen />} />
@@ -183,7 +190,11 @@ export default function App() {
 
             <Route
               path="/finance"
-              element={<RequireOwner title="Financial Analysis"><FinancialAnalysisScreen /></RequireOwner>}
+              element={
+                <RequireOwner title="Financial Analysis">
+                  <FinancialAnalysisScreen />
+                </RequireOwner>
+              }
             />
 
             <Route
@@ -218,7 +229,14 @@ export default function App() {
 
             <Route path="/shop" element={<ShopProfileScreen />} />
             <Route path="/payment-mode" element={<PaymentModeScreen />} />
-            <Route path="/business-preferences" element={<RequireOwner title="Store Settings"><StoreSettingsScreen /></RequireOwner>} />
+            <Route
+              path="/business-preferences"
+              element={
+                <RequireOwner title="Store Settings">
+                  <StoreSettingsScreen />
+                </RequireOwner>
+              }
+            />
             <Route path="/notifications" element={<NotificationsScreen />} />
             <Route path="/appearance" element={<ThemeScreen />} />
             <Route path="/language" element={<LanguageScreen />} />
