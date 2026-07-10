@@ -20,6 +20,7 @@ import InsightsScreen from './screens/InsightsScreen'
 import MeScreen from './screens/MeScreen'
 import NotificationCenterScreen from './screens/NotificationCenterScreen'
 import EmployeesScreen from './screens/EmployeesScreen'
+import EmployeePerformanceScreen from './screens/EmployeePerformanceScreen'
 
 import ShopProfileScreen from './screens/settings/ShopProfileScreen'
 import PaymentModeScreen from './screens/settings/PaymentModeScreen'
@@ -260,6 +261,15 @@ export default function App() {
               element={
                 <RequireOwner title="Employees">
                   <EmployeesScreen />
+                </RequireOwner>
+              }
+            />
+
+            <Route
+              path="/employee-performance"
+              element={
+                <RequireOwner title="Employee Performance">
+                  <EmployeePerformanceScreen />
                 </RequireOwner>
               }
             />
