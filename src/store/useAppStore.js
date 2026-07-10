@@ -288,12 +288,15 @@ registerOwner: async (data) => {
 signIn: async (data) => {
   const session = {
     role: data.role || 'owner',
-    name: data.name || 'Shop Owner',
+    name: data.name || data.employeeName || 'Shop Owner',
     phone: data.phone,
     shopName: data.shopName || null,
     shopAddress: data.shopAddress || null,
     photo: null,
     isOnboarded: true,
+    ...(data.employeeId ? { employeeId: data.employeeId } : {}),
+    ...(data.employeeName ? { employeeName: data.employeeName } : {}),
+    ...(data.shopId ? { shopId: data.shopId } : {}),
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
   set({ session })

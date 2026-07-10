@@ -5,6 +5,11 @@ import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
 import { getEmployeeInviteByCode, normalizeInviteCode } from '../../utils/employeeInvitations'
 
+function createEmployeeId(inviteCode) {
+  const normalizedCode = normalizeInviteCode(inviteCode)
+  return `employee-${normalizedCode || Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 export default function SignInScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -17,26 +22,45 @@ export default function SignInScreen() {
   const [role, setRole] = useState(startsInJoinMode ? 'employee' : 'owner')
   const [inviteCode, setInviteCode] = useState(inviteFromLink)
   const [inviteError, setInviteError] = useState('')
+  const [validatedInvite, setValidatedInvite] = useState(null)
+  const [employeeName, setEmployeeName] = useState('')
+  const [employeePhone, setEmployeePhone] = useState('')
 
   const isJoinMode = role === 'employee'
-  const canSubmit = isJoinMode ? inviteCode.trim().length > 0 : phone.trim().length > 0
+  const isCreatingEmployeeProfile = isJoinMode && Boolean(validatedInvite)
+  const canSubmit = isCreatingEmployeeProfile
+    ? employeeName.trim().length > 0 && employeePhone.trim().length > 0
+    : isJoinMode
+      ? inviteCode.trim().length > 0
+      : phone.trim().length > 0
 
   async function handleContinue() {
     if (!canSubmit) return
 
     if (isJoinMode) {
-      const invite = getEmployeeInviteByCode(inviteCode)
+      if (!validatedInvite) {
+        const invite = getEmployeeInviteByCode(inviteCode)
 
-      if (!invite) {
-        setInviteError('Invalid invitation code. Ask the shop owner to send a new invite.')
+        if (!invite) {
+          setInviteError('Invalid invitation code. Ask the shop owner to send a new invite.')
+          return
+        }
+
+        setValidatedInvite(invite)
+        setInviteError('')
         return
       }
 
+      const normalizedCode = normalizeInviteCode(validatedInvite.code || inviteCode)
+
       await signIn({
         role: 'employee',
-        name: 'Employee',
-        phone: phone.trim(),
-        shopName: invite.shopName,
+        employeeId: createEmployeeId(normalizedCode),
+        employeeName: employeeName.trim(),
+        name: employeeName.trim(),
+        phone: employeePhone.trim(),
+        shopId: validatedInvite.shopId || normalizedCode,
+        shopName: validatedInvite.shopName,
         shopAddress: null,
       })
       navigate('/')
@@ -50,6 +74,13 @@ export default function SignInScreen() {
   function updateInviteCode(value) {
     setInviteCode(value)
     setInviteError('')
+    setValidatedInvite(null)
+  }
+
+  function switchRole(nextRole) {
+    setRole(nextRole)
+    setInviteError('')
+    setValidatedInvite(null)
   }
 
   return (
@@ -70,10 +101,14 @@ export default function SignInScreen() {
 
         <FadeIn duration={280} y={12}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            {isJoinMode ? 'Join a shop' : 'Welcome back'}
+            {isCreatingEmployeeProfile ? 'Create your profile' : isJoinMode ? 'Join a shop' : 'Welcome back'}
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text-low)', marginBottom: 24 }}>
-            {isJoinMode ? 'Enter the invitation code shared by the shop owner' : 'Sign in to continue to your shop'}
+            {isCreatingEmployeeProfile
+              ? `Tell ${validatedInvite?.shopName || 'the shop'} who is joining`
+              : isJoinMode
+                ? 'Enter the invitation code shared by the shop owner'
+                : 'Sign in to continue to your shop'}
           </p>
         </FadeIn>
 
@@ -95,7 +130,7 @@ export default function SignInScreen() {
             </>
           )}
 
-          {isJoinMode && (
+          {isJoinMode && !validatedInvite && (
             <>
               <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Invitation Code</p>
               <input
@@ -116,6 +151,53 @@ export default function SignInScreen() {
                   {inviteError}
                 </p>
               )}
+            </>
+          )}
+
+          {isCreatingEmployeeProfile && (
+            <>
+              <div
+                style={{
+                  padding: '11px 12px',
+                  borderRadius: 12,
+                  background: 'rgba(95,217,122,0.08)',
+                  border: '1px solid rgba(95,217,122,0.22)',
+                  marginBottom: 14,
+                }}
+              >
+                <p style={{ margin: 0, fontSize: 10, color: '#5FD97A', fontWeight: 700 }}>
+                  Invitation accepted
+                </p>
+                <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
+                  Joining {validatedInvite?.shopName || 'Duka Shop'} as an employee.
+                </p>
+              </div>
+
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Full Name</p>
+              <input
+                type="text"
+                value={employeeName}
+                onChange={(e) => setEmployeeName(e.target.value)}
+                placeholder="Your full name"
+                style={{
+                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
+                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
+                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
+                }}
+              />
+
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
+              <input
+                type="tel"
+                value={employeePhone}
+                onChange={(e) => setEmployeePhone(e.target.value)}
+                placeholder="+254 7XX XXX XXX"
+                style={{
+                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
+                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
+                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
+                }}
+              />
             </>
           )}
 
@@ -140,34 +222,35 @@ export default function SignInScreen() {
             </button>
           )}
 
-          <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 6, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-            {isJoinMode ? 'Joining as' : 'Signing in as'}
-          </p>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            {[
-              { id: 'owner', label: 'Owner', icon: 'store' },
-              { id: 'employee', label: 'Employee', icon: 'users' },
-            ].map((r) => (
-              <button
-                key={r.id}
-                onClick={() => {
-                  setRole(r.id)
-                  setInviteError('')
-                }}
-                style={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  padding: '10px', borderRadius: 10, cursor: 'pointer',
-                  background: role === r.id ? 'rgba(240,169,61,0.14)' : 'var(--glass-fill-soft)',
-                  border: role === r.id ? '1.5px solid rgba(240,169,61,0.45)' : '1px solid var(--glass-border)',
-                }}
-              >
-                <Icon name={r.icon} size={14} color={role === r.id ? '#F0A93D' : 'var(--text-low)'} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: role === r.id ? '#F0A93D' : 'var(--text-low)' }}>
-                  {r.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          {!isCreatingEmployeeProfile && (
+            <>
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 6, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                {isJoinMode ? 'Joining as' : 'Signing in as'}
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                {[
+                  { id: 'owner', label: 'Owner', icon: 'store' },
+                  { id: 'employee', label: 'Employee', icon: 'users' },
+                ].map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => switchRole(r.id)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      padding: '10px', borderRadius: 10, cursor: 'pointer',
+                      background: role === r.id ? 'rgba(240,169,61,0.14)' : 'var(--glass-fill-soft)',
+                      border: role === r.id ? '1.5px solid rgba(240,169,61,0.45)' : '1px solid var(--glass-border)',
+                    }}
+                  >
+                    <Icon name={r.icon} size={14} color={role === r.id ? '#F0A93D' : 'var(--text-low)'} />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: role === r.id ? '#F0A93D' : 'var(--text-low)' }}>
+                      {r.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </FadeIn>
 
         <FadeIn delay={140} duration={280} y={10}>
@@ -181,7 +264,7 @@ export default function SignInScreen() {
               opacity: canSubmit ? 1 : 0.4, transition: 'opacity 200ms ease',
             }}
           >
-            {isJoinMode ? 'Join Shop' : 'Continue'}
+            {isCreatingEmployeeProfile ? 'Create Profile' : isJoinMode ? 'Continue' : 'Continue'}
           </button>
         </FadeIn>
       </div>

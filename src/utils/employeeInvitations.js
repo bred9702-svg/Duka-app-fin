@@ -10,6 +10,14 @@ export function normalizeInviteCode(value = '') {
     .replace(/\s+/g, '')
 }
 
+function createShopId(shopName, ownerName) {
+  const source = `${shopName || 'Duka Shop'}-${ownerName || 'Shop Owner'}`
+  return `shop-${source
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') || 'duka-shop'}`
+}
+
 export function generateEmployeeInviteCode() {
   const bytes = new Uint8Array(6)
 
@@ -40,9 +48,11 @@ export function getEmployeeInvites() {
 }
 
 export function saveEmployeeInvite(invite) {
+  const normalizedCode = normalizeInviteCode(invite.code)
   const normalizedInvite = {
     ...invite,
-    code: normalizeInviteCode(invite.code),
+    code: normalizedCode,
+    shopId: invite.shopId || normalizedCode,
   }
 
   const invites = getEmployeeInvites()
@@ -59,17 +69,27 @@ export function getEmployeeInviteByCode(code) {
   const normalizedCode = normalizeInviteCode(code)
   if (!normalizedCode) return null
 
-  return getEmployeeInvites().find((invite) => normalizeInviteCode(invite.code) === normalizedCode) || null
+  const invite = getEmployeeInvites().find((item) => normalizeInviteCode(item.code) === normalizedCode)
+  if (!invite) return null
+
+  return {
+    ...invite,
+    code: normalizedCode,
+    shopId: invite.shopId || normalizedCode,
+  }
 }
 
-export function createEmployeeInvite({ shopName, ownerName }) {
+export function createEmployeeInvite({ shopName, ownerName, shopId }) {
   const code = generateEmployeeInviteCode()
+  const normalizedShopName = shopName || 'Duka Shop'
+  const normalizedOwnerName = ownerName || 'Shop Owner'
 
   return saveEmployeeInvite({
     code,
     link: buildEmployeeInviteLink(code),
-    shopName: shopName || 'Duka Shop',
-    ownerName: ownerName || 'Shop Owner',
+    shopId: shopId || createShopId(normalizedShopName, normalizedOwnerName),
+    shopName: normalizedShopName,
+    ownerName: normalizedOwnerName,
     createdAt: new Date().toISOString(),
   })
 }
