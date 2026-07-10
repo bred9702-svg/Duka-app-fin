@@ -93,7 +93,6 @@ export default function ClassifyScreen() {
     setSaving(true)
     try {
       const cls = {
-        type,
         type: isDebtPayment ? 'debt_payment' : type,
         product_id: isDebtPayment ? null : selectedProduct?.id || null,
         quantity: isDebtPayment ? null : parsedQty,
