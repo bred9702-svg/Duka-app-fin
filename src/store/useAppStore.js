@@ -16,22 +16,6 @@ import {
   addProduct,
 } from '../lib/db'
 
-const DEFAULT_NOTIFICATION_SETTINGS = {
-  lowStockAlerts: true,
-  newDebtAlerts: true,
-  debtPaymentAlerts: true,
-  paymentReceivedAlerts: true,
-  saleAlerts: true,
-  stockPurchaseAlerts: true,
-  cashOutAlerts: true,
-  dailySummary: false,
-  weeklySummary: true,
-}
-
-const NOTIFICATIONS_STORAGE_KEY = 'duka-in-app-notifications'
-const LAST_DAILY_SUMMARY_KEY = 'duka-last-daily-summary'
-const LAST_WEEKLY_SUMMARY_KEY = 'duka-last-weekly-summary'
-
 function loadSession() {
   try {
     const raw = localStorage.getItem('duka-session')
@@ -41,106 +25,6 @@ function loadSession() {
   }
 }
 
-function loadNotificationSettings() {
-  try {
-    const raw = localStorage.getItem('duka-notifications')
-    return raw
-      ? { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(raw) }
-      : DEFAULT_NOTIFICATION_SETTINGS
-  } catch {
-    return DEFAULT_NOTIFICATION_SETTINGS
-  }
-}
-
-function loadNotifications() {
-  try {
-    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-function saveNotifications(notifications) {
-  localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications.slice(0, 100)))
-}
-
-function createInAppNotification({ type, title, message, dedupeKey = null }) {
-  return {
-    id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    type,
-    title,
-    message,
-    dedupeKey,
-    read: false,
-    createdAt: new Date().toISOString(),
-  }
-}
-
-function isNotificationEnabled(settings, key, fallbackKeys = []) {
-  if (!settings) return true
-
-  if (typeof settings[key] === 'boolean') {
-    return settings[key]
-  }
-
-  for (const fallbackKey of fallbackKeys) {
-    if (typeof settings[fallbackKey] === 'boolean') {
-      return settings[fallbackKey]
-    }
-  }
-
-  return true
-}
-
-function formatAmount(amount) {
-  return `${Number(amount || 0).toLocaleString('en-KE')} KES`
-}
-
-function getDateKey(date = new Date()) {
-  return date.toISOString().slice(0, 10)
-}
-
-function getWeekKey(date = new Date()) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
-
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
-}
-
-function getTransactionTime(transaction) {
-  return new Date(transaction.created_at || transaction.ts || Date.now()).getTime()
-}
-
-function isToday(transaction) {
-  const transactionDateKey = getDateKey(new Date(getTransactionTime(transaction)))
-  return transactionDateKey === getDateKey()
-}
-
-function isWithinLastDays(transaction, days) {
-  const now = Date.now()
-  const rangeMs = days * 24 * 60 * 60 * 1000
-  return getTransactionTime(transaction) >= now - rangeMs
-}
-
-function getProductNameFromTransaction(transaction, products = []) {
-  if (transaction.product?.name) return transaction.product.name
-  if (transaction.product_name) return transaction.product_name
-  if (transaction.productName) return transaction.productName
-  if (transaction.classification?.productName) return transaction.classification.productName
-
-  const product = products.find((p) => p.id === transaction.product_id)
-  return product?.name || 'Unknown product'
-}
-
-// All the account-scoped local caches used across settings/purchase
-// screens. Kept in one place so registration and sign-out never miss one.
-// duka-theme is intentionally excluded — it's a device preference, not
-// account data.
 const LOCAL_APP_DATA_KEYS = [
   'duka-shop-profile',
   'duka-payment-methods',
@@ -149,13 +33,10 @@ const LOCAL_APP_DATA_KEYS = [
   'duka-language',
   'duka-purchase-history',
   'duka-pending-stock-purchases',
-  NOTIFICATIONS_STORAGE_KEY,
 ]
 
 function clearLocalAppData() {
   LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
-  localStorage.removeItem(LAST_DAILY_SUMMARY_KEY)
-  localStorage.removeItem(LAST_WEEKLY_SUMMARY_KEY)
 }
 
 const useAppStore = create((set, get) => ({
@@ -167,9 +48,6 @@ const useAppStore = create((set, get) => ({
   error: null,
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
-  notificationSettings: loadNotificationSettings(),
-  notifications: loadNotifications(),
-  inAppNotifications: [],
 
   setTheme: (theme) => {
     localStorage.setItem('duka-theme', theme)
@@ -177,232 +55,7 @@ const useAppStore = create((set, get) => ({
     set({ theme })
   },
 
-  updateNotificationSetting: (key, value) => {
-    set((s) => {
-      const notificationSettings = {
-        ...DEFAULT_NOTIFICATION_SETTINGS,
-        ...s.notificationSettings,
-        [key]: value,
-      }
-
-      localStorage.setItem('duka-notifications', JSON.stringify(notificationSettings))
-
-      return { notificationSettings }
-    })
-
-    setTimeout(() => {
-      get().generateScheduledSummaries()
-    }, 0)
-  },
-
-  pushInAppNotification: (notification) => {
-    const saved = createInAppNotification(notification)
-
-    set((s) => {
-      if (
-        saved.dedupeKey &&
-        s.notifications.some((existing) => existing.dedupeKey === saved.dedupeKey)
-      ) {
-        return {}
-      }
-
-      const notifications = [saved, ...s.notifications].slice(0, 100)
-      saveNotifications(notifications)
-
-      return {
-        notifications,
-        inAppNotifications: [saved, ...s.inAppNotifications].slice(0, 5),
-      }
-    })
-
-    return saved
-  },
-
-  dismissInAppNotification: (id) => {
-    set((s) => ({
-      inAppNotifications: s.inAppNotifications.filter((notification) => notification.id !== id),
-    }))
-  },
-
-  markNotificationAsRead: (id) => {
-    set((s) => {
-      const notifications = s.notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-
-      saveNotifications(notifications)
-
-      return { notifications }
-    })
-  },
-
-  markAllNotificationsAsRead: () => {
-    set((s) => {
-      const notifications = s.notifications.map((notification) => ({
-        ...notification,
-        read: true,
-      }))
-
-      saveNotifications(notifications)
-
-      return { notifications }
-    })
-  },
-
-  deleteNotification: (id) => {
-    set((s) => {
-      const notifications = s.notifications.filter((notification) => notification.id !== id)
-      saveNotifications(notifications)
-
-      return {
-        notifications,
-        inAppNotifications: s.inAppNotifications.filter((notification) => notification.id !== id),
-      }
-    })
-  },
-
-  clearAllNotifications: () => {
-    localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY)
-
-    set({
-      notifications: [],
-      inAppNotifications: [],
-    })
-  },
-
-  notifyLowStockIfNeeded: (productId, newStock) => {
-    const settings = get().notificationSettings
-
-    if (!isNotificationEnabled(settings, 'lowStockAlerts', ['lowStock'])) {
-      return
-    }
-
-    const product = get().products.find((p) => p.id === productId)
-    if (!product) return
-
-    const alertLevel = Number(product.stock_alert ?? 0)
-    const currentStock = Number(newStock ?? product.stock_current ?? 0)
-
-    if (currentStock > alertLevel) return
-
-    get().pushInAppNotification({
-      type: 'low_stock',
-      title: 'Low Stock Alert',
-      message: `${product.name} is running low. ${currentStock} unit${currentStock === 1 ? '' : 's'} left.`,
-      dedupeKey: `low-stock:${productId}:${currentStock}`,
-    })
-  },
-
-  generateDailySummary: () => {
-    const settings = get().notificationSettings
-
-    if (!isNotificationEnabled(settings, 'dailySummary')) {
-      return
-    }
-
-    const todayKey = getDateKey()
-    const lastDailySummary = localStorage.getItem(LAST_DAILY_SUMMARY_KEY)
-
-    if (lastDailySummary === todayKey) {
-      return
-    }
-
-    const transactions = get().transactions
-    const products = get().products
-    const todayStats = get().todayStats
-
-    const todaysTransactions = transactions.filter(isToday)
-
-    const sales = todaysTransactions.filter((t) => t.operation_type === 'sale')
-    const expenses = todaysTransactions.filter((t) => t.operation_type === 'expense')
-    const newDebts = todaysTransactions.filter((t) => t.operation_type === 'debt' || t.is_debt)
-    const lowStockProducts = products.filter((p) => {
-      const stock = Number(p.stock_current ?? 0)
-      const alert = Number(p.stock_alert ?? 0)
-      return stock <= alert
-    })
-
-    const expensesTotal = expenses.reduce((sum, t) => sum + Number(t.amount || 0), 0)
-    const profit = Number(todayStats.profit || 0)
-
-    get().pushInAppNotification({
-      type: 'daily_summary',
-      title: 'Daily Summary',
-      message: `${sales.length} sale${sales.length === 1 ? '' : 's'}, expenses ${formatAmount(expensesTotal)}, profit ${formatAmount(profit)}, ${newDebts.length} new debt${newDebts.length === 1 ? '' : 's'}, ${lowStockProducts.length} low-stock product${lowStockProducts.length === 1 ? '' : 's'}.`,
-      dedupeKey: `daily-summary:${todayKey}`,
-    })
-
-    localStorage.setItem(LAST_DAILY_SUMMARY_KEY, todayKey)
-  },
-
-  generateWeeklySummary: () => {
-    const settings = get().notificationSettings
-
-    if (!isNotificationEnabled(settings, 'weeklySummary', ['weeklyReport'])) {
-      return
-    }
-
-    const weekKey = getWeekKey()
-    const lastWeeklySummary = localStorage.getItem(LAST_WEEKLY_SUMMARY_KEY)
-
-    if (lastWeeklySummary === weekKey) {
-      return
-    }
-
-    const transactions = get().transactions
-    const products = get().products
-
-    const weeklyTransactions = transactions.filter((t) => isWithinLastDays(t, 7))
-    const weeklySales = weeklyTransactions.filter((t) => t.operation_type === 'sale')
-    const weeklyExpenses = weeklyTransactions.filter((t) => t.operation_type === 'expense')
-    const weeklyDebtPayments = weeklyTransactions.filter((t) => t.operation_type === 'debt_payment')
-
-    const totalRevenue = weeklySales.reduce((sum, t) => sum + Number(t.amount || t.total_price || 0), 0)
-    const totalExpenses = weeklyExpenses.reduce((sum, t) => sum + Number(t.amount || 0), 0)
-    const profitFromTransactions = weeklySales.reduce((sum, t) => sum + Number(t.profit || 0), 0)
-    const totalProfit = profitFromTransactions || (totalRevenue - totalExpenses)
-    const debtCollected = weeklyDebtPayments.reduce((sum, t) => sum + Number(t.amount || 0), 0)
-
-    const productSales = {}
-
-    weeklySales.forEach((transaction) => {
-      const productName = getProductNameFromTransaction(transaction, products)
-      const quantity = Number(transaction.quantity || 1)
-
-      if (!productSales[productName]) {
-        productSales[productName] = 0
-      }
-
-      productSales[productName] += quantity
-    })
-
-    const bestSellingProduct =
-      Object.entries(productSales).sort((a, b) => b[1] - a[1])[0]?.[0] || 'No sales yet'
-
-    const stockAlerts = products.filter((p) => {
-      const stock = Number(p.stock_current ?? 0)
-      const alert = Number(p.stock_alert ?? 0)
-      return stock <= alert
-    })
-
-    get().pushInAppNotification({
-      type: 'weekly_summary',
-      title: 'Weekly Report',
-      message: `Revenue ${formatAmount(totalRevenue)}, profit ${formatAmount(totalProfit)}, best seller: ${bestSellingProduct}, debt collected ${formatAmount(debtCollected)}, ${stockAlerts.length} stock alert${stockAlerts.length === 1 ? '' : 's'}.`,
-      dedupeKey: `weekly-summary:${weekKey}`,
-    })
-
-    localStorage.setItem(LAST_WEEKLY_SUMMARY_KEY, weekKey)
-  },
-
-  generateScheduledSummaries: () => {
-    get().generateDailySummary()
-    get().generateWeeklySummary()
-  },
-
   registerOwner: async (data) => {
-    // A brand new account must never inherit a previous account's local
-    // settings cache (shop profile, purchase history, preferences, etc.)
     clearLocalAppData()
 
     const trialStart = new Date()
@@ -415,6 +68,10 @@ const useAppStore = create((set, get) => ({
       phone: data.phone,
       shopName: data.shopName,
       shopAddress: data.shopAddress,
+      shopType: 'Wines & Spirits',
+      shopCity: '',
+      shopTimezone: 'Africa/Nairobi',
+      shopLogo: data.photo || null,
       photo: data.photo || null,
       isOnboarded: false,
       trialStart: trialStart.toISOString(),
@@ -423,28 +80,20 @@ const useAppStore = create((set, get) => ({
     }
 
     localStorage.setItem('duka-session', JSON.stringify(session))
-    localStorage.setItem('duka-notifications', JSON.stringify(DEFAULT_NOTIFICATION_SETTINGS))
 
-    // Seed the Shop Profile screen with what was just entered, so it
-    // reflects this account immediately instead of stale defaults.
     localStorage.setItem('duka-shop-profile', JSON.stringify({
       name: data.shopName,
       type: 'Wines & Spirits',
       phone: data.phone,
       address: data.shopAddress || '',
+      city: '',
       currency: 'KES — Kenyan Shilling',
       timezone: 'Africa/Nairobi',
+      logo: data.photo || null,
     }))
 
-    set({
-      session,
-      notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
-      notifications: [],
-      inAppNotifications: [],
-    })
+    set({ session })
 
-    // In case registration follows a signOut() that emptied the data —
-    // bootstrap() only runs once on initial app mount otherwise.
     await get().bootstrap()
   },
 
@@ -455,23 +104,44 @@ const useAppStore = create((set, get) => ({
       phone: data.phone,
       shopName: data.shopName || null,
       shopAddress: data.shopAddress || null,
+      shopType: data.shopType || 'Wines & Spirits',
+      shopCity: data.shopCity || '',
+      shopTimezone: data.shopTimezone || 'Africa/Nairobi',
+      shopLogo: data.shopLogo || null,
       photo: null,
       isOnboarded: true,
     }
 
     localStorage.setItem('duka-session', JSON.stringify(session))
+    set({ session })
 
-    set({
-      session,
-      notificationSettings: loadNotificationSettings(),
-      notifications: loadNotifications(),
-      inAppNotifications: [],
-    })
-
-    // signOut() empties products/transactions/customers — reload them now
-    // that a session is active again, since bootstrap() only runs once
-    // on initial app mount.
     await get().bootstrap()
+  },
+
+  updateShopProfile: (profile) => {
+    set((s) => {
+      const session = s.session
+        ? {
+            ...s.session,
+            shopName: profile.name,
+            shopType: profile.type,
+            phone: profile.phone,
+            shopAddress: profile.address,
+            shopCity: profile.city,
+            shopTimezone: profile.timezone,
+            shopLogo: profile.logo || null,
+            photo: profile.logo || s.session.photo || null,
+          }
+        : null
+
+      if (session) {
+        localStorage.setItem('duka-session', JSON.stringify(session))
+      }
+
+      localStorage.setItem('duka-shop-profile', JSON.stringify(profile))
+
+      return { session }
+    })
   },
 
   completeOnboarding: () => {
@@ -492,24 +162,15 @@ const useAppStore = create((set, get) => ({
       customers: [],
       products: [],
       todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
-      notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
-      notifications: [],
-      inAppNotifications: [],
       loading: false,
       error: null,
     })
   },
 
   bootstrap: async () => {
-    // Applique le thème sauvegardé
     const savedTheme = localStorage.getItem('duka-theme') || 'dark'
     document.documentElement.setAttribute('data-theme', savedTheme)
-
-    set({
-      theme: savedTheme,
-      notificationSettings: loadNotificationSettings(),
-      notifications: loadNotifications(),
-    })
+    set({ theme: savedTheme })
 
     set({ loading: true, error: null })
 
@@ -520,12 +181,7 @@ const useAppStore = create((set, get) => ({
         getProducts(),
         getTodayStats(),
       ])
-
       set({ transactions, customers, products, todayStats, loading: false })
-
-      setTimeout(() => {
-        get().generateScheduledSummaries()
-      }, 0)
     } catch (err) {
       console.error('Bootstrap error:', err)
       set({ error: err.message, loading: false })
@@ -545,9 +201,7 @@ const useAppStore = create((set, get) => ({
 
   classifyTransaction: async (id, classification) => {
     try {
-      const existingTransaction = get().transactions.find((t) => t.id === id)
       const updated = await dbClassify(id, classification)
-
       set((s) => ({
         transactions: s.transactions.map((t) => {
           const debtUpdate = updated.debtUpdates?.find((d) => d.id === t.id)
@@ -560,48 +214,6 @@ const useAppStore = create((set, get) => ({
             )
           : s.customers,
       }))
-
-      const settings = get().notificationSettings
-      const direction = existingTransaction?.direction || updated.direction
-      const operationType = updated.operation_type || classification?.type || classification?.operation_type
-      const expenseCategory =
-        updated.expense_category ||
-        classification?.expense_category ||
-        classification?.category
-
-      if (
-        direction === 'in' &&
-        isNotificationEnabled(settings, 'paymentReceivedAlerts', ['paymentReceived'])
-      ) {
-        get().pushInAppNotification({
-          type: 'payment_received',
-          title: 'Payment Received',
-          message: `${formatAmount(updated.amount || existingTransaction?.amount)} cash in has been classified.`,
-          dedupeKey: `payment-received:${id}`,
-        })
-      }
-
-      if (
-        direction === 'out' &&
-        operationType === 'expense' &&
-        ['rent', 'salary', 'utilities', 'other'].includes(expenseCategory) &&
-        isNotificationEnabled(settings, 'cashOutAlerts', ['dailySummary'])
-      ) {
-        const labelMap = {
-          rent: 'Rent',
-          salary: 'Salary',
-          utilities: 'Utilities',
-          other: 'Other',
-        }
-
-        get().pushInAppNotification({
-          type: 'cash_out',
-          title: 'Cash Out Classified',
-          message: `${formatAmount(updated.amount || existingTransaction?.amount)} was classified as ${labelMap[expenseCategory] || 'Expense'}.`,
-          dedupeKey: `cash-out-expense:${id}`,
-        })
-      }
-
       await get().refreshTodayStats()
       return updated
     } catch (err) {
@@ -622,7 +234,6 @@ const useAppStore = create((set, get) => ({
   addDebtPayment: async (customerId, amount, paymentTransactionId = null) => {
     try {
       const updated = await dbAddDebtPayment(customerId, amount, paymentTransactionId)
-
       set((s) => ({
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updated.customer } : c
@@ -643,21 +254,6 @@ const useAppStore = create((set, get) => ({
           return t
         }),
       }))
-
-      const settings = get().notificationSettings
-      const customer = updated.customer || get().customers.find((c) => c.id === customerId)
-
-      if (isNotificationEnabled(settings, 'debtPaymentAlerts', ['paymentReceived'])) {
-        get().pushInAppNotification({
-          type: 'debt_payment',
-          title: 'Debt Payment Received',
-          message: `${customer?.name || 'Customer'} paid ${formatAmount(amount)} toward their debt.`,
-          dedupeKey: paymentTransactionId
-            ? `debt-payment:${paymentTransactionId}`
-            : `debt-payment:${customerId}:${amount}:${Date.now()}`,
-        })
-      }
-
       return updated
     } catch (err) {
       console.error('Debt payment error:', err)
@@ -692,9 +288,9 @@ const useAppStore = create((set, get) => ({
       const expectedRevenue = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
       const expectedProfit = expectedRevenue - totalInvestment
 
-      // Increase stock for every line item, one product at a time
       const updatedStocks = {}
       const updatedPrices = {}
+
       for (const item of items) {
         const newStock = await addStock(item.productId, item.quantity)
         updatedStocks[item.productId] = newStock
@@ -717,8 +313,6 @@ const useAppStore = create((set, get) => ({
       }))
 
       if (linkedTransactionId) {
-        // This purchase completes an existing Cash Out → Expense → Stock
-        // transaction — don't record a second expense, just mark it done.
         try {
           const key = 'duka-pending-stock-purchases'
           const pending = JSON.parse(localStorage.getItem(key) || '[]')
@@ -730,9 +324,6 @@ const useAppStore = create((set, get) => ({
           console.error('Pending purchase cleanup error:', e)
         }
       } else {
-        // Standalone purchase (not started from Cash Out) — record its own
-        // expense, using the exact same transaction shape as the proven
-        // working Cash In/Out flow.
         const savedTxn = await dbAddTransaction({
           amount: totalInvestment,
           source: 'cash',
@@ -749,7 +340,6 @@ const useAppStore = create((set, get) => ({
 
       await get().refreshTodayStats()
 
-      // Local purchase history record (no dedicated backend table yet)
       const record = {
         id: `purchase-${Date.now()}`,
         date: purchaseDate || new Date().toISOString(),
@@ -769,17 +359,6 @@ const useAppStore = create((set, get) => ({
         localStorage.setItem(key, JSON.stringify([record, ...existing].slice(0, 100)))
       } catch (e) {
         console.error('Purchase history save error:', e)
-      }
-
-      const settings = get().notificationSettings
-
-      if (isNotificationEnabled(settings, 'stockPurchaseAlerts', ['dailySummary'])) {
-        get().pushInAppNotification({
-          type: 'stock_purchase',
-          title: 'Stock Purchase Saved',
-          message: `${items.length} product${items.length === 1 ? '' : 's'} added to inventory. Total investment: ${formatAmount(totalInvestment)}.`,
-          dedupeKey: `stock-purchase:${record.id}`,
-        })
       }
 
       return record
@@ -868,22 +447,6 @@ const useAppStore = create((set, get) => ({
         ),
       }))
 
-      Object.entries(updatedStocks).forEach(([productId, newStock]) => {
-        get().notifyLowStockIfNeeded(productId, newStock)
-      })
-
-      const settings = get().notificationSettings
-      const customer = updatedCustomer || get().customers.find((c) => c.id === customerId)
-
-      if (isNotificationEnabled(settings, 'newDebtAlerts', ['newDebt'])) {
-        get().pushInAppNotification({
-          type: 'new_debt',
-          title: 'New Debt Created',
-          message: `${customer?.name || 'Customer'} now owes ${formatAmount(grandTotal)}.`,
-          dedupeKey: `new-debt:${savedTxns.map((txn) => txn.id).join(',') || customerId}`,
-        })
-      }
-
       await get().refreshTodayStats()
 
       return {
@@ -912,7 +475,6 @@ const useAppStore = create((set, get) => ({
         (a, it) => a + (it.unitPrice - (it.costPrice || 0)) * it.quantity, 0
       )
 
-      // Reduce stock for every item in the cart
       const updatedStocks = {}
       for (const item of items) {
         const newStock = await updateStock(item.productId, item.quantity)
@@ -925,12 +487,6 @@ const useAppStore = create((set, get) => ({
         ),
       }))
 
-      Object.entries(updatedStocks).forEach(([productId, newStock]) => {
-        get().notifyLowStockIfNeeded(productId, newStock)
-      })
-
-      // Classify the existing payment transaction — do NOT insert a new one,
-      // otherwise the same money would be counted twice.
       const updatedTxn = await completeSalePayment(linkedTransactionId, {
         items,
         grandTotal,
@@ -943,17 +499,6 @@ const useAppStore = create((set, get) => ({
           t.id === linkedTransactionId ? { ...t, ...updatedTxn } : t
         ),
       }))
-
-      const settings = get().notificationSettings
-
-      if (isNotificationEnabled(settings, 'saleAlerts', ['paymentReceivedAlerts', 'paymentReceived'])) {
-        get().pushInAppNotification({
-          type: 'sale',
-          title: 'Sale Confirmed',
-          message: `Sale of ${formatAmount(grandTotal)} was recorded successfully.`,
-          dedupeKey: `sale:${linkedTransactionId}`,
-        })
-      }
 
       await get().refreshTodayStats()
 
