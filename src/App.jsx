@@ -31,6 +31,7 @@ import PrivacyScreen from './screens/settings/PrivacyScreen'
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
 import RequireOwner from './components/auth/RequireOwner'
+import InAppNotification from './components/notifications/InAppNotification'
 
 import SplashScreen from './screens/onboarding/SplashScreen'
 import WelcomeScreen from './screens/onboarding/WelcomeScreen'
@@ -118,6 +119,8 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <InAppNotification />
+
       <div
         style={{
           flex: 1,
