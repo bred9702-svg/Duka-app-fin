@@ -9,6 +9,7 @@ const SECTIONS = [
       { label: 'Shop Profile', icon: 'store', color: '#5FD97A', path: '/shop' },
       { label: 'Payment Mode', icon: 'cash', color: '#F0A93D', path: '/payment-mode' },
       { label: 'Business Preferences', icon: 'settings', color: '#5B9FF0', path: '/business-preferences' },
+      { label: 'Employees', icon: 'users', color: '#4FC3F7', path: '/employees' },
     ],
   },
   {
