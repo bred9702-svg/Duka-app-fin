@@ -1,5 +1,14 @@
 import { supabase } from './supabase'
 
+function pickAttribution(source = {}) {
+  return {
+    performedByUserId: source.performedByUserId || null,
+    employeeId: source.employeeId || null,
+    employeeName: source.employeeName || null,
+    shopId: source.shopId || null,
+  }
+}
+
 // ── PRODUCTS ──────────────────────────────────────────────────
 
 export async function getProducts() {
@@ -85,7 +94,7 @@ export async function updateProductPrice(productId, unitPrice) {
   return unitPrice
 }
 
-export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null }) {
+export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
   const { data, error } = await supabase
     .from('transactions')
     .update({
@@ -97,6 +106,7 @@ export async function completeSalePayment(transactionId, { items, grandTotal, to
       total_price: grandTotal,
       profit: totalProfit,
       customer_id: customerId,
+      ...pickAttribution(attribution),
     })
     .eq('id', transactionId)
     .select()
@@ -160,7 +170,7 @@ async function recalculateCustomerDebt(customerId) {
   return customer
 }
 
-export async function addDebtPayment(customerId, amount, paymentTransactionId = null) {
+export async function addDebtPayment(customerId, amount, paymentTransactionId = null, attribution = {}) {
   const paymentAmount = Math.max(0, Number(amount) || 0)
   let unapplied = paymentAmount
   const updatedDebts = []
@@ -213,6 +223,7 @@ export async function addDebtPayment(customerId, amount, paymentTransactionId = 
         remaining_amount: 0,
         paid_amount: paymentAmount - unapplied,
         debt_status: 'payment',
+        ...pickAttribution(attribution),
       })
       .eq('id', paymentTransactionId)
     if (paymentError) throw paymentError
@@ -231,7 +242,7 @@ export async function classifyTransaction(id, classification) {
   if (txnError) throw txnError
 
   if (classification.type === 'debt_payment') {
-    const result = await addDebtPayment(classification.customer_id, txn.amount, id)
+    const result = await addDebtPayment(classification.customer_id, txn.amount, id, classification)
     const { data: payment, error: paymentFetchError } = await supabase
       .from('transactions')
       .select()
@@ -284,6 +295,7 @@ export async function classifyTransaction(id, classification) {
       remaining_amount: classification.type === 'debt' ? debtOriginal : 0,
       debt_status: classification.type === 'debt' ? 'active' : null,
       closed_at: null,
+      ...pickAttribution(classification),
     })
     .eq('id', id)
     .select()
@@ -386,18 +398,18 @@ export async function getTodayStats() {
 
   // Revenus = uniquement les ventes classifiées (direction in, type sale)
   const income = data
-    .filter(t => 
-      t.direction === 'in' && 
-      t.classified && 
+    .filter(t =>
+      t.direction === 'in' &&
+      t.classified &&
       t.operation_type === 'sale'
     )
     .reduce((a, t) => a + t.amount, 0)
 
   // Dépenses = uniquement les sorties classifiées comme expense
   const expenses = data
-    .filter(t => 
-      t.direction === 'out' && 
-      t.classified && 
+    .filter(t =>
+      t.direction === 'out' &&
+      t.classified &&
       t.operation_type === 'expense'
     )
     .reduce((a, t) => a + t.amount, 0)

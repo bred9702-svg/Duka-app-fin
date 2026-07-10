@@ -144,6 +144,21 @@ function clearLocalAppData() {
   LOCAL_APP_DATA_KEYS.forEach((key) => localStorage.removeItem(key))
 }
 
+function getSessionUserAttribution(session = {}) {
+  const isEmployee = session.role === 'employee'
+  const ownerUserId = session.phone || session.name || 'owner'
+  const employeeUserId = session.employeeId || session.phone || session.name || 'employee'
+
+  return {
+    performedByUserId: isEmployee ? employeeUserId : ownerUserId,
+    employeeId: isEmployee ? employeeUserId : null,
+    employeeName: isEmployee
+      ? session.employeeName || session.name || 'Employee'
+      : session.name || 'Owner',
+    shopId: session.shopId || session.shopName || null,
+  }
+}
+
 const useAppStore = create((set, get) => ({
   transactions: [],
   customers: [],
@@ -194,21 +209,6 @@ addNotification: (notification) => {
 
   return saved
 },
-
-function getSessionUserAttribution(session = {}) {
-  const isEmployee = session.role === 'employee'
-  const ownerUserId = session.phone || session.name || 'owner'
-  const employeeUserId = session.employeeId || session.phone || session.name || 'employee'
-
-  return {
-    performedByUserId: isEmployee ? employeeUserId : ownerUserId,
-    employeeId: isEmployee ? employeeUserId : null,
-    employeeName: isEmployee
-      ? session.employeeName || session.name || 'Employee'
-      : session.name || 'Owner',
-    shopId: session.shopId || session.shopName || null,
-  }
-}
 
 dismissInAppNotification: (id) => {
   set((s) => ({
