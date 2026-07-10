@@ -1,40 +1,12 @@
 import { useState } from 'react'
 import Icon from '../components/ui/Icon'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
-
-const INVITE_STORAGE_KEY = 'duka-employee-invite'
-
-function generateInviteCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  const bytes = new Uint8Array(6)
-
-  if (window.crypto?.getRandomValues) {
-    window.crypto.getRandomValues(bytes)
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) {
-      bytes[i] = Math.floor(Math.random() * 256)
-    }
-  }
-
-  return `DUKA-${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')}`
-}
-
-function buildInviteLink(code) {
-  return `${window.location.origin}/sign-in?invite=${encodeURIComponent(code)}`
-}
-
-function loadSavedInvite() {
-  try {
-    const raw = localStorage.getItem(INVITE_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
-
-function saveInvite(invite) {
-  localStorage.setItem(INVITE_STORAGE_KEY, JSON.stringify(invite))
-}
+import useAppStore from '../store/useAppStore'
+import {
+  buildEmployeeInviteLink,
+  createEmployeeInvite,
+  getEmployeeInvites,
+} from '../utils/employeeInvitations'
 
 function InviteInfo({ label, value }) {
   return (
@@ -58,18 +30,16 @@ function InviteInfo({ label, value }) {
 }
 
 export default function EmployeesScreen() {
-  const [invite, setInvite] = useState(() => loadSavedInvite())
+  const session = useAppStore((s) => s.session)
+  const [invite, setInvite] = useState(() => getEmployeeInvites()[0] || null)
   const [copied, setCopied] = useState(false)
 
   function createInvite() {
-    const code = generateInviteCode()
-    const nextInvite = {
-      code,
-      link: buildInviteLink(code),
-      createdAt: new Date().toISOString(),
-    }
+    const nextInvite = createEmployeeInvite({
+      shopName: session?.shopName,
+      ownerName: session?.name,
+    })
 
-    saveInvite(nextInvite)
     setInvite(nextInvite)
     setCopied(false)
   }
@@ -77,7 +47,8 @@ export default function EmployeesScreen() {
   async function copyInvite() {
     if (!invite) return
 
-    const text = `Join my Duka shop using this invitation code: ${invite.code}\n${invite.link}`
+    const link = invite.link || buildEmployeeInviteLink(invite.code)
+    const text = `Join ${invite.shopName || 'my Duka shop'} using this invitation code: ${invite.code}\n${link}`
 
     try {
       await navigator.clipboard.writeText(text)
@@ -92,8 +63,8 @@ export default function EmployeesScreen() {
 
     await navigator.share({
       title: 'Duka Employee Invitation',
-      text: `Join my Duka shop using invitation code ${invite.code}`,
-      url: invite.link,
+      text: `Join ${invite.shopName || 'my Duka shop'} using invitation code ${invite.code}`,
+      url: invite.link || buildEmployeeInviteLink(invite.code),
     })
   }
 
@@ -171,8 +142,9 @@ export default function EmployeesScreen() {
               border: '1px solid var(--glass-border)',
             }}
           >
+            <InviteInfo label="Shop" value={invite.shopName || 'Duka Shop'} />
             <InviteInfo label="Invitation code" value={invite.code} />
-            <InviteInfo label="Invitation link" value={invite.link} />
+            <InviteInfo label="Invitation link" value={invite.link || buildEmployeeInviteLink(invite.code)} />
 
             <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--text-low)', lineHeight: 1.5 }}>
               This only creates an invitation. Employee registration, permissions, and analytics are not active yet.
