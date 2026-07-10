@@ -1,4 +1,5 @@
 export const EMPLOYEE_INVITES_KEY = 'duka-employee-invites'
+export const JOINED_EMPLOYEES_KEY = 'duka-joined-employees'
 
 const INVITE_PREFIX = 'DUKA'
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -10,7 +11,7 @@ export function normalizeInviteCode(value = '') {
     .replace(/\s+/g, '')
 }
 
-export function createShopId(shopName, ownerName) {
+function createShopId(shopName, ownerName) {
   const source = `${shopName || 'Duka Shop'}-${ownerName || 'Shop Owner'}`
   return `shop-${source
     .toLowerCase()
@@ -92,4 +93,31 @@ export function createEmployeeInvite({ shopName, ownerName, shopId }) {
     ownerName: normalizedOwnerName,
     createdAt: new Date().toISOString(),
   })
+}
+
+export function getJoinedEmployees() {
+  try {
+    const raw = localStorage.getItem(JOINED_EMPLOYEES_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function saveJoinedEmployee(employee) {
+  const normalizedEmployee = {
+    ...employee,
+    role: 'employee',
+    joinedAt: employee.joinedAt || new Date().toISOString(),
+  }
+
+  const employees = getJoinedEmployees()
+  const nextEmployees = [
+    normalizedEmployee,
+    ...employees.filter((item) => item.employeeId !== normalizedEmployee.employeeId),
+  ]
+
+  localStorage.setItem(JOINED_EMPLOYEES_KEY, JSON.stringify(nextEmployees))
+  return normalizedEmployee
 }
