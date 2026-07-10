@@ -233,10 +233,16 @@ export default function MeScreen() {
                 {session?.role === 'employee' ? 'Employee' : 'Owner'}
               </span>
 
-              <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
+             <span style={{ fontSize: 11, color: 'var(--text-low)' }}>
                 {shopCity ? `${shopType} · ${shopCity}` : shopType}
               </span>
             </div>
+
+            {session?.role === 'employee' && (session?.name || session?.phone) && (
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
+                {[session?.name, session?.phone].filter(Boolean).join(' · ')}
+              </p>
+            )}
           </div>
         </div>
 

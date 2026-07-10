@@ -315,6 +315,15 @@ signIn: async (data) => {
   }
   localStorage.setItem('duka-session', JSON.stringify(session))
   set({ session })
+  if (session.role === 'employee' && session.employeeId && session.shopId) {
+    upsertEmployee({
+      employeeId: session.employeeId,
+      shopId: session.shopId,
+      name: session.name,
+      phone: session.phone,
+      inviteCode: data.inviteCode || null,
+    }).catch((err) => console.error('Employee sync failed:', err))
+  }
   // signOut() empties products/transactions/customers — reload them now
   // that a session is active again, since bootstrap() only runs once
   // on initial app mount.
@@ -377,7 +386,7 @@ bootstrap: async () => {
   addTransaction: async (txn) => {
   try {
     const attribution = getSessionUserAttribution(get().session)
-    const saved = await dbAddTransaction({ ...txn, ...attribution })
+    const saved = await dbAddTransaction(txn, attribution)
     set((s) => ({ transactions: [saved, ...s.transactions] }))
 
       const settings = get().notificationSettings

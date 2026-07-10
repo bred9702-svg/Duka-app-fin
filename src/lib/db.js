@@ -2,11 +2,51 @@ import { supabase } from './supabase'
 
 function pickAttribution(source = {}) {
   return {
-    performedByUserId: source.performedByUserId || null,
-    employeeId: source.employeeId || null,
-    employeeName: source.employeeName || null,
-    shopId: source.shopId || null,
+    performed_by_user_id: source.performedByUserId || null,
+    employee_id: source.employeeId || null,
+    employee_name: source.employeeName || null,
+    shop_id: source.shopId || null,
   }
+}
+
+// ── EMPLOYEES ─────────────────────────────────────────────────
+
+export async function upsertEmployee({ employeeId, shopId, name, phone, inviteCode }) {
+  if (!employeeId || !shopId) return null
+  const { data, error } = await supabase
+    .from('employees')
+    .upsert(
+      {
+        employee_id: employeeId,
+        shop_id: shopId,
+        name: name || null,
+        phone: phone || null,
+        invite_code: inviteCode || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'employee_id' }
+    )
+    .select()
+    .single()
+  if (error) {
+    console.error('Upsert employee failed:', error)
+    return null
+  }
+  return data
+}
+
+export async function getEmployees(shopId) {
+  if (!shopId) return []
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('shop_id', shopId)
+    .order('joined_at', { ascending: false })
+  if (error) {
+    console.error('Get employees failed:', error)
+    return []
+  }
+  return data || []
 }
 
 // ── PRODUCTS ──────────────────────────────────────────────────
@@ -131,19 +171,33 @@ export async function getTransactions(limit = 50) {
   return data
 }
 
-export async function addTransaction(txn) {
+export async function addTransaction(txn, attribution = {}) {
   const now = new Date()
+  const basePayload = {
+    ...txn,
+    day_of_week: now.getDay(),
+    hour_of_day: now.getHours(),
+  }
+
   const { data, error } = await supabase
     .from('transactions')
-    .insert({
-      ...txn,
-      day_of_week: now.getDay(),
-      hour_of_day: now.getHours(),
-    })
+    .insert({ ...basePayload, ...pickAttribution(attribution) })
     .select()
     .single()
-  if (error) throw error
-  return data
+
+  if (!error) return data
+
+  // Si les colonnes d'attribution ne sont pas encore là (migration pas
+  // appliquée), ça ne doit jamais bloquer Cash In / Cash Out — on retente
+  // sans attribution pour que la transaction soit quand même enregistrée.
+  console.error('Add transaction with attribution failed, retrying without attribution:', error)
+  const retry = await supabase
+    .from('transactions')
+    .insert(basePayload)
+    .select()
+    .single()
+  if (retry.error) throw retry.error
+  return retry.data
 }
 
 async function recalculateCustomerDebt(customerId) {

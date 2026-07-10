@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Icon from '../components/ui/Icon'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import useAppStore from '../store/useAppStore'
+import { getEmployees } from '../lib/db'
 import {
   buildEmployeeInviteLink,
   createEmployeeInvite,
+  createShopId,
   getEmployeeInvites,
 } from '../utils/employeeInvitations'
 
@@ -33,6 +35,24 @@ export default function EmployeesScreen() {
   const session = useAppStore((s) => s.session)
   const [invite, setInvite] = useState(() => getEmployeeInvites()[0] || null)
   const [copied, setCopied] = useState(false)
+  const [employees, setEmployees] = useState([])
+  const [loadingEmployees, setLoadingEmployees] = useState(true)
+
+  const shopId = createShopId(session?.shopName, session?.name)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingEmployees(true)
+    getEmployees(shopId).then((data) => {
+      if (!cancelled) {
+        setEmployees(data)
+        setLoadingEmployees(false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [shopId])
 
   function createInvite() {
     const nextInvite = createEmployeeInvite({
@@ -110,6 +130,65 @@ export default function EmployeesScreen() {
             </div>
           </div>
         </div>
+
+        {employees.length > 0 && (
+          <div
+            style={{
+              borderRadius: 16,
+              padding: 12,
+              marginBottom: 12,
+              background: 'var(--glass-fill-soft)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid var(--glass-border)',
+            }}
+          >
+            <p style={{ margin: '0 0 8px', fontSize: 9, color: 'var(--text-low)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Employees ({employees.length})
+            </p>
+            {employees.map((employee) => (
+              <div
+                key={employee.employee_id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '8px 4px',
+                  borderTop: '1px solid rgba(255,255,255,0.05)',
+                }}
+              >
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'rgba(91,159,240,.16)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon name="users" size={14} color="#5B9FF0" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 650, color: 'var(--text-hi)' }}>
+                    {employee.name || 'Employee'}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
+                    {employee.phone || 'No phone on file'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loadingEmployees && employees.length === 0 && invite && (
+          <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--text-low)' }}>
+            No one has joined with this shop yet.
+          </p>
+        )}
 
         {!invite ? (
           <div
