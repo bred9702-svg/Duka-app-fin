@@ -1,3 +1,5 @@
+import { getLowStock } from './inventoryEngine'
+
 export function generateBusinessReport({
   products = [],
   transactions = [],
@@ -9,11 +11,7 @@ export function generateBusinessReport({
   }
 
   // ---------- Low stock ----------
-  const lowStock = products.filter(
-    p =>
-      (p.stock_current ?? 0) > 0 &&
-      (p.stock_current ?? 0) <= (p.stock_alert ?? 5)
-  )
+  const lowStock = getLowStock(products)
 
   if (lowStock.length) {
     report.risks.push({

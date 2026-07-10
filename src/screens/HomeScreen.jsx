@@ -7,6 +7,7 @@ import ProfitRing from '../components/ProfitRing'
 import TransactionRow from '../components/transactions/TransactionRow'
 import ContextualMessage from '../components/ContextualMessage'
 import { fmtKES, fmtDateLong } from '../utils/formatters'
+import { getLowStock } from '../utils/inventoryEngine'
 import { getTopProducts } from '../lib/db'
 
 const MPESA_AMOUNTS = [500, 800, 1000, 1500, 2000, 2500]
@@ -46,7 +47,7 @@ export default function HomeScreen() {
   const products = useAppStore((s) => s.products)
   const todayStats = useAppStore((s) => s.todayStats)
   const addTransaction = useAppStore((s) => s.addTransaction)
-
+  const businessPreferences = useAppStore((s) => s.businessPreferences)
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
 
@@ -60,7 +61,8 @@ export default function HomeScreen() {
     .filter(c => (c.total_owed || 0) > 0)
     .sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0))[0] || null
 
-  const lowStock = products.filter(p => p.stock_current <= p.stock_alert && p.stock_current > 0)
+  const lowStock = getLowStock(products)
+  const showDailyAiBrief = businessPreferences.dailyAiBrief !== false
 
   useEffect(() => {
     getTopProducts(7).then(data => {
@@ -80,7 +82,6 @@ export default function HomeScreen() {
 
   function simulateMpesa() {
     setSimulating(true)
-
     setTimeout(async () => {
       await addTransaction({
         amount: MPESA_AMOUNTS[Math.floor(Math.random() * MPESA_AMOUNTS.length)],
@@ -91,7 +92,6 @@ export default function HomeScreen() {
         mpesa_sender_phone: '+254712345678',
         mpesa_reference: 'QK' + Math.random().toString(36).substr(2, 8).toUpperCase(),
       })
-
       setSimulating(false)
       navigate('/inbox')
     }, 900)
@@ -99,62 +99,23 @@ export default function HomeScreen() {
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
-      <div
-        className="bg-blob"
-        style={{
-          width: 150,
-          height: 150,
-          top: -40,
-          right: -40,
-          background: 'rgba(240,169,61,0.25)',
-        }}
-      />
-      <div
-        className="bg-blob"
-        style={{
-          width: 120,
-          height: 120,
-          bottom: 200,
-          left: -40,
-          background: 'rgba(95,217,122,0.12)',
-          animationDelay: '2s',
-        }}
-      />
+      <div className="bg-blob" style={{ width: 150, height: 150, top: -40, right: -40, background: 'rgba(240,169,61,0.25)' }} />
+      <div className="bg-blob" style={{ width: 120, height: 120, bottom: 200, left: -40, background: 'rgba(95,217,122,0.12)', animationDelay: '2s' }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: 14,
-          }}
-        >
+
+        {/* Header humain */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 2 }}>
               {fmtDateLong(Date.now())}
             </p>
-
-            <h1
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 22,
-                fontWeight: 700,
-                color: 'var(--text-hi)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
-              }}
-            >
-              {getGreeting()}
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+              {getGreeting()} 
             </h1>
-
             {income > 0 ? (
               <p style={{ fontSize: 12, color: 'var(--text-mid)', marginTop: 3 }}>
-                Your shop made{' '}
-                <span style={{ color: '#5FD97A', fontWeight: 600 }}>
-                  {fmtKES(income)} KES
-                </span>{' '}
-                today
+                Your shop made <span style={{ color: '#5FD97A', fontWeight: 600 }}>{fmtKES(income)} KES</span> today
               </p>
             ) : (
               <p style={{ fontSize: 12, color: 'var(--text-low)', marginTop: 3 }}>
@@ -162,233 +123,126 @@ export default function HomeScreen() {
               </p>
             )}
           </div>
-
-          <div
-            className="glass-card"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+          <div className="glass-card" style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Icon name="bottle" size={17} color="#F0A93D" />
           </div>
         </div>
 
-        <ContextualMessage
-          stats={todayStats}
-          topProduct={topProduct}
-          topCustomer={topCustomer}
-          lowStock={lowStock}
-        />
+        {/* Message contextuel */}
+        {showDailyAiBrief && (
+          <ContextualMessage
+            stats={todayStats}
+            topProduct={topProduct}
+            topCustomer={topCustomer}
+            lowStock={lowStock}
+          />
+        )}
 
+        {/* Profit ring */}
         <div style={{ marginBottom: 6 }}>
           <ProfitRing profit={profit} income={income} marginPct={marginPct} />
         </div>
 
+        {/* Stars rating */}
         {income > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 10,
-              paddingLeft: 4,
-            }}
-          >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, paddingLeft: 4 }}>
             <Stars count={rating} />
             <p style={{ fontSize: 11, color: 'var(--text-low)' }}>
-              {rating >= 4
-                ? 'Excellent day'
-                : rating >= 3
-                  ? 'Good performance'
-                  : rating >= 2
-                    ? 'Could be better'
-                    : 'Keep going'}
+              {rating >= 4 ? 'Excellent day' : rating >= 3 ? 'Good performance' : rating >= 2 ? 'Could be better' : 'Keep going'}
             </p>
           </div>
         )}
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 8,
-            marginBottom: 14,
-          }}
-        >
-          <StatCard
-            label="Money in"
-            value={fmtKES(income)}
-            sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
-            color="green"
-            delay={0.05}
-          />
+        {/* Stat cards — langage humain */}
+       <div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+    marginBottom: 14,
+  }}
+>
+ <StatCard
+  label="Money in"
+  value={fmtKES(income)}
+  sub={`${transactions.filter(t => t.classified && t.operation_type === 'sale').length} sales`}
+  color="green"
+  delay={0.05}
+/>
 
-          <StatCard
-            label="Money out"
-            value={fmtKES(expenses)}
-            sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
-            color="red"
-            delay={0.1}
-          />
+<StatCard
+  label="Money out"
+  value={fmtKES(expenses)}
+  sub={`${transactions.filter(t => t.classified && t.operation_type === 'expense').length} expenses`}
+  color="red"
+  delay={0.1}
+/>
 
-          <StatCard
-            label="Customer debt"
-            value={fmtKES(totalOwed)}
-            sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
-            color="amber"
-            delay={0.15}
-          />
+<StatCard
+  label="Customer debt"
+  value={fmtKES(totalOwed)}
+  sub={`${customers.filter(c => (c.total_owed || 0) > 0).length} customers`}
+  color="amber"
+  delay={0.15}
+/>
 
-          <StatCard
-            label="Needs review"
-            value={unclassifiedCount}
-            sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
-            color={unclassifiedCount ? 'red' : 'green'}
-            delay={0.2}
-          />
-        </div>
+<StatCard
+  label="Needs review"
+  value={unclassifiedCount}
+  sub={unclassifiedCount ? 'Tap to classify' : 'All clear'}
+  color={unclassifiedCount ? 'red' : 'green'}
+  delay={0.2}
+/>
 
+</div>
+
+{/* Quick insights */}
+
+        {/* Quick insights */}
         {(topProduct || topCustomer || lowStock.length > 0) && (
           <div style={{ marginBottom: 14 }}>
-            <p
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 10,
-                fontWeight: 600,
-                color: 'var(--text-low)',
-                marginBottom: 8,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Quick insights
             </p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: topProduct && topCustomer ? '1fr 1fr' : '1fr',
-                gap: 8,
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: topProduct && topCustomer ? '1fr 1fr' : '1fr', gap: 8 }}>
               {topProduct && (
-                <div
-                  style={{
-                    background: 'var(--glass-fill-soft)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 12,
-                    padding: '10px 12px',
-                  }}
-                >
-                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>
-                    BEST PRODUCT
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--text-hi)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {topProduct.name}
-                  </p>
-                  <p style={{ fontSize: 10, color: '#F0A93D' }}>
-                    ×{topProduct.qty} sold
-                  </p>
+                <div style={{ background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 12px' }}>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>BEST PRODUCT</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topProduct.name}</p>
+                  <p style={{ fontSize: 10, color: '#F0A93D' }}>×{topProduct.qty} sold</p>
                 </div>
               )}
-
               {topCustomer && (
-                <div
-                  style={{
-                    background: 'var(--glass-fill-soft)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 12,
-                    padding: '10px 12px',
-                  }}
-                >
-                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>
-                    TOP CUSTOMER
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'var(--text-hi)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {topCustomer.name}
-                  </p>
-                  <p style={{ fontSize: 10, color: '#5B9FF0' }}>
-                    {topCustomer.visit_count || 0} visits
-                  </p>
+                <div style={{ background: 'var(--glass-fill-soft)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 12px' }}>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>TOP CUSTOMER</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topCustomer.name}</p>
+                  <p style={{ fontSize: 10, color: '#5B9FF0' }}>{topCustomer.visit_count || 0} visits</p>
                 </div>
               )}
-
               {lowStock.length > 0 && (
-                <div
-                  style={{
-                    background: 'rgba(255,107,91,0.08)',
-                    border: '1px solid rgba(255,107,91,0.25)',
-                    borderRadius: 12,
-                    padding: '10px 12px',
-                    gridColumn: topProduct && topCustomer ? '1 / -1' : 'auto',
-                  }}
-                >
-                  <p style={{ fontSize: 9, color: '#FF6B5B', marginBottom: 3, fontWeight: 600 }}>
-                    ⚠ STOCK RUNNING LOW
-                  </p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>
-                    {lowStock[0].name}
-                  </p>
-                  <p style={{ fontSize: 10, color: '#FF6B5B' }}>
-                    {lowStock[0].stock_current} units left
-                  </p>
+                <div style={{ background: 'rgba(255,107,91,0.08)', border: '1px solid rgba(255,107,91,0.25)', borderRadius: 12, padding: '10px 12px', gridColumn: topProduct && topCustomer ? '1 / -1' : 'auto' }}>
+                  <p style={{ fontSize: 9, color: '#FF6B5B', marginBottom: 3, fontWeight: 600 }}>⚠ STOCK RUNNING LOW</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{lowStock[0].name}</p>
+                  <p style={{ fontSize: 10, color: '#FF6B5B' }}>{lowStock[0].stock_current} units left</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
+        {/* Simulate M-Pesa */}
         <button
           onClick={simulateMpesa}
           disabled={simulating}
           style={{
             width: '100%',
-            background: simulating
-              ? 'rgba(240,169,61,0.15)'
-              : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
+            background: simulating ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
             color: simulating ? '#FFD98A' : '#2A1A05',
-            border: simulating
-              ? '1px solid rgba(240,169,61,0.3)'
-              : '1px solid rgba(255,255,255,0.4)',
-            borderRadius: 12,
-            padding: 11,
-            fontFamily: 'var(--font-display)',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: simulating ? 'default' : 'pointer',
-            marginBottom: 14,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
+            border: simulating ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
+            borderRadius: 12, padding: 11,
+            fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', marginBottom: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             boxShadow: simulating ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
           }}
         >
@@ -396,22 +250,12 @@ export default function HomeScreen() {
           {simulating ? 'Simulating M-Pesa...' : 'Simulate M-Pesa payment'}
         </button>
 
+        {/* Recent transactions */}
         {recent.length > 0 && (
           <>
-            <p
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 10,
-                fontWeight: 600,
-                color: 'var(--text-low)',
-                marginBottom: 8,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Recent transactions
             </p>
-
             {recent.map((t, i) => (
               <TransactionRow
                 key={t.id}

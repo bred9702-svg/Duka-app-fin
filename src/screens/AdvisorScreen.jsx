@@ -66,33 +66,13 @@ function GlassCard({ children, style = {}, onClick }) {
   )
 }
 
-function TrialBlockedMessage({ message }) {
-  return (
-    <div
-      style={{
-        background: 'rgba(255,107,91,0.10)',
-        border: '1px solid rgba(255,107,91,0.28)',
-        borderRadius: 12,
-        padding: '10px 12px',
-        marginBottom: 12,
-      }}
-    >
-      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#FF6B5B' }}>
-        Trial Expired
-      </p>
-      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-mid)', lineHeight: 1.45 }}>
-        {message}
-      </p>
-    </div>
-  )
-}
-
 export default function AdvisorScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
-  const writeBlocked = useAppStore((s) => s.writeBlocked)
-  const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
+  const businessPreferences = useAppStore((s) => s.businessPreferences)
+  const showDailyAiBrief = businessPreferences.dailyAiBrief !== false
+  const showAiRecommendations = businessPreferences.aiRecommendations !== false
 
   const health = getInventoryHealth(products)
   const bestSeller = getBestSeller(products, transactions)
@@ -104,6 +84,7 @@ export default function AdvisorScreen() {
   const debtors = customers.filter(c => (c.total_owed || 0) > 0).sort((a, b) => b.total_owed - a.total_owed)
   const topDebtor = debtors[0] || null
 
+  // Revenue delta (this week vs last week)
   const now = Date.now()
   const weekMs = 7 * 24 * 60 * 60 * 1000
   const sales = transactions.filter(t => t.operation_type === 'sale')
@@ -132,10 +113,10 @@ export default function AdvisorScreen() {
 
   const context = { restockSuggestions, debtors, bestSeller, lowStock, predictions }
 
+  // messages: { role: 'user'|'ai', text } — a 'thinking' entry renders AnalyzingIndicator
   const [messages, setMessages] = useState([])
   const [thinking, setThinking] = useState(false)
   const [input, setInput] = useState('')
-  const [blockedMessage, setBlockedMessage] = useState('')
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -143,14 +124,7 @@ export default function AdvisorScreen() {
   }, [messages, thinking])
 
   function ask(question) {
-    if (writeBlocked) {
-      setBlockedMessage(trialEndedMessage)
-      return
-    }
-
     if (!question.trim() || thinking) return
-
-    setBlockedMessage('')
     setMessages(m => [...m, { role: 'user', text: question }])
     setInput('')
     setThinking(true)
@@ -170,41 +144,29 @@ export default function AdvisorScreen() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="AI Advisor" />
 
-        {writeBlocked && <TrialBlockedMessage message={trialEndedMessage} />}
-
-        {blockedMessage && (
-          <div style={{
-            background: 'rgba(255,107,91,0.10)',
-            border: '1px solid rgba(255,107,91,0.25)',
-            borderRadius: 12,
-            padding: '9px 11px',
-            marginBottom: 10,
-          }}>
-            <p style={{ margin: 0, fontSize: 11, color: '#FF6B5B', fontWeight: 600 }}>
-              {blockedMessage}
-            </p>
-          </div>
+        {/* Business Briefing */}
+        {showDailyAiBrief && (
+          <FadeIn delay={0}>
+            <GlassCard style={{ background: 'linear-gradient(160deg, rgba(240,169,61,0.10), rgba(255,255,255,0.03))', border: '1px solid rgba(240,169,61,0.20)' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-mid)', marginBottom: 8 }}>
+                {greeting}, here's your business briefing
+              </p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 700, color: '#F0A93D' }}>
+                  <AnimatedCounter value={score.score} duration={700} />
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-low)' }}>
+                  / 100 · {score.label}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.5 }}>
+                {summary}
+              </p>
+            </GlassCard>
+          </FadeIn>
         )}
 
-        <FadeIn delay={0}>
-          <GlassCard style={{ background: 'linear-gradient(160deg, rgba(240,169,61,0.10), rgba(255,255,255,0.03))', border: '1px solid rgba(240,169,61,0.20)' }}>
-            <p style={{ fontSize: 12, color: 'var(--text-mid)', marginBottom: 8 }}>
-              {greeting}, here's your business briefing
-            </p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 700, color: '#F0A93D' }}>
-                <AnimatedCounter value={score.score} duration={700} />
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-low)' }}>
-                / 100 · {score.label}
-              </span>
-            </div>
-            <p style={{ fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.5 }}>
-              {summary}
-            </p>
-          </GlassCard>
-        </FadeIn>
-
+        {/* Today's Priorities */}
         <SectionTitle>Today's Priorities</SectionTitle>
         <StaggerContainer step={50} initialDelay={60}>
           {priorities.map((p, i) => (
@@ -221,6 +183,7 @@ export default function AdvisorScreen() {
           ))}
         </StaggerContainer>
 
+        {/* Business Summary */}
         <SectionTitle>Business Summary</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginBottom: 8 }}>
           <FadeIn delay={100}>
@@ -257,21 +220,27 @@ export default function AdvisorScreen() {
           </FadeIn>
         </div>
 
-        <SectionTitle>AI Recommendations</SectionTitle>
-        <StaggerContainer step={50}>
-          {recommendations.map((r, i) => (
-            <GlassCard key={i} style={{ display: 'flex', gap: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: `${r.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon name={r.icon} size={14} color={r.color} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', marginBottom: 3 }}>{r.title}</p>
-                <p style={{ fontSize: 10, color: 'var(--text-low)', lineHeight: 1.4 }}>{r.detail}</p>
-              </div>
-            </GlassCard>
-          ))}
-        </StaggerContainer>
+        {/* AI Recommendations */}
+        {showAiRecommendations && (
+          <>
+            <SectionTitle>AI Recommendations</SectionTitle>
+            <StaggerContainer step={50}>
+              {recommendations.map((r, i) => (
+                <GlassCard key={i} style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `${r.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name={r.icon} size={14} color={r.color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', marginBottom: 3 }}>{r.title}</p>
+                    <p style={{ fontSize: 10, color: 'var(--text-low)', lineHeight: 1.4 }}>{r.detail}</p>
+                  </div>
+                </GlassCard>
+              ))}
+            </StaggerContainer>
+          </>
+        )}
 
+        {/* Predictions */}
         <SectionTitle>Predictions</SectionTitle>
         <FadeIn>
           <GlassCard>
@@ -301,6 +270,7 @@ export default function AdvisorScreen() {
           </GlassCard>
         </FadeIn>
 
+        {/* Risk Alerts */}
         {risks.length > 0 && (
           <>
             <SectionTitle>Risk Alerts</SectionTitle>
@@ -322,6 +292,7 @@ export default function AdvisorScreen() {
           </>
         )}
 
+        {/* Ask Duka AI */}
         <SectionTitle>Ask Duka AI</SectionTitle>
 
         {(messages.length > 0 || thinking) && (
@@ -358,7 +329,7 @@ export default function AdvisorScreen() {
             <button
               key={chip}
               onClick={() => ask(chip)}
-              disabled={thinking || writeBlocked}
+              disabled={thinking}
               style={{
                 flexShrink: 0,
                 padding: '7px 12px',
@@ -368,8 +339,8 @@ export default function AdvisorScreen() {
                 color: 'var(--text-mid)',
                 background: 'var(--glass-fill-soft)',
                 border: '1px solid var(--glass-border)',
-                cursor: thinking || writeBlocked ? 'default' : 'pointer',
-                opacity: thinking || writeBlocked ? 0.5 : 1,
+                cursor: thinking ? 'default' : 'pointer',
+                opacity: thinking ? 0.5 : 1,
                 whiteSpace: 'nowrap',
                 transition: 'opacity 200ms ease',
               }}
@@ -384,14 +355,13 @@ export default function AdvisorScreen() {
           borderRadius: 999, background: 'var(--glass-fill-soft)',
           border: '1px solid var(--glass-border)', marginBottom: 90,
           transition: 'border-color 200ms ease',
-          opacity: writeBlocked ? 0.75 : 1,
         }}>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && ask(input)}
-            placeholder={writeBlocked ? 'Your trial has ended. Upgrade to continue.' : 'Ask Duka AI anything about your business...'}
-            disabled={thinking || writeBlocked}
+            placeholder="Ask Duka AI anything about your business..."
+            disabled={thinking}
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',
               fontSize: 12, color: 'var(--text-hi)', fontFamily: 'inherit',
@@ -399,13 +369,12 @@ export default function AdvisorScreen() {
           />
           <button
             onClick={() => ask(input)}
-            disabled={thinking || writeBlocked}
+            disabled={thinking}
             style={{
               width: 32, height: 32, borderRadius: '50%', border: 'none',
-              background: writeBlocked ? 'rgba(240,169,61,0.35)' : '#F0A93D',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: thinking || writeBlocked ? 'default' : 'pointer', flexShrink: 0,
-              opacity: thinking || writeBlocked ? 0.5 : 1,
+              background: '#F0A93D', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: thinking ? 'default' : 'pointer', flexShrink: 0,
+              opacity: thinking ? 0.5 : 1,
               transition: 'opacity 200ms ease',
             }}
           >

@@ -1,29 +1,36 @@
-import { useState } from 'react'
 import SubScreenHeader from '../../components/layout/SubScreenHeader'
 import Icon from '../../components/ui/Icon'
 import Toggle from '../../components/ui/Toggle'
+import useAppStore from '../../store/useAppStore'
 
-const STORAGE_KEY = 'duka-store-settings'
+const CURRENCIES = [
+  { value: 'KES', label: 'KES — Kenyan Shilling' },
+  { value: 'USD', label: 'USD — US Dollar' },
+  { value: 'EUR', label: 'EUR — Euro' },
+  { value: 'GBP', label: 'GBP — British Pound' },
+  { value: 'TZS', label: 'TZS — Tanzanian Shilling' },
+  { value: 'UGX', label: 'UGX — Ugandan Shilling' },
+]
 
-const DEFAULTS = {
-  tax: '16',
-  currency: 'KES',
-  receipt: true,
-  stockAlerts: true,
-  lowStockThreshold: '5',
-  autoBackup: true,
+function SectionTitle({ children }) {
+  return (
+    <p
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      {children}
+    </p>
+  )
 }
 
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS
-  } catch {
-    return DEFAULTS
-  }
-}
-
-function InputRow({ label, value, onChange, suffix, icon, color }) {
+function FieldShell({ icon, color, label, sub, children }) {
   return (
     <div
       style={{
@@ -39,15 +46,43 @@ function InputRow({ label, value, onChange, suffix, icon, color }) {
         border: '1px solid var(--glass-border)',
       }}
     >
-      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          background: `${color}20`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
         <Icon name={icon} size={14} color={color} />
       </div>
-      <p style={{ flex: 1, margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>{label}</p>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>
+          {label}
+        </p>
+        {sub && <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-low)' }}>{sub}</p>}
+      </div>
+
+      {children}
+    </div>
+  )
+}
+
+function InputRow({ label, value, onChange, suffix, icon, color, type = 'text' }) {
+  return (
+    <FieldShell icon={icon} color={color} label={label}>
       <input
+        type={type}
         value={value}
+        min={type === 'number' ? 0 : undefined}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          width: 50,
+          width: 64,
           textAlign: 'right',
           background: 'transparent',
           border: 'none',
@@ -59,71 +94,126 @@ function InputRow({ label, value, onChange, suffix, icon, color }) {
         }}
       />
       {suffix && <span style={{ fontSize: 11, color: 'var(--text-low)' }}>{suffix}</span>}
-    </div>
+    </FieldShell>
+  )
+}
+
+function SelectRow({ label, value, onChange, options, icon, color }) {
+  return (
+    <FieldShell icon={icon} color={color} label={label}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          maxWidth: 150,
+          background: 'rgba(255,255,255,.06)',
+          border: '1px solid var(--glass-border)',
+          outline: 'none',
+          borderRadius: 10,
+          padding: '7px 8px',
+          fontSize: 12,
+          fontWeight: 700,
+          color: 'var(--text-hi)',
+          fontFamily: 'var(--font-display)',
+        }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </FieldShell>
   )
 }
 
 function ToggleRow({ label, sub, checked, onChange, icon, color }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '11px 12px',
-        borderRadius: 12,
-        marginBottom: 8,
-        background: 'var(--glass-fill-soft)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        border: '1px solid var(--glass-border)',
-      }}
-    >
-      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon name={icon} size={14} color={color} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>{label}</p>
-        {sub && <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-low)' }}>{sub}</p>}
-      </div>
+    <FieldShell icon={icon} color={color} label={label} sub={sub}>
       <Toggle checked={checked} onChange={onChange} />
-    </div>
+    </FieldShell>
   )
 }
 
 export default function StoreSettingsScreen() {
-  const [settings, setSettings] = useState(loadSettings)
-
-  function update(field, value) {
-    const next = { ...settings, [field]: value }
-    setSettings(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-  }
+  const settings = useAppStore((s) => s.businessPreferences)
+  const updateBusinessPreference = useAppStore((s) => s.updateBusinessPreference)
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
-      <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -20, background: 'rgba(240,169,61,0.16)' }} />
+      <div
+        className="bg-blob"
+        style={{ width: 140, height: 140, top: -30, right: -20, background: 'rgba(240,169,61,0.16)' }}
+      />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <SubScreenHeader title="Store Settings" />
+        <SubScreenHeader title="Business Preferences" />
 
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-          General
-        </p>
-        <InputRow label="Tax rate" value={settings.tax} onChange={(v) => update('tax', v)} suffix="%" icon="cash" color="#F0A93D" />
-        <InputRow label="Currency" value={settings.currency} onChange={(v) => update('currency', v)} icon="coins" color="#5FD97A" />
+        <SectionTitle>Money</SectionTitle>
+        <SelectRow
+          label="Currency"
+          value={settings.currency}
+          onChange={(value) => updateBusinessPreference('currency', value)}
+          options={CURRENCIES}
+          icon="coins"
+          color="#5FD97A"
+        />
+        <ToggleRow
+          label="Enable Tax"
+          sub="Add tax settings to your business preferences"
+          checked={settings.taxEnabled}
+          onChange={(value) => updateBusinessPreference('taxEnabled', value)}
+          icon="cash"
+          color="#F0A93D"
+        />
+        {settings.taxEnabled && (
+          <InputRow
+            label="Tax Rate"
+            value={settings.taxRate}
+            onChange={(value) => updateBusinessPreference('taxRate', value)}
+            suffix="%"
+            icon="cash"
+            color="#F0A93D"
+            type="number"
+          />
+        )}
 
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '18px 0 8px' }}>
-          Receipts &amp; Stock
-        </p>
-        <ToggleRow label="Auto-print receipt" sub="Print after every sale" checked={settings.receipt} onChange={(v) => update('receipt', v)} icon="receiptOff" color="#5B9FF0" />
-        <ToggleRow label="Stock alerts" sub="Notify when stock is low" checked={settings.stockAlerts} onChange={(v) => update('stockAlerts', v)} icon="bell" color="#FF6B5B" />
-        <InputRow label="Low stock threshold" value={settings.lowStockThreshold} onChange={(v) => update('lowStockThreshold', v)} suffix="units" icon="package" color="#7C5CFC" />
+        <SectionTitle>Stock</SectionTitle>
+        <ToggleRow
+          label="Stock Alerts"
+          sub="Warn when a product is running low"
+          checked={settings.stockAlerts}
+          onChange={(value) => updateBusinessPreference('stockAlerts', value)}
+          icon="bell"
+          color="#FF6B5B"
+        />
+        <InputRow
+          label="Low Stock Threshold"
+          value={settings.lowStockThreshold}
+          onChange={(value) => updateBusinessPreference('lowStockThreshold', value)}
+          suffix="units"
+          icon="package"
+          color="#7C5CFC"
+          type="number"
+        />
 
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '18px 0 8px' }}>
-          Data
-        </p>
-        <ToggleRow label="Auto backup" sub="Backup data daily" checked={settings.autoBackup} onChange={(v) => update('autoBackup', v)} icon="package" color="#4FC3F7" />
+        <SectionTitle>Duka AI</SectionTitle>
+        <ToggleRow
+          label="Daily AI Brief"
+          sub="Show a short daily business brief"
+          checked={settings.dailyAiBrief}
+          onChange={(value) => updateBusinessPreference('dailyAiBrief', value)}
+          icon="barChart"
+          color="#4FC3F7"
+        />
+        <ToggleRow
+          label="AI Recommendations"
+          sub="Show recommendation cards in AI screens"
+          checked={settings.aiRecommendations}
+          onChange={(value) => updateBusinessPreference('aiRecommendations', value)}
+          icon="star"
+          color="#FFD166"
+        />
       </div>
     </div>
   )

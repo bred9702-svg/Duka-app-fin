@@ -1,3 +1,44 @@
+const STORE_SETTINGS_KEY = 'duka-store-settings'
+const DEFAULT_LOW_STOCK_THRESHOLD = 5
+
+function getBusinessPreferences() {
+  try {
+    const raw = localStorage.getItem(STORE_SETTINGS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function getLowStockThreshold() {
+  const settings = getBusinessPreferences()
+  const threshold = Number(settings.lowStockThreshold)
+  return Number.isFinite(threshold) && threshold > 0
+    ? threshold
+    : DEFAULT_LOW_STOCK_THRESHOLD
+}
+
+export function areStockAlertsEnabled() {
+  const settings = getBusinessPreferences()
+  return settings.stockAlerts !== false
+}
+
+function getProductLowStockLimit(product) {
+  const globalThreshold = getLowStockThreshold()
+  const productThreshold = Number(product?.stock_alert)
+
+  return Number.isFinite(productThreshold) && productThreshold > 0
+    ? productThreshold
+    : globalThreshold
+}
+
+function isLowStockProduct(product) {
+  if (!areStockAlertsEnabled()) return false
+
+  const stock = product?.stock_current ?? 0
+  return stock > 0 && stock <= getProductLowStockLimit(product)
+}
+
 export function getInventoryHealth(products = []) {
   if (!products.length) {
     return {
@@ -13,11 +54,7 @@ export function getInventoryHealth(products = []) {
     p => (p.stock_current ?? 0) <= 0
   ).length
 
-  const lowStock = products.filter(
-    p =>
-      (p.stock_current ?? 0) > 0 &&
-      (p.stock_current ?? 0) <= (p.stock_alert ?? 5)
-  ).length
+  const lowStock = products.filter(isLowStockProduct).length
 
   let score = 100
 
@@ -125,11 +162,7 @@ export function getHighestProfit(products = [], transactions = []) {
 }
 
 export function getLowStock(products = []) {
-  return products.filter(
-    p =>
-      (p.stock_current ?? 0) > 0 &&
-      (p.stock_current ?? 0) <= (p.stock_alert ?? 5)
-  )
+  return products.filter(isLowStockProduct)
 }
 
 export function getOutOfStock(products = []) {
@@ -163,6 +196,8 @@ export function getRestockSuggestions(
   products = [],
   transactions = []
 ) {
+  if (!areStockAlertsEnabled()) return []
+
   const sales = {}
 
   transactions
@@ -176,18 +211,20 @@ export function getRestockSuggestions(
     })
 
   return products
-    .filter(p => (p.stock_current ?? 0) <= (p.stock_alert ?? 5))
+    .filter(isLowStockProduct)
     .map(product => {
       const sold = sales[product.id] || 0
+      const lowStockLimit = getProductLowStockLimit(product)
 
       const recommended =
         Math.max(
-          (product.stock_alert ?? 5) * 2,
+          lowStockLimit * 2,
           sold
         ) - (product.stock_current ?? 0)
 
       return {
         ...product,
+        stock_alert: lowStockLimit,
         sold,
         recommended: Math.max(
           0,
