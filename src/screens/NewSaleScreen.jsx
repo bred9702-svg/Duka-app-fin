@@ -66,6 +66,8 @@ export default function NewSaleScreen() {
   const completeSale = useAppStore((s) => s.completeSale)
   const writeBlocked = useAppStore((s) => s.writeBlocked)
   const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
+  const session = useAppStore((s) => s.session)
+  const isEmployee = session?.role === 'employee'
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -226,19 +228,21 @@ export default function NewSaleScreen() {
                 <AnimatedCounter value={result.grandTotal} format={fmtKES} suffix=" KES" />
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isEmployee ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)', gap: 10 }}>
                 <div>
                   <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Items</p>
                   <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-hi)' }}>
                     {result.itemCount} product{result.itemCount > 1 ? 's' : ''} · {result.totalQuantity} units
                   </p>
                 </div>
-                <div>
-                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Profit</p>
-                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: '#5FD97A' }}>
-                    <AnimatedCounter value={result.totalProfit} format={fmtKES} suffix=" KES" />
-                  </p>
-                </div>
+                {!isEmployee && (
+                  <div>
+                    <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 3, fontWeight: 500 }}>Profit</p>
+                    <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: '#5FD97A' }}>
+                      <AnimatedCounter value={result.totalProfit} format={fmtKES} suffix=" KES" />
+                    </p>
+                  </div>
+                )}
               </div>
             </GlassCard>
           </FadeIn>
