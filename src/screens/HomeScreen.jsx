@@ -61,7 +61,9 @@ export default function HomeScreen() {
     .filter(c => (c.total_owed || 0) > 0)
     .sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0))[0] || null
 
-  const lowStock = getLowStock(products)
+  const lowStockResult = getLowStock(products)
+  const lowStock = Array.isArray(lowStockResult) ? lowStockResult : []
+  const firstLowStock = lowStock[0] || null
   const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
 
   useEffect(() => {
@@ -196,7 +198,7 @@ export default function HomeScreen() {
         </div>
 
         {/* Quick insights */}
-        {(topProduct || topCustomer || lowStock.length > 0) && (
+        {(topProduct || topCustomer || firstLowStock) && (
           <div style={{ marginBottom: 14 }}>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Quick insights
@@ -216,11 +218,11 @@ export default function HomeScreen() {
                   <p style={{ fontSize: 10, color: '#5B9FF0' }}>{topCustomer.visit_count || 0} visits</p>
                 </div>
               )}
-              {lowStock.length > 0 && (
+              {firstLowStock && (
                 <div style={{ background: 'rgba(255,107,91,0.08)', border: '1px solid rgba(255,107,91,0.25)', borderRadius: 12, padding: '10px 12px', gridColumn: topProduct && topCustomer ? '1 / -1' : 'auto' }}>
                   <p style={{ fontSize: 9, color: '#FF6B5B', marginBottom: 3, fontWeight: 600 }}>⚠ STOCK RUNNING LOW</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{lowStock[0].name}</p>
-                  <p style={{ fontSize: 10, color: '#FF6B5B' }}>{lowStock[0].stock_current} units left</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>{firstLowStock.name || 'Unknown product'}</p>
+                  <p style={{ fontSize: 10, color: '#FF6B5B' }}>{firstLowStock.stock_current ?? 0} units left</p>
                 </div>
               )}
             </div>
