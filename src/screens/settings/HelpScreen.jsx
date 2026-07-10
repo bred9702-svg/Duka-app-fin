@@ -5,7 +5,7 @@ import Icon from '../../components/ui/Icon'
 const ITEMS = [
   { label: 'FAQ', sub: 'Common questions answered', icon: 'helpCircle', color: '#F0A93D', path: '/faq' },
   { label: 'Contact us', sub: 'Reach the Duka team', icon: 'phone', color: '#5B9FF0', action: () => {} },
-  { label: 'WhatsApp', sub: 'Chat with support', icon: 'phone', color: '#5FD97A', action: () => window.open('https://wa.me/+254742599719) },
+  { label: 'WhatsApp', sub: 'Chat with support', icon: 'phone', color: '#5FD97A', action: () => window.open('https://wa.me/+254742599719') },
   { label: 'Email', sub: 'support@duka.app', icon: 'inbox', color: '#7C5CFC', action: () => window.location.href = 'mailto:support@duka.app' },
 ]
 
