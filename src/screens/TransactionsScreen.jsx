@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import ScreenContainer from '../components/layout/ScreenContainer'
@@ -5,14 +6,22 @@ import Card from '../components/ui/Card'
 import Icon from '../components/ui/Icon'
 import TransactionRow from '../components/transactions/TransactionRow'
 
+const LIST_LIMIT = 8
+
 export default function TransactionsScreen() {
   const navigate = useNavigate()
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const addTransaction = useAppStore((s) => s.addTransaction)
 
+  const [showAllUnclassified, setShowAllUnclassified] = useState(false)
+  const [showAllClassified, setShowAllClassified] = useState(false)
+
   const unclassified = transactions.filter((t) => !t.classified)
   const classified = transactions.filter((t) => t.classified)
+
+  const visibleUnclassified = showAllUnclassified ? unclassified : unclassified.slice(0, LIST_LIMIT)
+  const visibleClassified = showAllClassified ? classified : classified.slice(0, LIST_LIMIT)
 
   async function addCash(direction) {
     const raw = window.prompt(
@@ -199,7 +208,7 @@ export default function TransactionsScreen() {
               Needs classification
             </p>
 
-            {unclassified.map((t, i) => (
+            {visibleUnclassified.map((t, i) => (
               <TransactionRow
                 key={t.id}
                 txn={t}
@@ -208,6 +217,18 @@ export default function TransactionsScreen() {
                 onClick={() => navigate(`/classify/${t.id}`)}
               />
             ))}
+
+            {unclassified.length > LIST_LIMIT && (
+              <div
+                onClick={() => setShowAllUnclassified((v) => !v)}
+                style={{
+                  textAlign: 'center', padding: '8px 0 2px', fontSize: 11, fontWeight: 600,
+                  color: '#FF6B5B', cursor: 'pointer',
+                }}
+              >
+                {showAllUnclassified ? 'Show Less' : `Show More (${unclassified.length - LIST_LIMIT})`}
+              </div>
+            )}
           </div>
         )}
 
@@ -227,7 +248,7 @@ export default function TransactionsScreen() {
               Classified
             </p>
 
-            {classified.map((t, i) => (
+            {visibleClassified.map((t, i) => (
               <TransactionRow
                 key={t.id}
                 txn={t}
@@ -235,6 +256,18 @@ export default function TransactionsScreen() {
                 delay={i * 0.03}
               />
             ))}
+
+            {classified.length > LIST_LIMIT && (
+              <div
+                onClick={() => setShowAllClassified((v) => !v)}
+                style={{
+                  textAlign: 'center', padding: '8px 0 2px', fontSize: 11, fontWeight: 600,
+                  color: '#5FD97A', cursor: 'pointer',
+                }}
+              >
+                {showAllClassified ? 'Show Less' : `Show More (${classified.length - LIST_LIMIT})`}
+              </div>
+            )}
           </div>
         )}
       </div>
