@@ -11,7 +11,7 @@ export function normalizeInviteCode(value = '') {
     .replace(/\s+/g, '')
 }
 
-function createShopId(shopName, ownerName) {
+export function createShopId(shopName, ownerName) {
   const source = `${shopName || 'Duka Shop'}-${ownerName || 'Shop Owner'}`
   return `shop-${source
     .toLowerCase()
