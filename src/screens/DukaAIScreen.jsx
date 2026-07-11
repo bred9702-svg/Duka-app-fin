@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import Icon from '../components/ui/Icon'
 import useAppStore from '../store/useAppStore'
@@ -9,21 +10,45 @@ import { getDukaAIInsights } from '../utils/dukaAIInsights'
 import { getDukaAIRecommendations } from '../utils/dukaAIRecommendations'
 import { fmtKES } from '../utils/formatters'
 
-function SectionTitle({ children }) {
+function CollapsibleSection({ id, title, expanded, onToggle, children }) {
   return (
-    <p
-      style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: 10,
-        fontWeight: 600,
-        color: 'var(--text-low)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        margin: '18px 0 8px',
-      }}
-    >
-      {children}
-    </p>
+    <div style={{ marginBottom: 4 }}>
+      <div
+        onClick={() => onToggle(id)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          padding: '10px 2px',
+          margin: '14px 0 4px',
+        }}
+      >
+        <p
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 10,
+            fontWeight: 600,
+            color: 'var(--text-low)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            margin: 0,
+          }}
+        >
+          {title}
+        </p>
+        <Icon
+          name="chevronRight"
+          size={14}
+          color="var(--text-low)"
+          style={{
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease',
+          }}
+        />
+      </div>
+      {expanded && children}
+    </div>
   )
 }
 
@@ -326,6 +351,19 @@ export default function DukaAIScreen() {
   const insights = getDukaAIInsights({ products, transactions, customers })
   const recommendations = getDukaAIRecommendations({ products, transactions, customers })
 
+  const [expandedSection, setExpandedSection] = useState('brief')
+
+  function toggleSection(id) {
+    setExpandedSection((current) => (current === id ? null : id))
+  }
+
+  const salesInsights = insights.filter(
+    (i) => i.id === 'sales-trend-insight' || i.id === 'top-product-insight'
+  )
+  const inventoryInsights = insights.filter((i) => i.id === 'stock-insight')
+  const debtInsights = insights.filter((i) => i.id === 'debt-risk-insight')
+  const recommendedAction = insights.filter((i) => i.id === 'recommended-action')
+
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div
@@ -341,24 +379,70 @@ export default function DukaAIScreen() {
         </p>
 
         {businessPreferences.dailyAiBrief !== false && (
-          <>
-            <SectionTitle>Daily AI Brief</SectionTitle>
+          <CollapsibleSection
+            id="brief"
+            title="Daily AI Brief"
+            expanded={expandedSection === 'brief'}
+            onToggle={toggleSection}
+          >
             <DailyBriefCard brief={dailyBrief} />
-          </>
+          </CollapsibleSection>
         )}
 
-        <StaggerContainer step={60} initialDelay={40}>
-          {insights.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))}
-        </StaggerContainer>
+        <CollapsibleSection
+          id="recommendations"
+          title="Recommendations"
+          expanded={expandedSection === 'recommendations'}
+          onToggle={toggleSection}
+        >
+          <StaggerContainer step={60} initialDelay={40}>
+            {recommendedAction.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+            {recommendations.map((rec) => (
+              <InsightCard key={rec.id} insight={rec} />
+            ))}
+          </StaggerContainer>
+        </CollapsibleSection>
 
-        <SectionTitle>Recommendations</SectionTitle>
-        <StaggerContainer step={60} initialDelay={40}>
-          {recommendations.map((rec) => (
-            <InsightCard key={rec.id} insight={rec} />
-          ))}
-        </StaggerContainer>
+        <CollapsibleSection
+          id="sales"
+          title="Sales"
+          expanded={expandedSection === 'sales'}
+          onToggle={toggleSection}
+        >
+          <StaggerContainer step={60} initialDelay={40}>
+            {salesInsights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </StaggerContainer>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="inventory"
+          title="Inventory"
+          expanded={expandedSection === 'inventory'}
+          onToggle={toggleSection}
+        >
+          <StaggerContainer step={60} initialDelay={40}>
+            {inventoryInsights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </StaggerContainer>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="debts"
+          title="Debts"
+          expanded={expandedSection === 'debts'}
+          onToggle={toggleSection}
+        >
+          <StaggerContainer step={60} initialDelay={40}>
+            {debtInsights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </StaggerContainer>
+        </CollapsibleSection>
       </div>
     </div>
   )
