@@ -4,12 +4,13 @@ import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
 
-function Field({ label, value, onChange, placeholder, type = 'text' }) {
+function Field({ label, value, onChange, placeholder, type = 'text', autoComplete }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>{label}</p>
       <input
         type={type}
+        autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -28,16 +29,45 @@ export default function OwnerRegistrationScreen() {
   const registerOwner = useAppStore((s) => s.registerOwner)
 
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [shopName, setShopName] = useState('')
   const [shopAddress, setShopAddress] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
-  const canSubmit = name.trim() && phone.trim() && shopName.trim()
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const canSubmit = Boolean(
+    name.trim()
+    && emailIsValid
+    && phone.trim()
+    && password.length >= 8
+    && password === confirmPassword
+    && shopName.trim()
+    && !submitting
+  )
 
   async function handleSubmit() {
     if (!canSubmit) return
-    await registerOwner({ name: name.trim(), phone: phone.trim(), shopName: shopName.trim(), shopAddress: shopAddress.trim() })
-    navigate('/setup-inventory')
+    setSubmitting(true)
+    setFormError('')
+
+    try {
+      await registerOwner({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password,
+        shopName: shopName.trim(),
+        shopAddress: shopAddress.trim(),
+      })
+      navigate('/sign-in?checkEmail=1', { replace: true })
+    } catch (error) {
+      setFormError(error?.message || 'Unable to create your account right now.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -89,7 +119,16 @@ export default function OwnerRegistrationScreen() {
           </div>
 
           <Field label="Full Name" value={name} onChange={setName} placeholder="e.g. Bred Mwepu" />
-          <Field label="Phone Number" value={phone} onChange={setPhone} placeholder="+254 7XX XXX XXX" type="tel" />
+          <Field label="Email Address" value={email} onChange={setEmail} placeholder="you@example.com" type="email" autoComplete="email" />
+          <Field label="Phone Number" value={phone} onChange={setPhone} placeholder="+254 7XX XXX XXX" type="tel" autoComplete="tel" />
+          <Field label="Password" value={password} onChange={setPassword} placeholder="At least 8 characters" type="password" autoComplete="new-password" />
+          <Field label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Enter your password again" type="password" autoComplete="new-password" />
+
+          {confirmPassword && password !== confirmPassword && (
+            <p style={{ margin: '-5px 0 12px', fontSize: 11, color: '#FF6B5B' }}>
+              Passwords do not match.
+            </p>
+          )}
 
           <button
             disabled
@@ -114,6 +153,12 @@ export default function OwnerRegistrationScreen() {
 
           <Field label="Shop Name" value={shopName} onChange={setShopName} placeholder="e.g. Bred's Wines & Spirits" />
           <Field label="Shop Address" value={shopAddress} onChange={setShopAddress} placeholder="e.g. Nairobi, Kenya" />
+
+          {formError && (
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+              {formError}
+            </p>
+          )}
         </FadeIn>
 
         <FadeIn delay={140} duration={280} y={10}>
@@ -127,7 +172,7 @@ export default function OwnerRegistrationScreen() {
               opacity: canSubmit ? 1 : 0.4, transition: 'opacity 200ms ease',
             }}
           >
-            Create Account
+            {submitting ? 'Creating Account...' : 'Create Account'}
           </button>
         </FadeIn>
       </div>

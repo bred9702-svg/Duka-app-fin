@@ -18,13 +18,19 @@ export default function SignInScreen() {
   const inviteFromLink = normalizeInviteCode(searchParams.get('invite') || '')
   const startsInJoinMode = searchParams.get('mode') === 'join' || Boolean(inviteFromLink)
 
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [role, setRole] = useState(startsInJoinMode ? 'employee' : 'owner')
   const [inviteCode, setInviteCode] = useState(inviteFromLink)
   const [inviteError, setInviteError] = useState('')
   const [validatedInvite, setValidatedInvite] = useState(null)
   const [employeeName, setEmployeeName] = useState('')
   const [employeePhone, setEmployeePhone] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [authError, setAuthError] = useState('')
+
+  const shouldCheckEmail = searchParams.get('checkEmail') === '1'
+  const emailConfirmed = searchParams.get('confirmed') === '1'
 
   const isJoinMode = role === 'employee'
   const isCreatingEmployeeProfile = isJoinMode && Boolean(validatedInvite)
@@ -32,10 +38,11 @@ export default function SignInScreen() {
     ? employeeName.trim().length > 0 && employeePhone.trim().length > 0
     : isJoinMode
       ? inviteCode.trim().length > 0
-      : phone.trim().length > 0
+      : email.trim().length > 0 && password.length >= 8 && !submitting
 
   async function handleContinue() {
     if (!canSubmit) return
+    setAuthError('')
 
     if (isJoinMode) {
       if (!validatedInvite) {
@@ -68,8 +75,14 @@ export default function SignInScreen() {
       return
     }
 
-    await signIn({ phone: phone.trim(), role })
-    navigate('/')
+    setSubmitting(true)
+    try {
+      const result = await signIn({ email: email.trim(), password, role })
+      navigate(result?.session?.isOnboarded === false ? '/setup-inventory' : '/', { replace: true })
+    } catch (error) {
+      setAuthError(error?.message || 'Unable to sign in right now.')
+      setSubmitting(false)
+    }
   }
 
   function updateInviteCode(value) {
@@ -116,18 +129,58 @@ export default function SignInScreen() {
         <FadeIn delay={60} duration={280} y={12}>
           {!isJoinMode && (
             <>
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
+              {shouldCheckEmail && (
+                <div style={{ padding: '11px 12px', borderRadius: 12, background: 'rgba(91,159,240,.1)', border: '1px solid rgba(91,159,240,.28)', marginBottom: 14 }}>
+                  <p style={{ margin: 0, fontSize: 11, color: '#7DB7FF', lineHeight: 1.5 }}>
+                    Check your email to confirm your Duka account before signing in.
+                  </p>
+                </div>
+              )}
+              {emailConfirmed && (
+                <div style={{ padding: '11px 12px', borderRadius: 12, background: 'rgba(95,217,122,.08)', border: '1px solid rgba(95,217,122,.24)', marginBottom: 14 }}>
+                  <p style={{ margin: 0, fontSize: 11, color: '#5FD97A', lineHeight: 1.5 }}>
+                    Email confirmed. Sign in to finish setting up your shop.
+                  </p>
+                </div>
+              )}
+
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Email Address</p>
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+254 7XX XXX XXX"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
                 style={{
                   width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
                   borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
                   fontFamily: 'inherit', outline: 'none', marginBottom: 14,
                 }}
               />
+
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Password</p>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                autoComplete="current-password"
+                style={{
+                  width: '100%', background: 'var(--glass-fill-soft)', border: authError ? '1px solid rgba(255,107,91,.55)' : '1px solid var(--glass-border)',
+                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
+                  fontFamily: 'inherit', outline: 'none', marginBottom: authError ? 6 : 14,
+                }}
+              />
+
+              {authError && (
+                <p style={{ margin: '0 0 12px', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+                  {authError}
+                </p>
+              )}
+
+              <p style={{ margin: '0 0 14px', fontSize: 10, color: 'var(--text-low)' }}>
+                Forgot your password? Contact Duka support on WhatsApp.
+              </p>
             </>
           )}
 
@@ -265,7 +318,7 @@ export default function SignInScreen() {
               opacity: canSubmit ? 1 : 0.4, transition: 'opacity 200ms ease',
             }}
           >
-            {isCreatingEmployeeProfile ? 'Create Profile' : isJoinMode ? 'Continue' : 'Continue'}
+            {isCreatingEmployeeProfile ? 'Create Profile' : isJoinMode ? 'Continue' : submitting ? 'Signing In...' : 'Sign In'}
           </button>
         </FadeIn>
       </div>
