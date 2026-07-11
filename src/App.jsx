@@ -49,17 +49,12 @@ function LoadingScreen() {
     <div
       style={{
         flex: 1,
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--bg-deep)',
         gap: 16,
-        overflowX: 'hidden',
-        boxSizing: 'border-box',
       }}
     >
       <div
@@ -137,15 +132,10 @@ export default function App() {
         style={{
           flex: 1,
           width: '100%',
-          maxWidth: '100%',
-          minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
-          overflowX: 'hidden',
-          boxSizing: 'border-box',
-          scrollPaddingBottom: hideNav ? 0 : 112,
-          paddingBottom: hideNav ? 0 : 112,
+          paddingBottom: hideNav ? 0 : 84,
         }}
       >
         <FadeIn
@@ -157,10 +147,6 @@ export default function App() {
             flexDirection: 'column',
             flex: 1,
             width: '100%',
-            maxWidth: '100%',
-            minWidth: 0,
-            overflowX: 'hidden',
-            boxSizing: 'border-box',
           }}
         >
           <Routes>
@@ -306,7 +292,6 @@ export default function App() {
                 </RequireOwner>
               }
             />
-
             <Route
               path="/payment-mode"
               element={
