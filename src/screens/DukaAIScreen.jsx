@@ -5,6 +5,25 @@ import useAppStore from '../store/useAppStore'
 import StaggerContainer from '../components/animation/StaggerContainer'
 
 import { getDukaAIInsights } from '../utils/dukaAIInsights'
+import { getDukaAIRecommendations } from '../utils/dukaAIRecommendations'
+
+function SectionTitle({ children }) {
+  return (
+    <p
+      style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-low)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        margin: '18px 0 8px',
+      }}
+    >
+      {children}
+    </p>
+  )
+}
 
 function InsightCard({ insight }) {
   return (
@@ -75,6 +94,7 @@ export default function DukaAIScreen() {
   const customers = useAppStore((s) => s.customers)
 
   const insights = getDukaAIInsights({ products, transactions, customers })
+  const recommendations = getDukaAIRecommendations({ products, transactions, customers })
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
@@ -93,6 +113,13 @@ export default function DukaAIScreen() {
         <StaggerContainer step={60} initialDelay={40}>
           {insights.map((insight) => (
             <InsightCard key={insight.id} insight={insight} />
+          ))}
+        </StaggerContainer>
+
+        <SectionTitle>Recommendations</SectionTitle>
+        <StaggerContainer step={60} initialDelay={40}>
+          {recommendations.map((rec) => (
+            <InsightCard key={rec.id} insight={rec} />
           ))}
         </StaggerContainer>
       </div>

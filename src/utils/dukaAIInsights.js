@@ -13,11 +13,6 @@ import {
   getDeadStock,
   getRestockSuggestions,
 } from './inventoryEngine'
-import {
-  getBusinessScore,
-  getGreeting,
-  getBriefingSummary,
-} from './aiAdvisorEngine'
 import { generateSmartInsight } from './smartInsight'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -45,44 +40,31 @@ function getRevenueWindow(transactions, now = Date.now()) {
   return { thisWeekTotal, lastWeekTotal, revenueDelta }
 }
 
-// ── 1. TODAY'S INSIGHT ────────────────────────────────────────────
-function getTodaysInsight({ health, revenueDelta, debtsTotal, thisWeekTotal, topDebtor, lowStock }) {
-  const score = getBusinessScore({ health, revenueDelta, debtsTotal, revenue: thisWeekTotal })
-  const greeting = getGreeting()
-  const summary = getBriefingSummary({ score, revenueDelta, topDebtor, lowStock })
-
-  return {
-    id: 'todays-insight',
-    title: "Today's Insight",
-    icon: 'star',
-    color: '#F0A93D',
-    headline: `${greeting} — Business score ${score.score}/100 (${score.label})`,
-    detail: summary,
-  }
-}
-
-// ── 2. SALES INSIGHT ──────────────────────────────────────────────
-function getSalesInsight({ thisWeekTotal, revenueDelta, bestSeller }) {
+// ── 1. SALES TREND INSIGHT ────────────────────────────────────────
+// Pure week-over-week trend — no product mix here, that's card 4.
+function getSalesTrendInsight({ thisWeekTotal, lastWeekTotal, revenueDelta }) {
   let headline
   let color = '#5B9FF0'
+  let detail
 
   if (revenueDelta === null) {
     headline = `${fmtKES(thisWeekTotal)} KES in sales this week`
+    detail = thisWeekTotal > 0
+      ? 'Not enough history yet to compare against last week.'
+      : 'No sales recorded yet — trend insights will appear once you log sales.'
   } else if (revenueDelta >= 0) {
     color = '#5FD97A'
     headline = `Sales are up ${revenueDelta}% vs last week`
+    detail = `${fmtKES(thisWeekTotal)} KES this week, up from ${fmtKES(lastWeekTotal)} KES last week.`
   } else {
     color = '#FF6B5B'
     headline = `Sales are down ${Math.abs(revenueDelta)}% vs last week`
+    detail = `${fmtKES(thisWeekTotal)} KES this week, down from ${fmtKES(lastWeekTotal)} KES last week.`
   }
 
-  const detail = bestSeller
-    ? `${bestSeller.name} is your best seller this period, with ${bestSeller.sold} unit(s) sold.`
-    : 'No sales recorded yet — insights will improve as you log transactions.'
-
   return {
-    id: 'sales-insight',
-    title: 'Sales Insight',
+    id: 'sales-trend-insight',
+    title: 'Sales Trend',
     icon: 'trendingUp',
     color,
     headline,
@@ -90,42 +72,74 @@ function getSalesInsight({ thisWeekTotal, revenueDelta, bestSeller }) {
   }
 }
 
-// ── 3. INVENTORY INSIGHT ──────────────────────────────────────────
-function getInventoryInsight({ health, lowStock, outOfStock, deadStock }) {
-  const headline = `Inventory health: ${health.score}/100 (${health.status})`
-
-  let detail
+// ── 2. LOW / OUT-OF-STOCK INSIGHT ─────────────────────────────────
+function getStockInsight({ lowStock, outOfStock }) {
   if (outOfStock.length > 0) {
-    detail = `${outOfStock.length} product(s) out of stock, including ${outOfStock[0].name}.`
-  } else if (lowStock.length > 0) {
-    detail = `${lowStock.length} product(s) running low, including ${lowStock[0].name}.`
-  } else if (deadStock.length > 0) {
-    detail = `${deadStock.length} product(s) haven't sold recently — consider a promotion.`
-  } else {
-    detail = 'Stock levels look healthy across your catalog.'
+    return {
+      id: 'stock-insight',
+      title: 'Low / Out of Stock',
+      icon: 'package',
+      color: '#FF6B5B',
+      headline: `${outOfStock.length} product(s) out of stock`,
+      detail: `Including ${outOfStock[0].name}${outOfStock.length > 1 ? ` and ${outOfStock.length - 1} other(s)` : ''} — restock to avoid lost sales.`,
+    }
+  }
+
+  if (lowStock.length > 0) {
+    return {
+      id: 'stock-insight',
+      title: 'Low / Out of Stock',
+      icon: 'package',
+      color: '#F0A93D',
+      headline: `${lowStock.length} product(s) running low`,
+      detail: `Including ${lowStock[0].name}${lowStock.length > 1 ? ` and ${lowStock.length - 1} other(s)` : ''} — plan a reorder soon.`,
+    }
   }
 
   return {
-    id: 'inventory-insight',
-    title: 'Inventory Insight',
+    id: 'stock-insight',
+    title: 'Low / Out of Stock',
     icon: 'package',
-    color: health.color,
-    headline,
-    detail,
+    color: '#5FD97A',
+    headline: 'No stock issues right now',
+    detail: 'All products are above their low-stock threshold.',
   }
 }
 
-// ── 4. DEBT INSIGHT ───────────────────────────────────────────────
-function getDebtInsight({ customers, transactions }) {
+// ── 3. DEBT RISK INSIGHT ──────────────────────────────────────────
+function getDebtRiskInsight({ customers, transactions }) {
   const smart = generateSmartInsight(customers, transactions)
 
   return {
-    id: 'debt-insight',
-    title: 'Debt Insight',
+    id: 'debt-risk-insight',
+    title: 'Debt Risk',
     icon: 'userDollar',
     color: smart.color,
     headline: smart.title,
     detail: smart.message,
+  }
+}
+
+// ── 4. TOP-SELLING PRODUCT INSIGHT ────────────────────────────────
+function getTopSellingProductInsight({ bestSeller }) {
+  if (!bestSeller) {
+    return {
+      id: 'top-product-insight',
+      title: 'Top-Selling Product',
+      icon: 'star',
+      color: '#5B9FF0',
+      headline: 'No sales recorded yet',
+      detail: 'Log a few sales to see which product is leading.',
+    }
+  }
+
+  return {
+    id: 'top-product-insight',
+    title: 'Top-Selling Product',
+    icon: 'star',
+    color: '#F0A93D',
+    headline: `${bestSeller.name} is your best seller`,
+    detail: `${bestSeller.sold} unit(s) sold — consider featuring it near checkout to sustain momentum.`,
   }
 }
 
@@ -212,7 +226,7 @@ export function getDukaAIInsights({ products = [], transactions = [], customers 
   const topDebtor = debtors[0] || null
   const debtsTotal = debtors.reduce((a, c) => a + (c.total_owed || 0), 0)
 
-  const { thisWeekTotal, revenueDelta } = getRevenueWindow(transactions)
+  const { thisWeekTotal, lastWeekTotal, revenueDelta } = getRevenueWindow(transactions)
 
   const ctx = {
     health,
@@ -225,16 +239,17 @@ export function getDukaAIInsights({ products = [], transactions = [], customers 
     topDebtor,
     debtsTotal,
     thisWeekTotal,
+    lastWeekTotal,
     revenueDelta,
     customers,
     transactions,
   }
 
   return [
-    getTodaysInsight(ctx),
-    getSalesInsight(ctx),
-    getInventoryInsight(ctx),
-    getDebtInsight(ctx),
+    getSalesTrendInsight(ctx),
+    getStockInsight(ctx),
+    getDebtRiskInsight(ctx),
+    getTopSellingProductInsight(ctx),
     getRecommendedAction(ctx),
   ]
 }
