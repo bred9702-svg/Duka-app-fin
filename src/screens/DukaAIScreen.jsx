@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import Icon from '../components/ui/Icon'
@@ -21,13 +21,7 @@ const TAB_CONFIG = {
   overview: {
     title: 'Overview',
     description: 'Your highest-priority business signals in one place.',
-    insightIds: [
-      'sales-trend-insight',
-      'stock-insight',
-      'debt-risk-insight',
-      'top-product-insight',
-      'recommended-action',
-    ],
+    insightIds: ['sales-trend-insight', 'stock-insight', 'debt-risk-insight', 'top-product-insight', 'recommended-action'],
     recommendationIds: [],
   },
   recommendations: {
@@ -45,35 +39,20 @@ const TAB_CONFIG = {
   sales: {
     title: 'Sales',
     description: 'Sales trends and product movement insights.',
-    insightIds: [
-      'sales-trend-insight',
-      'top-product-insight',
-    ],
-    recommendationIds: [
-      'fastest-seller-recommendation',
-    ],
+    insightIds: ['sales-trend-insight', 'top-product-insight'],
+    recommendationIds: ['fastest-seller-recommendation'],
   },
   inventory: {
     title: 'Inventory',
     description: 'Stock health, restocking, and underperforming product insights.',
-    insightIds: [
-      'stock-insight',
-      'top-product-insight',
-    ],
-    recommendationIds: [
-      'restock-recommendation',
-      'underperformer-recommendation',
-    ],
+    insightIds: ['stock-insight', 'top-product-insight'],
+    recommendationIds: ['restock-recommendation', 'underperformer-recommendation'],
   },
   debts: {
     title: 'Debts',
     description: 'Debt risk and follow-up priorities.',
-    insightIds: [
-      'debt-risk-insight',
-    ],
-    recommendationIds: [
-      'debt-followup-recommendation',
-    ],
+    insightIds: ['debt-risk-insight'],
+    recommendationIds: ['debt-followup-recommendation'],
   },
 }
 
@@ -159,6 +138,16 @@ function InsightCard({ insight }) {
 }
 
 function TabBar({ activeTab, onChange }) {
+  const tabRefs = useRef({})
+
+  useEffect(() => {
+    tabRefs.current[activeTab]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    })
+  }, [activeTab])
+
   return (
     <div
       style={{
@@ -166,18 +155,26 @@ function TabBar({ activeTab, onChange }) {
         top: 0,
         zIndex: 4,
         margin: '0 -14px 14px',
-        padding: '8px 14px 10px',
+        padding: '8px 0 10px',
         background: 'linear-gradient(180deg, var(--bg) 0%, rgba(10,10,16,0.86) 100%)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
           display: 'flex',
           gap: 8,
+          maxWidth: '100%',
           overflowX: 'auto',
+          overflowY: 'hidden',
+          padding: '0 14px 2px',
+          scrollPaddingInline: 14,
           scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehaviorX: 'contain',
         }}
       >
         {TABS.map((tab) => {
@@ -186,9 +183,13 @@ function TabBar({ activeTab, onChange }) {
           return (
             <button
               key={tab.id}
+              ref={(node) => {
+                if (node) tabRefs.current[tab.id] = node
+              }}
               type="button"
               onClick={() => onChange(tab.id)}
               style={{
+                flex: '0 0 auto',
                 border: `1px solid ${isActive ? 'rgba(240,169,61,0.48)' : 'var(--glass-border)'}`,
                 borderRadius: 999,
                 padding: '8px 12px',
@@ -225,12 +226,10 @@ export default function DukaAIScreen() {
     () => getDukaAIInsights({ products, transactions, customers }),
     [products, transactions, customers]
   )
-
   const recommendations = useMemo(
     () => getDukaAIRecommendations({ products, transactions, customers }),
     [products, transactions, customers]
   )
-
   const config = TAB_CONFIG[activeTab] || TAB_CONFIG.overview
   const visibleInsights = getCardsByIds(insights, config.insightIds)
   const visibleRecommendations = getCardsByIds(recommendations, config.recommendationIds)
