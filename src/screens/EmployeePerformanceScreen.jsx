@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Icon from '../components/ui/Icon'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import useAppStore from '../store/useAppStore'
@@ -150,15 +151,15 @@ function StatCard({ icon, label, value, color }) {
   )
 }
 
-function EmployeeRankCard({ employee, rank }) {
+function EmployeeRankCard({ employee, rank, expanded, onToggle }) {
   return (
     <div
+      onClick={onToggle}
       style={{
-        display: 'flex',
-        gap: 12,
         padding: '12px',
         borderRadius: 16,
         marginBottom: 10,
+        cursor: 'pointer',
         background: rank === 1
           ? 'linear-gradient(160deg, rgba(240,169,61,.15), rgba(255,255,255,.03))'
           : 'var(--glass-fill-soft)',
@@ -167,51 +168,68 @@ function EmployeeRankCard({ employee, rank }) {
         border: rank === 1 ? '1px solid rgba(240,169,61,.28)' : '1px solid var(--glass-border)',
       }}
     >
-      <div
-        style={{
-          width: 34,
-          height: 34,
-          borderRadius: 11,
-          background: rank === 1 ? 'rgba(240,169,61,.18)' : 'rgba(91,159,240,.14)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: 800, color: rank === 1 ? '#F0A93D' : '#5B9FF0' }}>
-          #{rank}
-        </span>
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <p
-            style={{
-              flex: 1,
-              minWidth: 0,
-              margin: 0,
-              fontFamily: 'var(--font-display)',
-              fontSize: 14,
-              fontWeight: 750,
-              color: 'var(--text-hi)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {employee.name}
-          </p>
-          {rank === 1 && <Icon name="star" size={15} color="#F0A93D" />}
+      <div style={{ display: 'flex', gap: 12 }}>
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 11,
+            background: rank === 1 ? 'rgba(240,169,61,.18)' : 'rgba(91,159,240,.14)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 800, color: rank === 1 ? '#F0A93D' : '#5B9FF0' }}>
+            #{rank}
+          </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <MiniStat label="Sales" value={employee.totalSales} />
-          <MiniStat label="Revenue" value={formatMoney(employee.revenueGenerated)} />
-          <MiniStat label="Debts" value={employee.debtsCreated} />
-          <MiniStat label="Debt paid" value={formatMoney(employee.debtPaymentsCollected)} />
-          <MiniStat label="Transactions" value={employee.transactionCount} />
-          <MiniStat label="Last activity" value={formatDate(employee.lastActivity)} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <p
+              style={{
+                flex: 1,
+                minWidth: 0,
+                margin: 0,
+                fontFamily: 'var(--font-display)',
+                fontSize: 14,
+                fontWeight: 750,
+                color: 'var(--text-hi)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {employee.name}
+            </p>
+            {rank === 1 && <Icon name="star" size={15} color="#F0A93D" />}
+            <Icon
+              name="chevronRight"
+              size={14}
+              color="var(--text-low)"
+              style={{
+                transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.15s ease',
+                flexShrink: 0,
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <MiniStat label="Sales" value={employee.totalSales} />
+            <MiniStat label="Revenue" value={formatMoney(employee.revenueGenerated)} />
+          </div>
+
+          {expanded && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+              <MiniStat label="Transactions" value={employee.transactionCount} />
+              <MiniStat label="Debts" value={employee.debtsCreated} />
+              <MiniStat label="Debt paid" value={formatMoney(employee.debtPaymentsCollected)} />
+              <MiniStat label="Last activity" value={formatDate(employee.lastActivity)} />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -242,6 +260,7 @@ export default function EmployeePerformanceScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const employees = buildEmployeePerformance(transactions)
   const topEmployee = employees[0] || null
+  const [expandedId, setExpandedId] = useState(null)
 
   const totalEmployeeSales = employees.reduce((sum, employee) => sum + employee.totalSales, 0)
   const totalEmployeeRevenue = employees.reduce((sum, employee) => sum + employee.revenueGenerated, 0)
@@ -371,7 +390,13 @@ export default function EmployeePerformanceScreen() {
           </div>
         ) : (
           employees.map((employee, index) => (
-            <EmployeeRankCard key={employee.id} employee={employee} rank={index + 1} />
+            <EmployeeRankCard
+              key={employee.id}
+              employee={employee}
+              rank={index + 1}
+              expanded={expandedId === employee.id}
+              onToggle={() => setExpandedId((current) => (current === employee.id ? null : employee.id))}
+            />
           ))
         )}
       </div>
