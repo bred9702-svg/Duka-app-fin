@@ -62,12 +62,24 @@ export default function NewSaleScreen() {
 
   const products = useAppStore((s) => s.products)
   const customers = useAppStore((s) => s.customers)
+  const transactions = useAppStore((s) => s.transactions)
   const addCustomer = useAppStore((s) => s.addCustomer)
   const completeSale = useAppStore((s) => s.completeSale)
   const writeBlocked = useAppStore((s) => s.writeBlocked)
   const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
   const session = useAppStore((s) => s.session)
   const isEmployee = session?.role === 'employee'
+
+  const linkedTransaction = useMemo(
+    () => transactions.find((transaction) => transaction.id === linkedTransactionId) || null,
+    [transactions, linkedTransactionId]
+  )
+
+  const isLinkedCashInPayment = !!linkedTransaction && linkedTransaction.direction === 'in'
+  const invalidLinkedSale =
+    !!linkedTransactionId &&
+    !!linkedTransaction &&
+    linkedTransaction.direction !== 'in'
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
@@ -91,6 +103,13 @@ export default function NewSaleScreen() {
   }, [])
 
   useEffect(() => {
+    if (!invalidLinkedSale) return
+
+    setError('Sales can only be linked to Cash In transactions.')
+    setCart([])
+  }, [invalidLinkedSale])
+
+  useEffect(() => {
     if (!result) return
     const t = setTimeout(() => navigate('/inbox'), 2200)
     return () => clearTimeout(t)
@@ -105,15 +124,20 @@ export default function NewSaleScreen() {
   }, [customers, customerQuery])
 
   const suggestions = useMemo(() => {
-    if (!query.trim()) return []
+    if (!query.trim() || !isLinkedCashInPayment) return []
     const q = query.toLowerCase()
     const inCartIds = new Set(cart.map((c) => c.productId))
     return products
       .filter((p) => (p.stock_current || 0) > 0 && !inCartIds.has(p.id) && p.name.toLowerCase().includes(q))
       .slice(0, 5)
-  }, [query, products, cart])
+  }, [query, products, cart, isLinkedCashInPayment])
 
   function addToCart(product) {
+    if (!isLinkedCashInPayment) {
+      setError('Sales can only be linked to Cash In transactions.')
+      return
+    }
+
     setCart((prev) => [
       ...prev,
       {
@@ -148,11 +172,21 @@ export default function NewSaleScreen() {
   const difference = paymentAmount !== null ? paymentAmount - grandTotal : null
 
   const hasCustomer = !!selectedCustomer || (addingCustomer && newCustomerName.trim())
-  const canSave = cart.length > 0 && hasCustomer && !saving && !writeBlocked
+  const canSave =
+    isLinkedCashInPayment &&
+    cart.length > 0 &&
+    hasCustomer &&
+    !saving &&
+    !writeBlocked
 
   async function handleConfirm() {
     if (writeBlocked) {
       setError(trialEndedMessage)
+      return
+    }
+
+    if (!isLinkedCashInPayment) {
+      setError('Sales can only be linked to Cash In transactions.')
       return
     }
 
@@ -275,6 +309,10 @@ export default function NewSaleScreen() {
           <TrialBlockedMessage message={trialEndedMessage} />
         )}
 
+        {invalidLinkedSale && (
+          <TrialBlockedMessage message="Sales can only be linked to Cash In transactions. Go back and classify this Cash Out as an Expense." />
+        )}
+
         {paymentAmount !== null && (
           <GlassCard style={{
             background: 'linear-gradient(160deg, rgba(95,217,122,0.10), rgba(255,255,255,0.02))',
@@ -302,12 +340,22 @@ export default function NewSaleScreen() {
               value={customerQuery}
               onChange={(e) => setCustomerQuery(e.target.value)}
               placeholder="Search customer..."
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit' }}
+              disabled={!isLinkedCashInPayment}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: 13,
+                color: 'var(--text-hi)',
+                fontFamily: 'inherit',
+                opacity: isLinkedCashInPayment ? 1 : 0.45,
+              }}
             />
           </div>
         </div>
 
-        {customerMatches.map((customer) => {
+        {isLinkedCashInPayment && customerMatches.map((customer) => {
           const selected = selectedCustomer?.id === customer.id
           return (
             <div
@@ -335,24 +383,32 @@ export default function NewSaleScreen() {
 
         <button
           onClick={() => {
+            if (!isLinkedCashInPayment) {
+              setError('Sales can only be linked to Cash In transactions.')
+              return
+            }
+
             if (writeBlocked) {
               setError(trialEndedMessage)
               return
             }
+
             setAddingCustomer((open) => !open)
             setSelectedCustomer(null)
           }}
+          disabled={!isLinkedCashInPayment}
           style={{
             width: '100%', marginBottom: addingCustomer ? 8 : 16, padding: '10px 12px',
             borderRadius: 12, border: '1px dashed var(--text-low)', background: 'transparent',
-            color: 'var(--text-low)', fontSize: 12, cursor: 'pointer', display: 'flex',
+            color: 'var(--text-low)', fontSize: 12, cursor: isLinkedCashInPayment ? 'pointer' : 'default', display: 'flex',
             alignItems: 'center', justifyContent: 'center', gap: 4,
+            opacity: isLinkedCashInPayment ? 1 : 0.45,
           }}
         >
           <Icon name="plus" size={14} /> + New Customer
         </button>
 
-        {addingCustomer && (
+        {addingCustomer && isLinkedCashInPayment && (
           <GlassCard style={{ marginBottom: 16 }}>
             <input
               value={newCustomerName}
@@ -382,7 +438,17 @@ export default function NewSaleScreen() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products sold..."
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit' }}
+              disabled={!isLinkedCashInPayment}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: 13,
+                color: 'var(--text-hi)',
+                fontFamily: 'inherit',
+                opacity: isLinkedCashInPayment ? 1 : 0.45,
+              }}
             />
           </div>
 
@@ -412,7 +478,7 @@ export default function NewSaleScreen() {
             </div>
           )}
 
-          {query.trim() && suggestions.length === 0 && (
+          {isLinkedCashInPayment && query.trim() && suggestions.length === 0 && (
             <div style={{
               position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
               background: 'var(--card-elevated-bg)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
@@ -450,7 +516,7 @@ export default function NewSaleScreen() {
           </div>
         )}
 
-        {showCreateProduct && (
+        {showCreateProduct && isLinkedCashInPayment && (
           <CreateProductSheet
             initialName={query.trim()}
             onClose={() => setShowCreateProduct(false)}
@@ -526,7 +592,9 @@ export default function NewSaleScreen() {
         ) : (
           <GlassCard style={{ textAlign: 'center', padding: 20 }}>
             <p style={{ fontSize: 12, color: 'var(--text-low)' }}>
-              Search and add products to build this sale
+              {isLinkedCashInPayment
+                ? 'Search and add products to build this sale'
+                : 'This transaction cannot be used to create a sale'}
             </p>
           </GlassCard>
         )}
