@@ -21,7 +21,13 @@ const TAB_CONFIG = {
   overview: {
     title: 'Overview',
     description: 'Your highest-priority business signals in one place.',
-    insightIds: ['sales-trend-insight', 'stock-insight', 'debt-risk-insight', 'top-product-insight', 'recommended-action'],
+    insightIds: [
+      'sales-trend-insight',
+      'stock-insight',
+      'debt-risk-insight',
+      'top-product-insight',
+      'recommended-action',
+    ],
     recommendationIds: [],
   },
   recommendations: {
@@ -39,20 +45,35 @@ const TAB_CONFIG = {
   sales: {
     title: 'Sales',
     description: 'Sales trends and product movement insights.',
-    insightIds: ['sales-trend-insight', 'top-product-insight'],
-    recommendationIds: ['fastest-seller-recommendation'],
+    insightIds: [
+      'sales-trend-insight',
+      'top-product-insight',
+    ],
+    recommendationIds: [
+      'fastest-seller-recommendation',
+    ],
   },
   inventory: {
     title: 'Inventory',
     description: 'Stock health, restocking, and underperforming product insights.',
-    insightIds: ['stock-insight', 'top-product-insight'],
-    recommendationIds: ['restock-recommendation', 'underperformer-recommendation'],
+    insightIds: [
+      'stock-insight',
+      'top-product-insight',
+    ],
+    recommendationIds: [
+      'restock-recommendation',
+      'underperformer-recommendation',
+    ],
   },
   debts: {
     title: 'Debts',
     description: 'Debt risk and follow-up priorities.',
-    insightIds: ['debt-risk-insight'],
-    recommendationIds: ['debt-followup-recommendation'],
+    insightIds: [
+      'debt-risk-insight',
+    ],
+    recommendationIds: [
+      'debt-followup-recommendation',
+    ],
   },
 }
 
@@ -87,6 +108,8 @@ function InsightCard({ insight }) {
         borderRadius: 14,
         padding: '12px 14px',
         marginBottom: 10,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}
     >
       <div
@@ -104,7 +127,7 @@ function InsightCard({ insight }) {
         <Icon name={insight.icon} size={16} color={insight.color} />
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
         <p
           style={{
             fontFamily: 'var(--font-display)',
@@ -125,11 +148,19 @@ function InsightCard({ insight }) {
             color: 'var(--text-hi)',
             marginBottom: 4,
             lineHeight: 1.35,
+            overflowWrap: 'anywhere',
           }}
         >
           {insight.headline}
         </p>
-        <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.45 }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: 'var(--text-low)',
+            lineHeight: 1.45,
+            overflowWrap: 'anywhere',
+          }}
+        >
           {insight.detail}
         </p>
       </div>
@@ -169,7 +200,9 @@ function TabBar({ activeTab, onChange }) {
         WebkitBackdropFilter: 'blur(16px)',
         overflow: 'hidden',
         width: '100%',
+        maxWidth: '100%',
         minWidth: 0,
+        boxSizing: 'border-box',
       }}
     >
       <div
@@ -178,7 +211,9 @@ function TabBar({ activeTab, onChange }) {
         style={{
           display: 'flex',
           gap: 8,
+          width: '100%',
           maxWidth: '100%',
+          minWidth: 0,
           overflowX: 'auto',
           overflowY: 'hidden',
           padding: '0 28px 2px 0',
@@ -187,6 +222,7 @@ function TabBar({ activeTab, onChange }) {
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           overscrollBehaviorX: 'contain',
+          boxSizing: 'border-box',
         }}
       >
         {TABS.map((tab) => {
@@ -238,22 +274,51 @@ export default function DukaAIScreen() {
     () => getDukaAIInsights({ products, transactions, customers }),
     [products, transactions, customers]
   )
+
   const recommendations = useMemo(
     () => getDukaAIRecommendations({ products, transactions, customers }),
     [products, transactions, customers]
   )
+
   const config = TAB_CONFIG[activeTab] || TAB_CONFIG.overview
   const visibleInsights = getCardsByIds(insights, config.insightIds)
   const visibleRecommendations = getCardsByIds(recommendations, config.recommendationIds)
 
   return (
-    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
+    <div
+      style={{
+        flex: 1,
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        padding: '16px 14px 8px',
+        position: 'relative',
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
       <div
         className="bg-blob"
-        style={{ width: 220, height: 220, top: -40, right: -40, background: 'rgba(240,169,61,0.14)' }}
+        style={{
+          width: 220,
+          height: 220,
+          top: -40,
+          right: -40,
+          background: 'rgba(240,169,61,0.14)',
+        }}
       />
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+        }}
+      >
         <SubScreenHeader title="Duka AI" />
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 16 }}>
