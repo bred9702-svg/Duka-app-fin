@@ -28,6 +28,8 @@ function getEmployeeKey(transaction) {
   return (
     transaction.employee_id ||
     transaction.employeeId ||
+    transaction.performed_by_user_id ||
+    transaction.performedByUserId ||
     transaction.created_by ||
     transaction.createdBy ||
     transaction.user_id ||
