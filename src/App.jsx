@@ -30,6 +30,7 @@ import NotificationsScreen from './screens/settings/NotificationsScreen'
 import ThemeScreen from './screens/settings/ThemeScreen'
 import HelpScreen from './screens/settings/HelpScreen'
 import FAQScreen from './screens/settings/FAQScreen'
+import TermsScreen from './screens/settings/TermsScreen'
 import PrivacyScreen from './screens/settings/PrivacyScreen'
 
 import BottomNav from './components/BottomNav'
@@ -314,6 +315,7 @@ export default function App() {
             <Route path="/appearance" element={<ThemeScreen />} />
             <Route path="/help" element={<HelpScreen />} />
             <Route path="/faq" element={<FAQScreen />} />
+            <Route path="/terms" element={<TermsScreen />} />
             <Route path="/privacy" element={<PrivacyScreen />} />
           </Routes>
         </FadeIn>

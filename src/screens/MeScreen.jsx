@@ -25,6 +25,8 @@ const SECTIONS = [
     title: 'Support',
     items: [
       { label: 'Help', icon: 'helpCircle', color: '#F0A93D', path: '/help' },
+      { label: 'Terms of Service', icon: 'edit', color: '#5B9FF0', path: '/terms' },
+      { label: 'Privacy Policy', icon: 'shield', color: '#5FD97A', path: '/privacy' },
     ],
   },
 ]
