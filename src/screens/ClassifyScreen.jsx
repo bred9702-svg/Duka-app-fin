@@ -42,6 +42,7 @@ export default function ClassifyScreen() {
   const [saving, setSaving] = useState(false)
 
   const LIST_LIMIT = 5
+  const PRODUCT_LIST_LIMIT = 10
   const [showAllProducts, setShowAllProducts] = useState(false)
   const [showAllCustomers, setShowAllCustomers] = useState(false)
   const [showAllCategories, setShowAllCategories] = useState(false)
@@ -55,7 +56,7 @@ export default function ClassifyScreen() {
       .some((value) => value.toLowerCase().includes(customerSearch.toLowerCase()))
   )
 
-  const visibleProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, LIST_LIMIT)
+  const visibleProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, PRODUCT_LIST_LIMIT)
   const visibleCustomers = showAllCustomers ? filteredCustomers : filteredCustomers.slice(0, LIST_LIMIT)
   const visibleCategories = showAllCategories ? EXPENSE_CATEGORIES : EXPENSE_CATEGORIES.slice(0, LIST_LIMIT)
 
@@ -275,14 +276,14 @@ export default function ClassifyScreen() {
             <div style={{ position: 'relative', marginBottom: 10 }}>
               <input
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setSelectedProduct(null) }}
+                onChange={(e) => { setSearch(e.target.value); setSelectedProduct(null); setShowAllProducts(false) }}
                 placeholder="Search product..."
                 style={{ ...inputStyle, paddingLeft: 36 }}
               />
               <Icon name="search" size={15} color="var(--text-low)" style={{ position: 'absolute', left: 11, top: 11 }} />
             </div>
 
-            {search.length > 0 && !selectedProduct && (
+            {!selectedProduct && (
               <div style={{
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--glass-border)',
@@ -331,7 +332,7 @@ export default function ClassifyScreen() {
                     </div>
                   ))
                 }
-                {filteredProducts.length > LIST_LIMIT && (
+                {filteredProducts.length > PRODUCT_LIST_LIMIT && (
                   <div
                     onClick={() => setShowAllProducts((v) => !v)}
                     style={{
@@ -339,7 +340,7 @@ export default function ClassifyScreen() {
                       color: '#F0A93D', cursor: 'pointer',
                     }}
                   >
-                    {showAllProducts ? 'Show Less' : `Show More (${filteredProducts.length - LIST_LIMIT})`}
+                    {showAllProducts ? 'Show Less' : `Show More (${filteredProducts.length - PRODUCT_LIST_LIMIT})`}
                   </div>
                 )}
               </div>
