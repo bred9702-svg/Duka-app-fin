@@ -12,6 +12,7 @@ import AnalyticsScreen from './screens/AnalyticsScreen'
 import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
 import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
 import AdvisorScreen from './screens/AdvisorScreen'
+import DukaAIScreen from './screens/DukaAIScreen'
 import InventoryInvestmentScreen from './screens/InventoryInvestmentScreen'
 import NewSaleScreen from './screens/NewSaleScreen'
 import NewDebtScreen from './screens/NewDebtScreen'
@@ -223,6 +224,15 @@ export default function App() {
               element={
                 <RequireOwner title="AI Advisor">
                   <AdvisorScreen />
+                </RequireOwner>
+              }
+            />
+
+            <Route
+              path="/duka-ai"
+              element={
+                <RequireOwner title="Duka AI">
+                  <DukaAIScreen />
                 </RequireOwner>
               }
             />
