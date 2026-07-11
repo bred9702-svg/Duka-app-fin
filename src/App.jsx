@@ -129,6 +129,7 @@ export default function App() {
       <InAppNotification />
 
       <div
+        className="app-content"
         style={{
           flex: 1,
           width: '100%',
