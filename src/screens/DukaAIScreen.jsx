@@ -108,8 +108,6 @@ function InsightCard({ insight }) {
         borderRadius: 14,
         padding: '12px 14px',
         marginBottom: 10,
-        maxWidth: '100%',
-        boxSizing: 'border-box',
       }}
     >
       <div
@@ -127,7 +125,7 @@ function InsightCard({ insight }) {
         <Icon name={insight.icon} size={16} color={insight.color} />
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <p
           style={{
             fontFamily: 'var(--font-display)',
@@ -148,19 +146,11 @@ function InsightCard({ insight }) {
             color: 'var(--text-hi)',
             marginBottom: 4,
             lineHeight: 1.35,
-            overflowWrap: 'anywhere',
           }}
         >
           {insight.headline}
         </p>
-        <p
-          style={{
-            fontSize: 11,
-            color: 'var(--text-low)',
-            lineHeight: 1.45,
-            overflowWrap: 'anywhere',
-          }}
-        >
+        <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.45 }}>
           {insight.detail}
         </p>
       </div>
@@ -175,29 +165,19 @@ function TabBar({ activeTab, onChange }) {
         position: 'sticky',
         top: 0,
         zIndex: 4,
-        margin: '0 0 14px',
-        padding: '8px 0 10px',
+        margin: '0 -14px 14px',
+        padding: '8px 14px 10px',
         background: 'linear-gradient(180deg, var(--bg) 0%, rgba(10,10,16,0.86) 100%)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
-        overflowX: 'hidden',
-        boxSizing: 'border-box',
       }}
     >
       <div
         style={{
           display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
           gap: 8,
-          width: '100%',
-          maxWidth: '100%',
-          minWidth: 0,
-          overflow: 'hidden',
-          boxSizing: 'border-box',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
         }}
       >
         {TABS.map((tab) => {
@@ -209,8 +189,6 @@ function TabBar({ activeTab, onChange }) {
               type="button"
               onClick={() => onChange(tab.id)}
               style={{
-                flex: '0 0 auto',
-                maxWidth: '100%',
                 border: `1px solid ${isActive ? 'rgba(240,169,61,0.48)' : 'var(--glass-border)'}`,
                 borderRadius: 999,
                 padding: '8px 12px',
@@ -258,40 +236,13 @@ export default function DukaAIScreen() {
   const visibleRecommendations = getCardsByIds(recommendations, config.recommendationIds)
 
   return (
-    <div
-      style={{
-        flex: 1,
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
-        padding: '16px 14px 8px',
-        position: 'relative',
-        overflowX: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
+    <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
       <div
         className="bg-blob"
-        style={{
-          width: 220,
-          height: 220,
-          top: -40,
-          right: -40,
-          background: 'rgba(240,169,61,0.14)',
-        }}
+        style={{ width: 220, height: 220, top: -40, right: -40, background: 'rgba(240,169,61,0.14)' }}
       />
 
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          width: '100%',
-          maxWidth: '100%',
-          minWidth: 0,
-          overflowX: 'hidden',
-          boxSizing: 'border-box',
-        }}
-      >
+      <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="Duka AI" />
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 16 }}>
