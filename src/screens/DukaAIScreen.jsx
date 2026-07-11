@@ -138,15 +138,23 @@ function InsightCard({ insight }) {
 }
 
 function TabBar({ activeTab, onChange }) {
+  const scrollerRef = useRef(null)
   const tabRefs = useRef({})
 
   useEffect(() => {
     tabRefs.current[activeTab]?.scrollIntoView({
       behavior: 'smooth',
       block: 'nearest',
-      inline: 'nearest',
+      inline: 'center',
     })
   }, [activeTab])
+
+  function handleWheel(event) {
+    const scroller = scrollerRef.current
+    if (!scroller || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return
+
+    scroller.scrollLeft += event.deltaY
+  }
 
   return (
     <div
@@ -154,23 +162,27 @@ function TabBar({ activeTab, onChange }) {
         position: 'sticky',
         top: 0,
         zIndex: 4,
-        margin: '0 -14px 14px',
+        margin: '0 0 14px',
         padding: '8px 0 10px',
         background: 'linear-gradient(180deg, var(--bg) 0%, rgba(10,10,16,0.86) 100%)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         overflow: 'hidden',
+        width: '100%',
+        minWidth: 0,
       }}
     >
       <div
+        ref={scrollerRef}
+        onWheel={handleWheel}
         style={{
           display: 'flex',
           gap: 8,
           maxWidth: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
-          padding: '0 14px 2px',
-          scrollPaddingInline: 14,
+          padding: '0 28px 2px 0',
+          scrollPaddingInline: 28,
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
