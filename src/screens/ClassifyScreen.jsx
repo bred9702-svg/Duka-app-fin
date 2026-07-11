@@ -10,7 +10,7 @@ import { EXPENSE_CATEGORIES, PRODUCT_CATEGORY_LABELS } from '../data/mockData'
 
 const TYPE_OPTS = [
   { id: 'sale', icon: 'bottle', label: 'Sale', color: '#F0A93D' },
-  { id: 'debt', icon: 'userDollar', label: 'Debt', color: '#5B9FF0' },
+  { id: 'debt', icon: 'userDollar', label: 'Debt Payment', color: '#5B9FF0' },
   { id: 'expense', icon: 'receiptOff', label: 'Expense', color: '#FF6B5B' },
 ]
 
@@ -61,7 +61,6 @@ export default function ClassifyScreen() {
       .some((value) => value.toLowerCase().includes(customerSearch.toLowerCase()))
   )
 
-<<<<<<< HEAD
   useEffect(() => {
     if (!txn || !type) return
 
@@ -76,8 +75,6 @@ export default function ClassifyScreen() {
     }
   }, [type, txn])
 
-=======
->>>>>>> 0a1b7a1c80f28f15124dfd511e32087fee381e56
   // FIX: dépendances correctes — on écoute `type`, `txn`, `products`
   useEffect(() => {
     if (type === 'sale' && txn && products.length > 0) {
@@ -104,7 +101,7 @@ export default function ClassifyScreen() {
   const visibleTypeOptions = TYPE_OPTS.filter((option) => allowedTypes.includes(option.id))
   const isAllowedType = isTypeAllowedForDirection(type, txn.direction)
 
-  const parsedQty = Math.max(1, parseInt(qty) || 1) // FIX: qty "0" → 1, centralisé
+  const parsedQty = Math.max(1, parseInt(qty) || 1)
   const isDebtPayment = type === 'debt' && txn.direction === 'in'
   const needsCustomer = type === 'sale' || type === 'debt'
   const hasCustomer = customerId || (!isDebtPayment && newName.trim())
@@ -153,7 +150,6 @@ export default function ClassifyScreen() {
 
       if (type === 'debt') {
         if (!isDebtPayment && addingNew && newName.trim()) {
-          // FIX: on vérifie que addCustomer a bien retourné un id avant de continuer
           const newCust = await addCustomer({
             name: newName.trim(),
             phone: newPhone.trim() || null,
@@ -233,18 +229,10 @@ export default function ClassifyScreen() {
         <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
           What is this?
         </p>
-<<<<<<< HEAD
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${visibleTypeOptions.length}, minmax(0, 1fr))`, gap: 8, marginBottom: 16 }}>
           {visibleTypeOptions.map((o) => {
-=======
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-          {TYPE_OPTS.map((o) => {
->>>>>>> 0a1b7a1c80f28f15124dfd511e32087fee381e56
             const selected = type === o.id
-<<<<<<< HEAD
-=======
-            const label = o.id === 'debt' && txn.direction === 'in' ? 'Debt Payment' : o.label
->>>>>>> 0a1b7a1c80f28f15124dfd511e32087fee381e56
+
             return (
               <div
                 key={o.id}
@@ -290,15 +278,9 @@ export default function ClassifyScreen() {
                     transform: selected ? 'scale(1.18)' : 'scale(1)',
                     transition: 'transform .25s cubic-bezier(.2,.8,.2,1)',
                   }}
-<<<<<<< HEAD
                 />
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
                   {o.label}
-=======
-                />
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
-                  {label}
->>>>>>> 0a1b7a1c80f28f15124dfd511e32087fee381e56
                 </span>
               </div>
             )
@@ -376,7 +358,6 @@ export default function ClassifyScreen() {
               </div>
             )}
 
-            {/* FIX: structure JSX correctement fermée */}
             {selectedProduct && (
               <div>
                 <div style={{
@@ -425,7 +406,7 @@ export default function ClassifyScreen() {
                       {fmtKES(selectedProduct.unit_price * parsedQty)} KES
                     </p>
                   </div>
-                </div>{/* FIX: </div> du wrapper amber card */}
+                </div>
               </div>
             )}
           </div>
@@ -438,6 +419,7 @@ export default function ClassifyScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {EXPENSE_CATEGORIES.map((c) => {
                 const selected = category === c.id
+
                 return (
                   <div
                     key={c.id}
@@ -476,9 +458,9 @@ export default function ClassifyScreen() {
               <Icon name="search" size={15} color="var(--text-low)" style={{ position: 'absolute', left: 11, top: 11 }} />
             </div>
 
-            {/* FIX: return() correctement fermé dans le .map() */}
             {filteredCustomers.map((c) => {
               const selected = customerId === c.id
+
               return (
                 <div
                   key={c.id}
@@ -512,7 +494,6 @@ export default function ClassifyScreen() {
               )
             })}
 
-<<<<<<< HEAD
             {!isDebtPayment && (
               <div
                 onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
@@ -526,21 +507,6 @@ export default function ClassifyScreen() {
               </div>
             )}
 
-=======
-            {!isDebtPayment && (
-              <div
-              onClick={() => { setAddingNew(!addingNew); setCustomerId(null) }}
-              style={{
-                border: '1px dashed var(--text-low)', borderRadius: 11, padding: 10,
-                textAlign: 'center', fontSize: 12, color: 'var(--text-low)', cursor: 'pointer',
-                marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              }}
-            >
-              <Icon name="plus" size={14} /> New customer
-            </div>
-            )}
-
->>>>>>> 0a1b7a1c80f28f15124dfd511e32087fee381e56
             {addingNew && !isDebtPayment && (
               <div>
                 <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Customer name" style={{ ...inputStyle, marginBottom: 8 }} />
@@ -577,7 +543,6 @@ const inputStyle = {
   WebkitBackdropFilter: 'blur(10px)',
 }
 
-// FIX: style des boutons qty extrait pour éviter la duplication
 const qtyBtnStyle = {
   width: 42, height: 42, borderRadius: 12,
   border: '1px solid rgba(255,255,255,.08)',
