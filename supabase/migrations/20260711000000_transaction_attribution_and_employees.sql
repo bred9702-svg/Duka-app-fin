@@ -33,3 +33,7 @@ create policy "employees_allow_all" on public.employees
   for all
   using (true)
   with check (true);
+-- employee_id pre-existed as uuid on some environments; app-generated
+-- employee IDs are strings like "employee-DUKA-XXXXXX-xxxxx", not UUIDs.
+alter table public.transactions
+  alter column employee_id type text using employee_id::text;
