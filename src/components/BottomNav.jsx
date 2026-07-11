@@ -54,22 +54,23 @@ export default function BottomNav() {
     <div
       style={{
         position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
+        left: 12,
+        right: 12,
+        bottom: 12,
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        margin: '0 12px 12px',
         padding: '6px 6px',
-        background: 'var(--nav-bg)',
-        backdropFilter: 'blur(26px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(26px) saturate(180%)',
-        border: '1px solid var(--nav-border)',
+        background: 'rgba(18, 15, 10, 0.34)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.13)',
         borderRadius: 16,
-        boxShadow: 'var(--nav-shadow)',
+        boxShadow: '0 18px 42px -18px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.14)',
         flexShrink: 0,
         zIndex: 10,
+        overflow: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       {visibleTabs.map((tab) => {
@@ -81,6 +82,7 @@ export default function BottomNav() {
             onClick={() => navigate(tab.path)}
             style={{
               flex: 1,
+              minWidth: 0,
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',

@@ -49,14 +49,15 @@ function LoadingScreen() {
     <div
       style={{
         flex: 1,
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--bg-deep)',
         gap: 16,
-        width: '100%',
-        maxWidth: '100%',
         overflowX: 'hidden',
         boxSizing: 'border-box',
       }}
@@ -143,7 +144,8 @@ export default function App() {
           overflowY: 'auto',
           overflowX: 'hidden',
           boxSizing: 'border-box',
-          paddingBottom: hideNav ? 0 : 84,
+          scrollPaddingBottom: hideNav ? 0 : 112,
+          paddingBottom: hideNav ? 0 : 112,
         }}
       >
         <FadeIn
