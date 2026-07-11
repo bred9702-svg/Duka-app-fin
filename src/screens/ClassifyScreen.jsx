@@ -41,6 +41,11 @@ export default function ClassifyScreen() {
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const LIST_LIMIT = 5
+  const [showAllProducts, setShowAllProducts] = useState(false)
+  const [showAllCustomers, setShowAllCustomers] = useState(false)
+  const [showAllCategories, setShowAllCategories] = useState(false)
+
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
@@ -49,6 +54,10 @@ export default function ClassifyScreen() {
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(customerSearch.toLowerCase()))
   )
+
+  const visibleProducts = showAllProducts ? filteredProducts : filteredProducts.slice(0, LIST_LIMIT)
+  const visibleCustomers = showAllCustomers ? filteredCustomers : filteredCustomers.slice(0, LIST_LIMIT)
+  const visibleCategories = showAllCategories ? EXPENSE_CATEGORIES : EXPENSE_CATEGORIES.slice(0, LIST_LIMIT)
 
   // FIX: dépendances correctes — on écoute `type`, `txn`, `products`
   useEffect(() => {
@@ -188,14 +197,20 @@ export default function ClassifyScreen() {
           )}
         </div>
 
-        {/* Type selector */}
+        {/* Type tabs */}
         <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: 'var(--text-low)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
           What is this?
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            borderBottom: '1px solid var(--glass-border)',
+            marginBottom: 16,
+          }}
+        >
           {TYPE_OPTS.map((o) => {
             const selected = type === o.id
-            const label = o.id === 'debt' && txn.direction === 'in' ? 'Debt Payment' : o.label
+            const label = o.id === 'debt' ? 'Debt Payment' : o.label
             return (
               <div
                 key={o.id}
@@ -213,33 +228,34 @@ export default function ClassifyScreen() {
                   setSelectedProduct(null)
                   setSearch('')
                   setAddingNew(false)
+                  setShowAllProducts(false)
+                  setShowAllCustomers(false)
+                  setShowAllCategories(false)
                 }}
                 style={{
-                  background: selected ? `${o.color}26` : 'var(--glass-fill-soft)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: selected ? `1.5px solid ${o.color}99` : '1px solid var(--glass-border)',
-                  transform: selected ? 'translateY(-3px) scale(1.03)' : 'scale(1)',
-                  transition: 'all .25s cubic-bezier(.2,.8,.2,1)',
-                  boxShadow: selected ? `0 14px 30px -10px ${o.color}55` : '0 3px 10px rgba(0,0,0,.08)',
-                  borderRadius: 12,
-                  padding: '12px 6px',
+                  flex: 1,
                   textAlign: 'center',
+                  padding: '10px 4px',
                   cursor: 'pointer',
+                  borderBottom: selected ? `2px solid ${o.color}` : '2px solid transparent',
+                  marginBottom: -1,
+                  transition: 'all .2s ease',
                 }}
               >
                 <Icon
                   name={o.icon}
-                  size={22}
-                  color={selected ? o.color : 'var(--text-mid)'}
-                  style={{
-                    display: 'block',
-                    margin: '0 auto 5px',
-                    transform: selected ? 'scale(1.18)' : 'scale(1)',
-                    transition: 'transform .25s cubic-bezier(.2,.8,.2,1)',
-                  }}
+                  size={18}
+                  color={selected ? o.color : 'var(--text-low)'}
+                  style={{ display: 'block', margin: '0 auto 4px' }}
                 />
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: selected ? o.color : 'var(--text-mid)' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 11,
+                    fontWeight: selected ? 700 : 500,
+                    color: selected ? o.color : 'var(--text-low)',
+                  }}
+                >
                   {label}
                 </span>
               </div>
@@ -275,7 +291,7 @@ export default function ClassifyScreen() {
               }}>
                 {filteredProducts.length === 0
                   ? <p style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-low)' }}>No product found</p>
-                  : filteredProducts.map((p) => (
+                  : visibleProducts.map((p) => (
                     <div
                       key={p.id}
                       onClick={() => { setSelectedProduct(p); setSearch(p.name) }}
@@ -315,6 +331,17 @@ export default function ClassifyScreen() {
                     </div>
                   ))
                 }
+                {filteredProducts.length > LIST_LIMIT && (
+                  <div
+                    onClick={() => setShowAllProducts((v) => !v)}
+                    style={{
+                      textAlign: 'center', padding: '10px 0', fontSize: 11, fontWeight: 600,
+                      color: '#F0A93D', cursor: 'pointer',
+                    }}
+                  >
+                    {showAllProducts ? 'Show Less' : `Show More (${filteredProducts.length - LIST_LIMIT})`}
+                  </div>
+                )}
               </div>
             )}
 
@@ -378,7 +405,7 @@ export default function ClassifyScreen() {
           <div>
             <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 8 }}>Category</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {EXPENSE_CATEGORIES.map((c) => {
+              {visibleCategories.map((c) => {
                 const selected = category === c.id
                 return (
                   <div
@@ -398,6 +425,17 @@ export default function ClassifyScreen() {
                 )
               })}
             </div>
+            {EXPENSE_CATEGORIES.length > LIST_LIMIT && (
+              <div
+                onClick={() => setShowAllCategories((v) => !v)}
+                style={{
+                  textAlign: 'center', padding: '10px 0 0', fontSize: 11, fontWeight: 600,
+                  color: '#5B9FF0', cursor: 'pointer',
+                }}
+              >
+                {showAllCategories ? 'Show Less' : `Show More (${EXPENSE_CATEGORIES.length - LIST_LIMIT})`}
+              </div>
+            )}
           </div>
         )}
 
@@ -418,8 +456,7 @@ export default function ClassifyScreen() {
               <Icon name="search" size={15} color="var(--text-low)" style={{ position: 'absolute', left: 11, top: 11 }} />
             </div>
 
-            {/* FIX: return() correctement fermé dans le .map() */}
-            {filteredCustomers.map((c) => {
+            {visibleCustomers.map((c) => {
               const selected = customerId === c.id
               return (
                 <div
@@ -453,6 +490,18 @@ export default function ClassifyScreen() {
                 </div>
               )
             })}
+
+            {filteredCustomers.length > LIST_LIMIT && (
+              <div
+                onClick={() => setShowAllCustomers((v) => !v)}
+                style={{
+                  textAlign: 'center', padding: '8px 0 14px', fontSize: 11, fontWeight: 600,
+                  color: '#5B9FF0', cursor: 'pointer',
+                }}
+              >
+                {showAllCustomers ? 'Show Less' : `Show More (${filteredCustomers.length - LIST_LIMIT})`}
+              </div>
+            )}
 
             {!isDebtPayment && (
               <div

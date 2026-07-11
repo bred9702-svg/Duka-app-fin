@@ -23,6 +23,28 @@ function getTransactionProductName(transaction, productById) {
   )
 }
 
+function ShowMoreButton({ total, limit, expanded, onToggle, color = '#5B9FF0' }) {
+  if (total <= limit) return null
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        textAlign: 'center', padding: '8px 0 2px', fontSize: 11, fontWeight: 600,
+        color, cursor: 'pointer',
+      }}
+    >
+      {expanded ? 'Show Less' : `Show More (${total - limit})`}
+    </div>
+  )
+}
+
+const TABS = [
+  { id: 'overview', label: 'Overview', color: '#F0A93D' },
+  { id: 'purchases', label: 'Purchases', color: '#F0A93D' },
+  { id: 'debts', label: 'Debts', color: '#FF6B5B' },
+  { id: 'payments', label: 'Payments', color: '#5FD97A' },
+]
+
 export default function CustomerDetailScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
@@ -33,6 +55,11 @@ export default function CustomerDetailScreen() {
   const { id } = useParams()
 
   const [amount, setAmount] = useState('')
+  const [activeTab, setActiveTab] = useState('overview')
+  const LIST_LIMIT = 5
+  const [showAllPurchases, setShowAllPurchases] = useState(false)
+  const [showAllDebts, setShowAllDebts] = useState(false)
+  const [showAllPayments, setShowAllPayments] = useState(false)
 
   // ← C'était cette ligne qui avait disparu
   const customer = customers.find((c) => c.id === id)
@@ -83,6 +110,10 @@ export default function CustomerDetailScreen() {
       (a, b) =>
         new Date(b.created_at) - new Date(a.created_at)
     )
+
+  const visiblePurchases = showAllPurchases ? purchaseHistory : purchaseHistory.slice(0, LIST_LIMIT)
+  const visibleDebts = showAllDebts ? debts : debts.slice(0, LIST_LIMIT)
+  const visiblePayments = showAllPayments ? paymentHistory : paymentHistory.slice(0, LIST_LIMIT)
 
   if (!customer) {
     return (
@@ -154,30 +185,105 @@ export default function CustomerDetailScreen() {
 
         <CustomerHeader customer={customer} />
 
-        <CustomerStats
-          customer={customer}
-          lastPaymentLabel={lastPaymentLabel}
-        />
+        <div
+          style={{
+            display: 'flex',
+            borderBottom: '1px solid var(--glass-border)',
+            marginBottom: 16,
+          }}
+        >
+          {TABS.map((tab) => {
+            const selected = activeTab === tab.id
+            return (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  padding: '10px 4px',
+                  cursor: 'pointer',
+                  borderBottom: selected ? `2px solid ${tab.color}` : '2px solid transparent',
+                  marginBottom: -1,
+                  transition: 'all .2s ease',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 11,
+                    fontWeight: selected ? 700 : 500,
+                    color: selected ? tab.color : 'var(--text-low)',
+                  }}
+                >
+                  {tab.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
 
-        <ActiveDebts
-          debts={debts}
-          onRecordPayment={handleRecordPayment}
-        />
+        {activeTab === 'overview' && (
+          <>
+            <CustomerStats
+              customer={customer}
+              lastPaymentLabel={lastPaymentLabel}
+            />
 
-        <PaymentInput
-          customer={customer}
-          amount={amount}
-          setAmount={setAmount}
-          onRecord={recordPayment}
-        />
+            <PaymentInput
+              customer={customer}
+              amount={amount}
+              setAmount={setAmount}
+              onRecord={recordPayment}
+            />
+          </>
+        )}
 
-        <PurchaseHistory
-          purchases={purchaseHistory}
-        />
+        {activeTab === 'purchases' && (
+          <>
+            <PurchaseHistory
+              purchases={visiblePurchases}
+            />
+            <ShowMoreButton
+              total={purchaseHistory.length}
+              limit={LIST_LIMIT}
+              expanded={showAllPurchases}
+              onToggle={() => setShowAllPurchases((v) => !v)}
+              color="#F0A93D"
+            />
+          </>
+        )}
 
-        <PaymentTimeline
-          payments={paymentHistory}
-        />
+        {activeTab === 'debts' && (
+          <>
+            <ActiveDebts
+              debts={visibleDebts}
+              onRecordPayment={handleRecordPayment}
+            />
+            <ShowMoreButton
+              total={debts.length}
+              limit={LIST_LIMIT}
+              expanded={showAllDebts}
+              onToggle={() => setShowAllDebts((v) => !v)}
+              color="#FF6B5B"
+            />
+          </>
+        )}
+
+        {activeTab === 'payments' && (
+          <>
+            <PaymentTimeline
+              payments={visiblePayments}
+            />
+            <ShowMoreButton
+              total={paymentHistory.length}
+              limit={LIST_LIMIT}
+              expanded={showAllPayments}
+              onToggle={() => setShowAllPayments((v) => !v)}
+              color="#5FD97A"
+            />
+          </>
+        )}
       </div>
     </div>
   )

@@ -11,7 +11,7 @@ export default function ProfitRing({ profit, income, marginPct }) {
     <div
       style={{
         background:
-          'radial-gradient(circle at 75% 20%, rgba(240,169,61,0.25), transparent 55%), linear-gradient(160deg, #2A2014 0%, #1A150D 100%)',
+          'radial-gradient(circle at 75% 20%, rgba(240,169,61,0.25), transparent 55%), var(--card-elevated-bg)',
         border: `1px solid ${isPositive ? 'rgba(240,169,61,0.4)' : 'rgba(255,107,91,0.4)'}`,
         borderRadius: 'var(--radius-xl)',
         padding: 16,

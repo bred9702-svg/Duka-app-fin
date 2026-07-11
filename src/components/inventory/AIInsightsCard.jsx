@@ -104,11 +104,10 @@ function Insight({
   return (
     <div
       style={{
-        background:
-          'linear-gradient(180deg, rgba(28,28,28,.65) 0%, rgba(18,18,18,.72) 100%)',
+        background: 'var(--card-elevated-bg)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        border: '1px solid rgba(255,255,255,.08)',
+        border: '1px solid var(--card-elevated-border)',
         borderRadius: 10,
         padding: '10px 12px',
         boxShadow:
