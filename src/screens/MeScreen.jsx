@@ -19,7 +19,6 @@ const SECTIONS = [
       { label: 'Notification Center', icon: 'bell', color: '#FF6B5B', path: '/notification-center' },
       { label: 'Notification Settings', icon: 'settings', color: '#F0A93D', path: '/notifications' },
       { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
-      { label: 'Language', icon: 'globe', color: '#4FC3F7', path: '/language' },
     ],
   },
   {
