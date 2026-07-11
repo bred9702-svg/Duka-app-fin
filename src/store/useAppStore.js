@@ -320,11 +320,6 @@ signIn: async (data) => {
   // on initial app mount.
   await get().bootstrap()
 },
-  // signOut() empties products/transactions/customers — reload them now
-  // that a session is active again, since bootstrap() only runs once
-  // on initial app mount.
-  await get().bootstrap()
-},
 
 completeOnboarding: () => {
   set((s) => {
@@ -790,7 +785,7 @@ const updatedTxn = await completeSalePayment(linkedTransactionId, {
     }
   },
 
-   createProduct: async (data) => {
+     createProduct: async (data) => {
     try {
       const saved = await addProduct(data)
       set((s) => ({ products: [...s.products, saved] }))
@@ -801,7 +796,5 @@ const updatedTxn = await completeSalePayment(linkedTransactionId, {
     }
   },
 }))
-
-export default useAppStore
 
 export default useAppStore
