@@ -115,7 +115,7 @@ function InsightCard({ insight }) {
   )
 }
 
-function BriefMetric({ label, value, detail, color = '#5B9FF0' }) {
+function BriefMetric({ label, value, detail, color = 'var(--text-hi)' }) {
   return (
     <div
       style={{
@@ -232,23 +232,20 @@ function DailyBriefCard({ brief }) {
         <BriefMetric
           label="Today's sales"
           value={`${fmtKES(brief.todaySales)} KES`}
-          color="#5FD97A"
         />
         <BriefMetric
           label="Today's expenses"
           value={`${fmtKES(brief.todayExpenses)} KES`}
-          color="#FF8A4C"
         />
         <BriefMetric
           label="Estimated profit"
           value={`${fmtKES(brief.estimatedProfit)} KES`}
-          color={brief.estimatedProfit >= 0 ? '#5FD97A' : '#FF6B5B'}
+          color={brief.estimatedProfit >= 0 ? 'var(--text-hi)' : '#FF6B5B'}
         />
         <BriefMetric
           label="Best seller"
           value={brief.bestSellingProduct.label}
           detail={brief.bestSellingProduct.detail}
-          color="#F0A93D"
         />
       </div>
 
@@ -269,14 +266,13 @@ function DailyBriefCard({ brief }) {
           label="Outstanding debts"
           value={brief.outstandingDebts.label}
           detail={brief.outstandingDebts.detail}
-          color={brief.outstandingDebts.count > 0 ? '#FF8A4C' : '#5FD97A'}
+          color={brief.outstandingDebts.count > 0 ? '#F0A93D' : '#5FD97A'}
         />
         {brief.employeePerformance.exists && (
           <BriefMetric
             label="Employee performance"
             value={brief.employeePerformance.label}
             detail={brief.employeePerformance.detail}
-            color="#7C5CFC"
           />
         )}
       </div>
