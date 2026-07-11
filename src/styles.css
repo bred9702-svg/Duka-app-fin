@@ -179,6 +179,10 @@ button:active { transform: scale(0.97); }
   transition: background 0.3s ease;
 }
 
+.app-content {
+  overflow-x: hidden;
+}
+
 @media (min-width: 361px) {
   body {
     display: flex;
