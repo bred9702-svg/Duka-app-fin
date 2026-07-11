@@ -55,6 +55,10 @@ function LoadingScreen() {
         justifyContent: 'center',
         background: 'var(--bg-deep)',
         gap: 16,
+        width: '100%',
+        maxWidth: '100%',
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       <div
@@ -132,9 +136,13 @@ export default function App() {
         style={{
           flex: 1,
           width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
           paddingBottom: hideNav ? 0 : 84,
         }}
       >
@@ -147,6 +155,10 @@ export default function App() {
             flexDirection: 'column',
             flex: 1,
             width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
           }}
         >
           <Routes>
@@ -292,6 +304,7 @@ export default function App() {
                 </RequireOwner>
               }
             />
+
             <Route
               path="/payment-mode"
               element={
