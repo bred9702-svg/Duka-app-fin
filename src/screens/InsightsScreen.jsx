@@ -38,6 +38,13 @@ const ITEMS = [
     color: '#FF6B5B',
     path: '/advisor',
   },
+  {
+    title: 'Duka AI',
+    subtitle: 'Quick rule-based business insights',
+    icon: 'star',
+    color: '#F0A93D',
+    path: '/duka-ai',
+  },
 ]
 
 export default function InsightsScreen() {
