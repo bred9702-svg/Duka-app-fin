@@ -1,34 +1,5 @@
 import { supabase } from './supabase'
 
-function pickAttribution(source = {}) {
-  return {
-    performed_by_user_id: source.performedByUserId || null,
-    employee_id: source.employeeId || null,
-    employee_name: source.employeeName || null,
-    shop_id: source.shopId || null,
-  }
-}
-
-// Applies an attribution-tagged update to a transaction. If the attribution
-// columns aren't available yet (migration not applied), retries the same
-// update without attribution instead of blocking the whole operation.
-async function updateTransactionSafe(transactionId, basePayload, attribution, { select = true } = {}) {
-  let query = supabase
-    .from('transactions')
-    .update({ ...basePayload, ...pickAttribution(attribution) })
-    .eq('id', transactionId)
-  if (select) query = query.select().single()
-  const { data, error } = await query
-  if (!error) return data
-
-  console.error('Update transaction with attribution failed, retrying without attribution:', error)
-  let retryQuery = supabase.from('transactions').update(basePayload).eq('id', transactionId)
-  if (select) retryQuery = retryQuery.select().single()
-  const retry = await retryQuery
-  if (retry.error) throw retry.error
-  return retry.data
-}
-
 // ── EMPLOYEES ─────────────────────────────────────────────────
 
 export async function upsertEmployee({ employeeId, shopId, name, phone, inviteCode }) {
@@ -83,19 +54,14 @@ export async function getProducts() {
 }
 
 export async function addProduct({ name, category, costPrice, unitPrice, stockCurrent = 0, stockAlert = 5 }) {
-  const { data, error } = await supabase
-    .from('products')
-    .insert({
-      name,
-      category,
-      cost_price: costPrice,
-      unit_price: unitPrice,
-      stock_current: stockCurrent,
-      stock_alert: stockAlert,
-      active: true,
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_shop_product', {
+    product_name: name,
+    product_category: category,
+    product_cost_price: costPrice,
+    product_unit_price: unitPrice,
+    opening_stock: stockCurrent,
+    low_stock_alert: stockAlert,
+  })
   if (error) throw error
   return data
 }
@@ -109,49 +75,6 @@ export async function searchProducts(query) {
     .order('name')
   if (error) throw error
   return data
-}
-
-export async function updateStock(productId, quantity) {
-  const { data: product, error: fetchError } = await supabase
-    .from('products')
-    .select('stock_current')
-    .eq('id', productId)
-    .single()
-  if (fetchError) throw fetchError
-
-  const newStock = product.stock_current - quantity
-  const { error } = await supabase
-    .from('products')
-    .update({ stock_current: newStock })
-    .eq('id', productId)
-  if (error) throw error
-  return newStock
-}
-
-export async function addStock(productId, quantity) {
-  const { data: product, error: fetchError } = await supabase
-    .from('products')
-    .select('stock_current')
-    .eq('id', productId)
-    .single()
-  if (fetchError) throw fetchError
-
-  const newStock = (product.stock_current || 0) + quantity
-  const { error } = await supabase
-    .from('products')
-    .update({ stock_current: newStock })
-    .eq('id', productId)
-  if (error) throw error
-  return newStock
-}
-
-export async function updateProductPrice(productId, unitPrice) {
-  const { error } = await supabase
-    .from('products')
-    .update({ unit_price: unitPrice })
-    .eq('id', productId)
-  if (error) throw error
-  return unitPrice
 }
 
 export async function recordStockPurchase({
@@ -208,56 +131,16 @@ export async function getTransactions(limit = 50) {
 }
 
 export async function addTransaction(txn, attribution = {}) {
-  const now = new Date()
-  const basePayload = {
-    ...txn,
-    day_of_week: now.getDay(),
-    hour_of_day: now.getHours(),
-  }
-
-  const { data, error } = await supabase
-    .from('transactions')
-    .insert({ ...basePayload, ...pickAttribution(attribution) })
-    .select()
-    .single()
-
-  if (!error) return data
-
-  // If the attribution columns aren't available yet (e.g. migration not
-  // applied), never let that block Cash In / Cash Out — retry without
-  // attribution so the transaction still gets recorded.
-  console.error('Add transaction with attribution failed, retrying without attribution:', error)
-  const retry = await supabase
-    .from('transactions')
-    .insert(basePayload)
-    .select()
-    .single()
-  if (retry.error) throw retry.error
-  return retry.data
-}
-
-async function recalculateCustomerDebt(customerId) {
-  const { data: activeDebts, error: debtError } = await supabase
-    .from('transactions')
-    .select('remaining_amount')
-    .eq('customer_id', customerId)
-    .eq('is_debt', true)
-    .gt('remaining_amount', 0)
-  if (debtError) throw debtError
-
-  const totalOwed = (activeDebts || []).reduce(
-    (sum, debt) => sum + (Number(debt.remaining_amount) || 0),
-    0
-  )
-
-  const { data: customer, error: customerError } = await supabase
-    .from('customers')
-    .update({ total_owed: totalOwed })
-    .eq('id', customerId)
-    .select()
-    .single()
-  if (customerError) throw customerError
-  return customer
+  const { data, error } = await supabase.rpc('record_cash_transaction', {
+    transaction_amount: txn.amount,
+    transaction_source: txn.source,
+    transaction_direction: txn.direction,
+    sender_name: txn.mpesa_sender_name || null,
+    sender_phone: txn.mpesa_sender_phone || null,
+    external_reference: txn.mpesa_reference || null,
+  })
+  if (error) throw error
+  return data
 }
 
 export async function addDebtPayment(customerId, amount, paymentTransactionId = null, attribution = {}) {
@@ -309,65 +192,12 @@ export async function getCustomers() {
   return data
 }
 
-export async function upsertCustomer(phone, name, mpesaName) {
-  const { data: existing } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('phone', phone)
-    .single()
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from('customers')
-      .update({
-        visit_count: existing.visit_count + 1,
-        last_seen: new Date().toISOString(),
-      })
-      .eq('id', existing.id)
-      .select()
-      .single()
-    if (error) throw error
-    return data
-  }
-
-  const { data, error } = await supabase
-    .from('customers')
-    .insert({
-      name,
-      phone,
-      mpesa_name: mpesaName,
-      visit_count: 1,
-      last_seen: new Date().toISOString(),
-    })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-export async function increaseDebt(customerId, amount) {
-  const { data: customer } = await supabase
-    .from('customers')
-    .select('total_owed')
-    .eq('id', customerId)
-    .single()
-
-  const { data, error } = await supabase
-    .from('customers')
-    .update({ total_owed: customer.total_owed + amount })
-    .eq('id', customerId)
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
 export async function addNewCustomer(name, phone) {
-  const { data, error } = await supabase
-    .from('customers')
-    .insert({ name, phone, total_owed: 0, visit_count: 0 })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_shop_customer', {
+    customer_name: name,
+    customer_phone: phone || null,
+    customer_mpesa_name: null,
+  })
   if (error) throw error
   return data
 }

@@ -5,7 +5,6 @@ import {
   classifyTransaction as dbClassify,
   getCustomers,
   addDebtPayment as dbAddDebtPayment,
-  increaseDebt as dbIncreaseDebt,
   addNewCustomer,
   getProducts,
   getTodayStats,
@@ -494,19 +493,6 @@ bootstrap: async () => {
       return updated
     } catch (err) {
       console.error('Debt payment error:', err)
-    }
-  },
-
-  increaseDebt: async (customerId, amount) => {
-    try {
-      const updated = await dbIncreaseDebt(customerId, amount)
-      set((s) => ({
-        customers: s.customers.map((c) =>
-          c.id === customerId ? { ...c, ...updated } : c
-        ),
-      }))
-    } catch (err) {
-      console.error('Increase debt error:', err)
     }
   },
 
