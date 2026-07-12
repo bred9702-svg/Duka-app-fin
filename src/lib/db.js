@@ -155,20 +155,22 @@ export async function updateProductPrice(productId, unitPrice) {
 }
 
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
-  return updateTransactionSafe(
-    transactionId,
-    {
-      classified: true,
-      operation_type: 'sale',
-      product_id: items.length === 1 ? items[0].productId : null,
-      quantity: items.length === 1 ? items[0].quantity : null,
-      unit_price: items.length === 1 ? items[0].unitPrice : null,
-      total_price: grandTotal,
-      profit: totalProfit,
-      customer_id: customerId,
-    },
-    attribution
-  )
+  const { data, error } = await supabase.rpc('finalize_sale_atomic', {
+    target_transaction_id: transactionId,
+    sale_items: items,
+    target_customer_id: customerId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function createDebtSale({ items, customerId }) {
+  const { data, error } = await supabase.rpc('create_debt_sale_atomic', {
+    sale_items: items,
+    target_customer_id: customerId,
+  })
+  if (error) throw error
+  return data
 }
 
 // ── TRANSACTIONS ──────────────────────────────────────────────
@@ -241,140 +243,41 @@ async function recalculateCustomerDebt(customerId) {
 }
 
 export async function addDebtPayment(customerId, amount, paymentTransactionId = null, attribution = {}) {
-  const paymentAmount = Math.max(0, Number(amount) || 0)
-  let unapplied = paymentAmount
-  const updatedDebts = []
-  const now = new Date().toISOString()
-
-  const { data: debts, error: debtsError } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('customer_id', customerId)
-    .eq('is_debt', true)
-    .gt('remaining_amount', 0)
-    .order('created_at', { ascending: true })
-  if (debtsError) throw debtsError
-
-  for (const debt of debts || []) {
-    if (unapplied <= 0) break
-
-    const currentRemaining = Number(debt.remaining_amount) || 0
-    const applied = Math.min(unapplied, currentRemaining)
-    const remaining = Math.max(0, currentRemaining - applied)
-    const original = Number(debt.original_amount ?? debt.total_price ?? debt.amount ?? currentRemaining) || 0
-    const paid = Math.max(0, original - remaining)
-
-    const { data: updatedDebt, error: updateError } = await supabase
-      .from('transactions')
-      .update({
-        original_amount: original,
-        paid_amount: paid,
-        remaining_amount: remaining,
-        debt_status: remaining === 0 ? 'closed' : 'active',
-        closed_at: remaining === 0 ? now : null,
-      })
-      .eq('id', debt.id)
-      .select()
-      .single()
-    if (updateError) throw updateError
-
-    updatedDebts.push(updatedDebt)
-    unapplied -= applied
-  }
-
-  if (paymentTransactionId) {
-    await updateTransactionSafe(
-      paymentTransactionId,
-      {
-        classified: true,
-        operation_type: 'debt_payment',
-        customer_id: customerId,
-        is_debt: false,
-        remaining_amount: 0,
-        paid_amount: paymentAmount - unapplied,
-        debt_status: 'payment',
-      },
-      attribution,
-      { select: false }
-    )
-  }
-
-  const customer = await recalculateCustomerDebt(customerId)
-  return { customer, debts: updatedDebts, unapplied }
+  const { data, error } = await supabase.rpc('apply_debt_payment_atomic', {
+    target_customer_id: customerId,
+    payment_amount: Math.max(0, Number(amount) || 0),
+    payment_transaction_id: paymentTransactionId,
+  })
+  if (error) throw error
+  return data
 }
 
 export async function classifyTransaction(id, classification) {
-  const { data: txn, error: txnError } = await supabase
-    .from('transactions')
-    .select('amount, direction')
-    .eq('id', id)
-    .single()
-  if (txnError) throw txnError
-
   if (classification.type === 'debt_payment') {
-    const result = await addDebtPayment(classification.customer_id, txn.amount, id, classification)
-    const { data: payment, error: paymentFetchError } = await supabase
-      .from('transactions')
-      .select()
-      .eq('id', id)
-      .single()
-    if (paymentFetchError) throw paymentFetchError
-    return { ...payment, debtUpdates: result.debts, customerUpdate: result.customer }
-  }
-
-  let profit = null
-  let total_price = null
-  let stock_after = null
-
-  if (
-    (classification.type === 'sale' || classification.type === 'debt') &&
-    classification.product_id
-  ) {
-    const { data: product } = await supabase
-      .from('products')
-      .select('unit_price, cost_price, stock_current')
-      .eq('id', classification.product_id)
-      .single()
-
-    if (product) {
-      const qty = classification.quantity || 1
-      total_price = product.unit_price * qty
-      profit = (product.unit_price - product.cost_price) * qty
-      stock_after = await updateStock(classification.product_id, qty)
+    const { data: txn, error: txnError } = await supabase
+      .from('transactions').select('amount').eq('id', id).single()
+    if (txnError) throw txnError
+    const result = await addDebtPayment(classification.customer_id, txn.amount, id)
+    return {
+      ...(result.paymentTransaction || {}),
+      debtUpdates: result.debts || [],
+      customerUpdate: result.customer,
     }
   }
-
-  const debtOriginal = classification.type === 'debt' ? total_price ?? txn.amount : null
-
-  const data = await updateTransactionSafe(
-    id,
-    {
-      classified: true,
-      operation_type: classification.type,
-      product_id: classification.product_id || null,
-      quantity: classification.quantity || null,
-      expense_category: classification.category || null,
-      customer_id: classification.customer_id || null,
-      unit_price: classification.unit_price || null,
-      total_price,
-      profit,
-      stock_after,
-      is_debt: classification.type === 'debt',
-      original_amount: debtOriginal,
-      paid_amount: 0,
-      remaining_amount: classification.type === 'debt' ? debtOriginal : 0,
-      debt_status: classification.type === 'debt' ? 'active' : null,
-      closed_at: null,
-    },
-    classification
-  )
-
-  if (classification.type === 'debt' && classification.customer_id) {
-    const customer = await recalculateCustomerDebt(classification.customer_id)
-    return { ...data, customerUpdate: customer }
+  const { data, error } = await supabase.rpc('classify_transaction_atomic', {
+    target_transaction_id: id,
+    classification_type: classification.type,
+    target_product_id: classification.product_id || null,
+    requested_quantity: classification.quantity || null,
+    expense_category_value: classification.category || null,
+    target_customer_id: classification.customer_id || null,
+  })
+  if (error) throw error
+  return {
+    ...data.transaction,
+    productUpdate: data.product,
+    customerUpdate: data.customer,
   }
-
-  return data
 }
 
 // ── CUSTOMERS ─────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import {
   updateStock,
   updateProductPrice,
   completeSalePayment,
+  createDebtSale as dbCreateDebtSale,
   addProduct,
 } from '../lib/db'
 import {
@@ -412,6 +413,11 @@ bootstrap: async () => {
               c.id === updated.customerUpdate.id ? { ...c, ...updated.customerUpdate } : c
             )
           : s.customers,
+        products: updated.productUpdate
+          ? s.products.map((p) =>
+              p.id === updated.productUpdate.id ? { ...p, ...updated.productUpdate } : p
+            )
+          : s.products,
       }))
       await get().refreshTodayStats()
 
@@ -635,60 +641,19 @@ const savedTxn = await dbAddTransaction({
         throw new Error('Add at least one product before confirming debt.')
       }
 
-      const grandTotal = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
-      const totalProfit = items.reduce(
-        (a, it) => a + (it.unitPrice - (it.costPrice || 0)) * it.quantity,
-        0
-      )
-
-      const updatedStocks = {}
-      for (const item of items) {
-        const newStock = await updateStock(item.productId, item.quantity)
-        updatedStocks[item.productId] = newStock
-      }
-
+      const result = await dbCreateDebtSale({ items, customerId })
+      const grandTotal = Number(result.grandTotal) || 0
+      const totalProfit = Number(result.totalProfit) || 0
       const productById = new Map(get().products.map((product) => [product.id, product]))
-const attribution = getSessionUserAttribution(get().session)
-const savedTxns = []
-
-      for (const item of items) {
-        const lineTotal = item.unitPrice * item.quantity
-        const lineProfit = (item.unitPrice - (item.costPrice || 0)) * item.quantity
-        const savedTxn = await dbAddTransaction({
-          amount: lineTotal,
-          source: 'cash',
-          direction: 'out',
-          classified: true,
-          operation_type: 'debt',
-          customer_id: customerId,
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          total_price: lineTotal,
-          profit: lineProfit,
-          is_debt: true,
-          original_amount: lineTotal,
-          paid_amount: 0,
-          remaining_amount: lineTotal,
-          debt_status: 'active',
-          mpesa_sender_name: null,
-          mpesa_sender_phone: null,
-          mpesa_reference: null,
-          ...attribution,
-        })
-
-        savedTxns.push({
-          ...savedTxn,
-          product: productById.get(item.productId) || null,
-        })
-      }
-
-      const updatedCustomer = await dbIncreaseDebt(customerId, grandTotal)
+      const savedTxns = (result.transactions || []).map((transaction) => ({
+        ...transaction,
+        product: productById.get(transaction.product_id) || null,
+      }))
+      const updatedCustomer = result.customer
+      const productsById = new Map((result.products || []).map((product) => [product.id, product]))
 
       set((s) => ({
-        products: s.products.map((p) =>
-          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
-        ),
+        products: s.products.map((p) => productsById.has(p.id) ? { ...p, ...productsById.get(p.id) } : p),
         transactions: [...savedTxns, ...s.transactions],
         customers: s.customers.map((c) =>
           c.id === customerId ? { ...c, ...updatedCustomer } : c
@@ -726,31 +691,16 @@ const savedTxns = []
         throw new Error('A sale must be linked to a payment transaction.')
       }
 
-      const grandTotal = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
-      const totalProfit = items.reduce(
-        (a, it) => a + (it.unitPrice - (it.costPrice || 0)) * it.quantity, 0
-      )
-
-      // Reduce stock for every item in the cart
-      const updatedStocks = {}
-      for (const item of items) {
-        const newStock = await updateStock(item.productId, item.quantity)
-        updatedStocks[item.productId] = newStock
-      }
-      set((s) => ({
-        products: s.products.map((p) =>
-          p.id in updatedStocks ? { ...p, stock_current: updatedStocks[p.id] } : p
-        ),
-      }))
-
       // Classify the existing payment transaction — do NOT insert a new one,
       // otherwise the same money would be counted twice.
-     const attribution = getSessionUserAttribution(get().session)
-const updatedTxn = await completeSalePayment(linkedTransactionId, {
-  items, grandTotal, totalProfit, customerId, ...attribution,
-})
+      const result = await completeSalePayment(linkedTransactionId, { items, customerId })
+      const updatedTxn = result.transaction
+      const grandTotal = Number(result.grandTotal) || 0
+      const totalProfit = Number(result.totalProfit) || 0
+      const productsById = new Map((result.products || []).map((product) => [product.id, product]))
 
       set((s) => ({
+        products: s.products.map((p) => productsById.has(p.id) ? { ...p, ...productsById.get(p.id) } : p),
         transactions: s.transactions.map((t) =>
           t.id === linkedTransactionId ? { ...t, ...updatedTxn } : t
         ),
