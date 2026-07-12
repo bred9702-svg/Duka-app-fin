@@ -28,9 +28,8 @@ export default function SignInScreen() {
 
   const shouldCheckEmail = searchParams.get('checkEmail') === '1'
   const emailConfirmed = searchParams.get('confirmed') === '1'
-  const isConfirmedJoin = isJoinMode && emailConfirmed
-
   const isJoinMode = role === 'employee'
+  const isConfirmedJoin = isJoinMode && emailConfirmed
   const isCreatingEmployeeProfile = isJoinMode && Boolean(validatedInvite)
   const canSubmit = isCreatingEmployeeProfile
     ? isConfirmedJoin
