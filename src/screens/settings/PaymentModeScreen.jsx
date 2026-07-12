@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import SubScreenHeader from '../../components/layout/SubScreenHeader'
 import Icon from '../../components/ui/Icon'
 import Toggle from '../../components/ui/Toggle'
-
-const STORAGE_KEY = 'duka-payment-methods'
+import useAppStore from '../../store/useAppStore'
+import { getPaymentSettings, savePaymentSettings } from '../../lib/shop'
 
 const METHODS = [
   { id: 'cash', label: 'Cash', icon: 'cash', color: '#5FD97A' },
@@ -15,22 +15,51 @@ const METHODS = [
 
 const DEFAULTS = { cash: true, mpesa: true, card: true, bank: false, credit: false }
 
-function loadEnabled() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS
-  } catch {
-    return DEFAULTS
-  }
-}
-
 export default function PaymentModeScreen() {
-  const [enabled, setEnabled] = useState(loadEnabled)
+  const shopId = useAppStore((state) => state.session?.shopId)
+  const [enabled, setEnabled] = useState(DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState(null)
+  const [error, setError] = useState('')
 
-  function toggle(id) {
+  useEffect(() => {
+    if (!shopId) return
+    let active = true
+    getPaymentSettings(shopId)
+      .then((settings) => {
+        if (active) setEnabled({ ...DEFAULTS, ...settings })
+      })
+      .catch((loadError) => {
+        console.error('Load payment settings failed:', loadError)
+        if (active) setError('Could not load payment settings.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [shopId])
+
+  async function toggle(id) {
+    if (!shopId || savingId) return
     const next = { ...enabled, [id]: !enabled[id] }
+    if (!Object.values(next).some(Boolean)) {
+      setError('At least one payment method must remain enabled.')
+      return
+    }
+    const previous = enabled
     setEnabled(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    setSavingId(id)
+    setError('')
+    try {
+      const saved = await savePaymentSettings(shopId, next)
+      setEnabled({ ...DEFAULTS, ...saved })
+    } catch (saveError) {
+      console.error('Save payment settings failed:', saveError)
+      setEnabled(previous)
+      setError('Could not save this change. Please try again.')
+    } finally {
+      setSavingId(null)
+    }
   }
 
   const activeCount = Object.values(enabled).filter(Boolean).length
@@ -41,6 +70,9 @@ export default function PaymentModeScreen() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="Payment Mode" />
+
+        {loading && <p style={{ fontSize: 10, color: 'var(--text-low)', marginBottom: 10 }}>Loading payment methods...</p>}
+        {error && <p style={{ fontSize: 10, color: '#FF6B5B', marginBottom: 10 }}>{error}</p>}
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', marginBottom: 14 }}>
           {activeCount} payment method{activeCount !== 1 ? 's' : ''} accepted at checkout
@@ -85,7 +117,7 @@ export default function PaymentModeScreen() {
               {m.label}
             </p>
 
-            <Toggle checked={enabled[m.id]} onChange={() => toggle(m.id)} />
+            <Toggle checked={enabled[m.id]} onChange={() => toggle(m.id)} disabled={loading || Boolean(savingId)} />
           </div>
         ))}
 

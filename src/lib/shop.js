@@ -55,3 +55,24 @@ export async function saveShopProfile({ shopId, userId, profile, logoFile }) {
   if (error) throw error
   return data
 }
+
+export async function getPaymentSettings(shopId) {
+  const { data, error } = await supabase.rpc('get_owned_shop_payment_settings', {
+    target_shop_id: shopId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function savePaymentSettings(shopId, settings) {
+  const { data, error } = await supabase.rpc('update_owned_shop_payment_settings', {
+    target_shop_id: shopId,
+    cash_value: Boolean(settings.cash),
+    mpesa_value: Boolean(settings.mpesa),
+    card_value: Boolean(settings.card),
+    bank_value: Boolean(settings.bank),
+    credit_value: Boolean(settings.credit),
+  })
+  if (error) throw error
+  return data
+}
