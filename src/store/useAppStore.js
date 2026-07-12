@@ -21,6 +21,12 @@ import {
   signOutAccount,
 } from '../lib/auth'
 import { saveShopProfile } from '../lib/shop'
+import {
+  getBusinessPreferences,
+  saveBusinessPreferences as saveRemoteBusinessPreferences,
+} from '../lib/businessPreferences'
+
+let businessPreferencesSaveTimer = null
 
 function loadSession() {
   try {
@@ -66,7 +72,7 @@ function normalizeBusinessPreferences(settings = {}) {
     taxEnabled: Boolean(next.taxEnabled),
     taxRate: String(next.taxRate ?? ''),
     stockAlerts: next.stockAlerts !== false,
-    lowStockThreshold: String(next.lowStockThreshold || DEFAULT_BUSINESS_PREFERENCES.lowStockThreshold),
+    lowStockThreshold: String(next.lowStockThreshold ?? DEFAULT_BUSINESS_PREFERENCES.lowStockThreshold),
     dailyAiBrief: next.dailyAiBrief !== false,
     aiRecommendations: next.aiRecommendations !== false,
   }
@@ -175,6 +181,8 @@ const useAppStore = create((set, get) => ({
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
   businessPreferences: loadBusinessPreferences(),
+  businessPreferencesSaving: false,
+  businessPreferencesError: null,
   notifications: loadNotifications(),
   inAppNotifications: [],
   notificationSettings: loadNotificationSettings(),
@@ -186,18 +194,50 @@ setTheme: (theme) => {
 },
 
 updateBusinessPreference: (field, value) => {
-  set((s) => {
-    const businessPreferences = saveBusinessPreferences({
-      ...s.businessPreferences,
-      [field]: value,
-    })
-    return { businessPreferences }
+  const businessPreferences = saveBusinessPreferences({
+    ...get().businessPreferences,
+    [field]: value,
   })
+  set({ businessPreferences, businessPreferencesSaving: true, businessPreferencesError: null })
+
+  clearTimeout(businessPreferencesSaveTimer)
+  businessPreferencesSaveTimer = setTimeout(async () => {
+    const session = get().session
+    if (!session?.shopId || session.role !== 'owner') {
+      set({ businessPreferencesSaving: false })
+      return
+    }
+    try {
+      const saved = await saveRemoteBusinessPreferences(session.shopId, get().businessPreferences)
+      saveBusinessPreferences(saved)
+      set({ businessPreferences: saved, businessPreferencesSaving: false, businessPreferencesError: null })
+    } catch (error) {
+      console.error('Save Business Preferences failed:', error)
+      set({ businessPreferencesSaving: false, businessPreferencesError: 'Could not save preferences.' })
+    }
+  }, 600)
 },
 
 updateBusinessPreferences: (settings) => {
   const businessPreferences = saveBusinessPreferences(settings)
-  set({ businessPreferences })
+  set({ businessPreferences, businessPreferencesSaving: true, businessPreferencesError: null })
+
+  clearTimeout(businessPreferencesSaveTimer)
+  businessPreferencesSaveTimer = setTimeout(async () => {
+    const session = get().session
+    if (!session?.shopId || session.role !== 'owner') {
+      set({ businessPreferencesSaving: false })
+      return
+    }
+    try {
+      const saved = await saveRemoteBusinessPreferences(session.shopId, get().businessPreferences)
+      saveBusinessPreferences(saved)
+      set({ businessPreferences: saved, businessPreferencesSaving: false, businessPreferencesError: null })
+    } catch (error) {
+      console.error('Save Business Preferences failed:', error)
+      set({ businessPreferencesSaving: false, businessPreferencesError: 'Could not save preferences.' })
+    }
+  }, 600)
 },
 
 addNotification: (notification) => {
@@ -387,7 +427,23 @@ bootstrap: async () => {
         getProducts(),
         getTodayStats(),
       ])
-      set({ transactions, customers, products, todayStats, loading: false })
+      let businessPreferences = loadBusinessPreferences()
+      try {
+        businessPreferences = await getBusinessPreferences(session.shopId)
+        saveBusinessPreferences(businessPreferences)
+      } catch (preferencesError) {
+        console.error('Load Business Preferences failed:', preferencesError)
+      }
+      set({
+        transactions,
+        customers,
+        products,
+        todayStats,
+        businessPreferences,
+        businessPreferencesSaving: false,
+        businessPreferencesError: null,
+        loading: false,
+      })
     } catch (err) {
       console.error('Bootstrap error:', err)
       set({ error: err.message, loading: false })

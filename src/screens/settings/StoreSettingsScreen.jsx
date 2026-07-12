@@ -138,6 +138,8 @@ function ToggleRow({ label, sub, checked, onChange, icon, color }) {
 export default function StoreSettingsScreen() {
   const settings = useAppStore((s) => s.businessPreferences)
   const updateBusinessPreference = useAppStore((s) => s.updateBusinessPreference)
+  const saving = useAppStore((s) => s.businessPreferencesSaving)
+  const saveError = useAppStore((s) => s.businessPreferencesError)
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
@@ -148,6 +150,10 @@ export default function StoreSettingsScreen() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SubScreenHeader title="Business Preferences" />
+
+        <p style={{ margin: '-4px 0 10px', minHeight: 14, fontSize: 10, color: saveError ? '#FF6B5B' : 'var(--text-low)' }}>
+          {saveError || (saving ? 'Saving changes...' : 'Saved to your shop')}
+        </p>
 
         <SectionTitle>Money</SectionTitle>
         <SelectRow
