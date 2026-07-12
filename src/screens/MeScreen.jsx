@@ -118,6 +118,9 @@ export default function MeScreen() {
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
   const trialDaysRemaining = getTrialDaysRemaining(session)
+  const isOwner = session?.role !== 'employee'
+  const isActivePro = session?.subscriptionStatus === 'active' && session?.isPro
+  const isFree = session?.subscriptionStatus === 'free' || !session?.isPro
   const visibleSections = session?.role === 'employee'
     ? SECTIONS.map((section) => section.title === 'Business'
       ? { ...section, items: [] }
@@ -247,7 +250,7 @@ export default function MeScreen() {
           </div>
         </div>
 
-        {trialDaysRemaining !== null && (
+        {isOwner && trialDaysRemaining !== null && (
           <div
             style={{
               marginTop: 10,
@@ -270,6 +273,58 @@ export default function MeScreen() {
               </p>
             </div>
             <Icon name="star" size={20} color="#F0A93D" />
+          </div>
+        )}
+
+        {isOwner && isActivePro && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'linear-gradient(160deg, rgba(95,217,122,.15), rgba(255,255,255,.03))',
+              border: '1px solid rgba(95,217,122,.28)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#5FD97A', margin: 0 }}>
+                Duka Pro
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
+                Active subscription
+              </p>
+            </div>
+            <Icon name="star" size={20} color="#5FD97A" />
+          </div>
+        )}
+
+        {isOwner && isFree && trialDaysRemaining === null && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'var(--glass-fill-soft)',
+              border: '1px solid var(--glass-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text-hi)', margin: 0 }}>
+                Duka Free
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
+                Core business tools are active
+              </p>
+            </div>
+            <Icon name="store" size={20} color="var(--text-low)" />
           </div>
         )}
 

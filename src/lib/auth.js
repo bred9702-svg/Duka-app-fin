@@ -68,11 +68,20 @@ async function createPendingOwnerShop(user) {
 async function getContext() {
   const { data, error } = await supabase.rpc('get_current_shop_context')
   if (error) return null
-  return data
+  if (!data?.shop?.id) return data
+
+  const { data: entitlements, error: entitlementsError } = await supabase.rpc(
+    'get_shop_entitlements',
+    { target_shop_id: data.shop.id }
+  )
+  if (entitlementsError) throw entitlementsError
+  return { ...data, entitlements }
 }
 
 function toSession(user, context, isOnboarded = true) {
-  const { profile, membership, shop, subscription } = context
+  const { profile, membership, shop, subscription, entitlements } = context
+  const effectivePlan = entitlements?.plan || subscription?.plan || 'free'
+  const effectiveStatus = entitlements?.status || subscription?.status || 'free'
   return {
     authUserId: user.id, role: membership.role,
     name: profile.full_name || user.user_metadata?.full_name || (membership.role === 'owner' ? 'Shop Owner' : 'Employee'),
@@ -81,10 +90,14 @@ function toSession(user, context, isOnboarded = true) {
     email: user.email || null, phone: profile.phone || null, photo: profile.avatar_url || null,
     shopId: shop.id, shopName: shop.name, shopType: shop.shop_type, shopAddress: shop.address,
     shopCity: shop.city, shopTimezone: shop.timezone, shopLogo: shop.logo_url,
-    subscriptionStatus: subscription?.status || 'free', subscriptionPlan: subscription?.plan || 'free',
+    subscriptionStatus: effectiveStatus, subscriptionPlan: effectivePlan,
     trialStart: subscription?.trial_started_at || null, trialEnd: subscription?.trial_ends_at || null,
     currentPeriodStart: subscription?.current_period_started_at || null,
-    currentPeriodEnd: subscription?.current_period_ends_at || null, isOnboarded,
+    currentPeriodEnd: entitlements?.current_period_ends_at || subscription?.current_period_ends_at || null,
+    isPro: entitlements?.is_pro === true,
+    entitlements: entitlements?.features || {},
+    subscriptionAmountKes: entitlements?.amount_kes || 2999,
+    isOnboarded,
   }
 }
 
