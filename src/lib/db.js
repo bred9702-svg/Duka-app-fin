@@ -1,45 +1,5 @@
 import { supabase } from './supabase'
 
-// ── EMPLOYEES ─────────────────────────────────────────────────
-
-export async function upsertEmployee({ employeeId, shopId, name, phone, inviteCode }) {
-  if (!employeeId || !shopId) return null
-  const { data, error } = await supabase
-    .from('employees')
-    .upsert(
-      {
-        employee_id: employeeId,
-        shop_id: shopId,
-        name: name || null,
-        phone: phone || null,
-        invite_code: inviteCode || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'employee_id' }
-    )
-    .select()
-    .single()
-  if (error) {
-    console.error('Upsert employee failed:', error)
-    return null
-  }
-  return data
-}
-
-export async function getEmployees(shopId) {
-  if (!shopId) return []
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('shop_id', shopId)
-    .order('joined_at', { ascending: false })
-  if (error) {
-    console.error('Get employees failed:', error)
-    return []
-  }
-  return data || []
-}
-
 // ── PRODUCTS ──────────────────────────────────────────────────
 
 export async function getProducts() {
