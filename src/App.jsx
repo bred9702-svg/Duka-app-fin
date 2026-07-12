@@ -36,6 +36,7 @@ import PrivacyScreen from './screens/settings/PrivacyScreen'
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
 import RequireOwner from './components/auth/RequireOwner'
+import RequireEntitlement from './components/auth/RequireEntitlement'
 import InAppNotification from './components/notifications/InAppNotification'
 
 import SplashScreen from './screens/onboarding/SplashScreen'
@@ -188,7 +189,7 @@ export default function App() {
               path="/analytics"
               element={
                 <RequireOwner title="Analytics">
-                  <AnalyticsScreen />
+                  <RequireEntitlement feature="advanced_analytics" title="Advanced Analytics"><AnalyticsScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -197,7 +198,7 @@ export default function App() {
               path="/inventory"
               element={
                 <RequireOwner title="Inventory Insights">
-                  <InventoryInsightsScreen />
+                  <RequireEntitlement feature="smart_insights" title="Inventory Intelligence"><InventoryInsightsScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -206,7 +207,7 @@ export default function App() {
               path="/finance"
               element={
                 <RequireOwner title="Financial Analysis">
-                  <FinancialAnalysisScreen />
+                  <RequireEntitlement feature="advanced_reports" title="Financial Analysis"><FinancialAnalysisScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -215,7 +216,7 @@ export default function App() {
               path="/trends"
               element={
                 <RequireOwner title="Business Trends">
-                  <BusinessTrendsScreen />
+                  <RequireEntitlement feature="advanced_analytics" title="Business Trends"><BusinessTrendsScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -224,7 +225,7 @@ export default function App() {
               path="/advisor"
               element={
                 <RequireOwner title="AI Advisor">
-                  <AdvisorScreen />
+                  <RequireEntitlement feature="smart_insights" title="AI Advisor"><AdvisorScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -233,7 +234,7 @@ export default function App() {
               path="/duka-ai"
               element={
                 <RequireOwner title="Duka AI">
-                  <DukaAIScreen />
+                  <RequireEntitlement feature="smart_insights" title="Duka AI"><DukaAIScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />
@@ -280,7 +281,7 @@ export default function App() {
               path="/employee-performance"
               element={
                 <RequireOwner title="Employee Performance">
-                  <EmployeePerformanceScreen />
+                  <RequireEntitlement feature="employees" title="Employee Performance"><EmployeePerformanceScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />

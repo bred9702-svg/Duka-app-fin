@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import ScreenContainer from '../components/layout/ScreenContainer'
 import Icon from '../components/ui/Icon'
+import useAppStore from '../store/useAppStore'
 
 const ITEMS = [
   {
@@ -9,6 +10,7 @@ const ITEMS = [
     icon: 'barChart',
     color: '#5B9FF0',
     path: '/analytics',
+    feature: 'advanced_analytics',
   },
   {
     title: 'Inventory Intelligence',
@@ -16,6 +18,7 @@ const ITEMS = [
     icon: 'package',
     color: '#5FD97A',
     path: '/inventory',
+    feature: 'smart_insights',
   },
   {
     title: 'Financial Analysis',
@@ -23,6 +26,7 @@ const ITEMS = [
     icon: 'cash',
     color: '#F0A93D',
     path: '/finance',
+    feature: 'advanced_reports',
   },
   {
     title: 'Business Trends',
@@ -30,6 +34,7 @@ const ITEMS = [
     icon: 'trendingUp',
     color: '#7C5CFC',
     path: '/trends',
+    feature: 'advanced_analytics',
   },
   {
     title: 'AI Advisor',
@@ -37,6 +42,7 @@ const ITEMS = [
     icon: 'bell',
     color: '#FF6B5B',
     path: '/advisor',
+    feature: 'smart_insights',
   },
   {
     title: 'Duka AI',
@@ -44,11 +50,13 @@ const ITEMS = [
     icon: 'star',
     color: '#F0A93D',
     path: '/duka-ai',
+    feature: 'smart_insights',
   },
 ]
 
 export default function InsightsScreen() {
   const navigate = useNavigate()
+  const entitlements = useAppStore((state) => state.session?.entitlements || {})
 
   return (
     <ScreenContainer>
@@ -162,6 +170,24 @@ export default function InsightsScreen() {
                   {item.subtitle}
                 </div>
               </div>
+
+              {entitlements[item.feature] !== true && (
+                <span
+                  style={{
+                    padding: '3px 7px',
+                    borderRadius: 7,
+                    background: 'rgba(240,169,61,.13)',
+                    border: '1px solid rgba(240,169,61,.22)',
+                    color: '#F0A93D',
+                    fontSize: 8,
+                    fontWeight: 750,
+                    textTransform: 'uppercase',
+                    letterSpacing: '.06em',
+                  }}
+                >
+                  Pro
+                </span>
+              )}
 
               <Icon
                 name="chevronRight"
