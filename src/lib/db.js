@@ -55,6 +55,37 @@ export async function recordStockPurchase({
   return data
 }
 
+export async function getStockPurchases(limit = 100) {
+  const { data, error } = await supabase
+    .from('stock_purchases')
+    .select(`
+      id,
+      purchase_date,
+      supplier,
+      notes,
+      total_investment,
+      expected_revenue,
+      expected_profit,
+      linked_transaction_id,
+      created_at,
+      items:stock_purchase_items(
+        id,
+        product_id,
+        quantity,
+        purchase_price,
+        unit_price,
+        stock_before,
+        stock_after,
+        product:products(name)
+      )
+    `)
+    .order('purchase_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data || []
+}
+
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
   const { data, error } = await supabase.rpc('finalize_sale_atomic', {
     target_transaction_id: transactionId,

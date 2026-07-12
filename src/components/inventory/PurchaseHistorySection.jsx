@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { fmtKES } from '../../utils/formatters'
+import { getStockPurchases } from '../../lib/db'
 
 function fmtPurchaseDate(iso) {
   try {
@@ -9,23 +10,33 @@ function fmtPurchaseDate(iso) {
   }
 }
 
-/**
- * PurchaseHistorySection — reads the merchant's actual recorded purchases
- * (saved by recordPurchase in the store) from localStorage. No mock data —
- * shows nothing if no purchase has ever been made.
- */
 export default function PurchaseHistorySection() {
   const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('duka-purchase-history')
-      setHistory(raw ? JSON.parse(raw) : [])
-    } catch {
-      setHistory([])
-    }
+    let active = true
+    getStockPurchases()
+      .then((records) => {
+        if (active) setHistory(records)
+      })
+      .catch((loadError) => {
+        console.error('Load purchase history failed:', loadError)
+        if (active) setError('Could not load purchase history.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
   }, [])
 
+  if (loading) {
+    return <p style={{ margin: '10px 0', fontSize: 10, color: 'var(--text-low)' }}>Loading purchase history...</p>
+  }
+  if (error) {
+    return <p style={{ margin: '10px 0', fontSize: 10, color: '#FF6B5B' }}>{error}</p>
+  }
   if (history.length === 0) return null
 
   return (
@@ -39,11 +50,13 @@ export default function PurchaseHistorySection() {
       </p>
 
       {history.map((record) => {
-        const margin = record.expectedRevenue > 0
-          ? Math.round((record.expectedProfit / record.expectedRevenue) * 100)
+        const expectedRevenue = Number(record.expected_revenue) || 0
+        const expectedProfit = Number(record.expected_profit) || 0
+        const margin = expectedRevenue > 0
+          ? Math.round((expectedProfit / expectedRevenue) * 100)
           : 0
         const productSummary = (record.items || [])
-          .map((it) => `${it.name} ×${it.quantity}`)
+          .map((item) => `${item.product?.name || 'Product'} ×${item.quantity}`)
           .join(', ')
 
         return (
@@ -59,14 +72,14 @@ export default function PurchaseHistorySection() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
               <div>
                 <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)' }}>
-                  {fmtPurchaseDate(record.date)}
+                  {fmtPurchaseDate(record.purchase_date || record.created_at)}
                 </p>
                 {record.supplier && (
                   <p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 2 }}>{record.supplier}</p>
                 )}
               </div>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: '#F0A93D' }}>
-                {fmtKES(record.totalInvestment)} KES
+                {fmtKES(record.total_investment)} KES
               </p>
             </div>
 
@@ -81,13 +94,13 @@ export default function PurchaseHistorySection() {
               <div>
                 <p style={{ fontSize: 8, color: 'var(--text-low)', marginBottom: 2 }}>Expected Revenue</p>
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: 'var(--text-hi)' }}>
-                  {fmtKES(record.expectedRevenue)}
+                  {fmtKES(expectedRevenue)}
                 </p>
               </div>
               <div>
                 <p style={{ fontSize: 8, color: 'var(--text-low)', marginBottom: 2 }}>Expected Profit</p>
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: '#5FD97A' }}>
-                  {fmtKES(record.expectedProfit)}
+                  {fmtKES(expectedProfit)}
                 </p>
               </div>
               <div>

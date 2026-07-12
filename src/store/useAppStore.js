@@ -583,7 +583,6 @@ bootstrap: async () => {
 
       await get().refreshTodayStats()
 
-      // Local purchase history record (no dedicated backend table yet)
       const record = {
         id: result.purchase?.id || `purchase-${Date.now()}`,
         date: result.purchase?.purchase_date || purchaseDate || new Date().toISOString(),
@@ -596,14 +595,6 @@ bootstrap: async () => {
         linkedTransactionId,
         budget,
       }
-      try {
-        const key = 'duka-purchase-history'
-        const existing = JSON.parse(localStorage.getItem(key) || '[]')
-        localStorage.setItem(key, JSON.stringify([record, ...existing].slice(0, 100)))
-      } catch (e) {
-        console.error('Purchase history save error:', e)
-      }
-
       return record
     } catch (err) {
       console.error('Record purchase error:', err)
