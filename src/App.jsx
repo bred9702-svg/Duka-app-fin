@@ -32,6 +32,7 @@ import HelpScreen from './screens/settings/HelpScreen'
 import FAQScreen from './screens/settings/FAQScreen'
 import TermsScreen from './screens/settings/TermsScreen'
 import PrivacyScreen from './screens/settings/PrivacyScreen'
+import AccountScreen from './screens/settings/AccountScreen'
 
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
@@ -318,6 +319,7 @@ export default function App() {
             <Route path="/faq" element={<FAQScreen />} />
             <Route path="/terms" element={<TermsScreen />} />
             <Route path="/privacy" element={<PrivacyScreen />} />
+            <Route path="/account" element={<AccountScreen />} />
           </Routes>
         </FadeIn>
       </div>
