@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SubScreenHeader from '../../components/layout/SubScreenHeader'
 import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
-
-const STORAGE_KEY = 'duka-shop-profile'
+import { getShopProfile } from '../../lib/shop'
 
 const DEFAULTS = {
   name: 'My Wines & Spirits',
@@ -17,32 +16,15 @@ const DEFAULTS = {
 }
 
 function loadProfile(session) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    const stored = raw ? JSON.parse(raw) : {}
-
-    return {
-      ...DEFAULTS,
-      ...stored,
-      name: stored.name || session?.shopName || DEFAULTS.name,
-      type: stored.type || session?.shopType || DEFAULTS.type,
-      phone: stored.phone || session?.phone || DEFAULTS.phone,
-      address: stored.address || session?.shopAddress || DEFAULTS.address,
-      city: stored.city || session?.shopCity || DEFAULTS.city,
-      timezone: stored.timezone || session?.shopTimezone || DEFAULTS.timezone,
-      logo: stored.logo || session?.shopLogo || session?.photo || null,
-    }
-  } catch {
-    return {
-      ...DEFAULTS,
-      name: session?.shopName || DEFAULTS.name,
-      type: session?.shopType || DEFAULTS.type,
-      phone: session?.phone || DEFAULTS.phone,
-      address: session?.shopAddress || DEFAULTS.address,
-      city: session?.shopCity || DEFAULTS.city,
-      timezone: session?.shopTimezone || DEFAULTS.timezone,
-      logo: session?.shopLogo || session?.photo || null,
-    }
+  return {
+    ...DEFAULTS,
+    name: session?.shopName || DEFAULTS.name,
+    type: session?.shopType || DEFAULTS.type,
+    phone: session?.phone || DEFAULTS.phone,
+    address: session?.shopAddress || DEFAULTS.address,
+    city: session?.shopCity || DEFAULTS.city,
+    timezone: session?.shopTimezone || DEFAULTS.timezone,
+    logo: session?.shopLogo || session?.photo || null,
   }
 }
 
@@ -110,6 +92,30 @@ export default function ShopProfileScreen() {
   const fileInputRef = useRef(null)
   const [profile, setProfile] = useState(() => loadProfile(session))
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [logoFile, setLogoFile] = useState(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!session?.shopId) return
+    getShopProfile(session.shopId)
+      .then((shop) => {
+        setProfile({
+          name: shop.name || DEFAULTS.name,
+          type: shop.shop_type || DEFAULTS.type,
+          phone: shop.phone || '',
+          address: shop.address || '',
+          city: shop.city || '',
+          currency: shop.currency || 'KES',
+          timezone: shop.timezone || DEFAULTS.timezone,
+          logo: shop.logo_url || null,
+        })
+      })
+      .catch((loadError) => {
+        console.error('Load shop profile failed:', loadError)
+        setError('Could not refresh the shop profile.')
+      })
+  }, [session?.shopId])
 
   function update(field, value) {
     setProfile((current) => ({
@@ -123,6 +129,13 @@ export default function ShopProfileScreen() {
     const file = event.target.files?.[0]
     if (!file) return
 
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setError('Use a JPG, PNG or WebP logo smaller than 2 MB.')
+      return
+    }
+    setLogoFile(file)
+    setError('')
+
     const reader = new FileReader()
 
     reader.onload = () => {
@@ -132,7 +145,8 @@ export default function ShopProfileScreen() {
     reader.readAsDataURL(file)
   }
 
-  function save() {
+  async function save() {
+    if (saving) return
     const cleanedProfile = {
       ...profile,
       name: profile.name?.trim() || DEFAULTS.name,
@@ -145,12 +159,30 @@ export default function ShopProfileScreen() {
       logo: profile.logo || null,
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanedProfile))
-    updateShopProfile(cleanedProfile)
-
-    setProfile(cleanedProfile)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setSaving(true)
+    setError('')
+    try {
+      const shop = await updateShopProfile(cleanedProfile, logoFile)
+      setProfile({
+        ...cleanedProfile,
+        name: shop.name,
+        type: shop.shop_type,
+        phone: shop.phone || '',
+        address: shop.address || '',
+        city: shop.city || '',
+        timezone: shop.timezone,
+        currency: shop.currency,
+        logo: shop.logo_url || null,
+      })
+      setLogoFile(null)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (saveError) {
+      console.error('Save shop profile failed:', saveError)
+      setError(saveError.message || 'Could not save the shop profile.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -335,23 +367,30 @@ export default function ShopProfileScreen() {
 
         <button
           onClick={save}
+          disabled={saving}
           style={{
             width: '100%',
             marginTop: 8,
             padding: '13px',
             borderRadius: 12,
             border: 'none',
-            cursor: 'pointer',
+            cursor: saving ? 'wait' : 'pointer',
             fontFamily: 'var(--font-display)',
             fontSize: 13,
             fontWeight: 700,
             color: '#0F1117',
             background: saved ? '#5FD97A' : '#F0A93D',
+            opacity: saving ? 0.65 : 1,
             transition: 'background .2s',
           }}
         >
-          {saved ? 'Saved ✓' : 'Save changes'}
+          {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save changes'}
         </button>
+        {error && (
+          <p style={{ margin: '10px 2px 0', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )

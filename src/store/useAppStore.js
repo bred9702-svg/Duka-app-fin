@@ -20,6 +20,7 @@ import {
   restoreAccount,
   signOutAccount,
 } from '../lib/auth'
+import { saveShopProfile } from '../lib/shop'
 
 function loadSession() {
   try {
@@ -297,6 +298,33 @@ completeOnboarding: () => {
     localStorage.setItem('duka-session', JSON.stringify(session))
     return { session }
   })
+},
+
+updateShopProfile: async (profile, logoFile = null) => {
+  const currentSession = get().session
+  if (!currentSession?.shopId || !currentSession?.authUserId) {
+    throw new Error('No active Owner shop is available.')
+  }
+
+  const shop = await saveShopProfile({
+    shopId: currentSession.shopId,
+    userId: currentSession.authUserId,
+    profile,
+    logoFile,
+  })
+
+  const session = {
+    ...currentSession,
+    shopName: shop.name,
+    shopType: shop.shop_type,
+    shopAddress: shop.address,
+    shopCity: shop.city,
+    shopTimezone: shop.timezone,
+    shopLogo: shop.logo_url,
+  }
+  localStorage.setItem('duka-session', JSON.stringify(session))
+  set({ session })
+  return shop
 },
 
 signOut: async () => {
