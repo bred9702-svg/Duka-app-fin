@@ -154,6 +154,24 @@ export async function updateProductPrice(productId, unitPrice) {
   return unitPrice
 }
 
+export async function recordStockPurchase({
+  items,
+  supplier = null,
+  purchaseDate = null,
+  notes = null,
+  linkedTransactionId = null,
+}) {
+  const { data, error } = await supabase.rpc('record_stock_purchase_atomic', {
+    purchase_items: items,
+    supplier_name: supplier || null,
+    purchased_on: purchaseDate || new Date().toISOString().slice(0, 10),
+    purchase_notes: notes || null,
+    target_transaction_id: linkedTransactionId,
+  })
+  if (error) throw error
+  return data
+}
+
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
   const { data, error } = await supabase.rpc('finalize_sale_atomic', {
     target_transaction_id: transactionId,

@@ -9,9 +9,7 @@ import {
   addNewCustomer,
   getProducts,
   getTodayStats,
-  addStock,
-  updateStock,
-  updateProductPrice,
+  recordStockPurchase as dbRecordStockPurchase,
   completeSalePayment,
   createDebtSale as dbCreateDebtSale,
   addProduct,
@@ -523,32 +521,27 @@ bootstrap: async () => {
 
   recordPurchase: async ({ items, supplier, purchaseDate, notes, linkedTransactionId = null, budget = null }) => {
     try {
-      const totalInvestment = items.reduce((a, it) => a + it.purchasePrice * it.quantity, 0)
-      const expectedRevenue = items.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
-      const expectedProfit = expectedRevenue - totalInvestment
-
-      // Increase stock for every line item, one product at a time
-      const updatedStocks = {}
-      const updatedPrices = {}
-      for (const item of items) {
-        const newStock = await addStock(item.productId, item.quantity)
-        updatedStocks[item.productId] = newStock
-
-        if (item.priceChanged) {
-          await updateProductPrice(item.productId, item.unitPrice)
-          updatedPrices[item.productId] = item.unitPrice
-        }
-      }
+      const result = await dbRecordStockPurchase({
+        items,
+        supplier,
+        purchaseDate,
+        notes,
+        linkedTransactionId,
+      })
+      const totalInvestment = Number(result.totalInvestment) || 0
+      const expectedRevenue = Number(result.expectedRevenue) || 0
+      const expectedProfit = Number(result.expectedProfit) || 0
+      const productsById = new Map((result.products || []).map((product) => [product.id, product]))
 
       set((s) => ({
-        products: s.products.map((p) => {
-          if (!(p.id in updatedStocks)) return p
-          return {
-            ...p,
-            stock_current: updatedStocks[p.id],
-            ...(p.id in updatedPrices ? { unit_price: updatedPrices[p.id] } : {}),
-          }
-        }),
+        products: s.products.map((product) =>
+          productsById.has(product.id)
+            ? { ...product, ...productsById.get(product.id) }
+            : product
+        ),
+        transactions: linkedTransactionId
+          ? s.transactions
+          : [result.transaction, ...s.transactions],
       }))
 
       if (linkedTransactionId) {
@@ -565,24 +558,6 @@ bootstrap: async () => {
           console.error('Pending purchase cleanup error:', e)
         }
       } else {
-        // Standalone purchase (not started from Cash Out) — record its own
-        // expense, using the exact same transaction shape as the proven
-        // working Cash In/Out flow.
-     const attribution = getSessionUserAttribution(get().session)
-const savedTxn = await dbAddTransaction({
-  amount: totalInvestment,
-  source: 'cash',
-  direction: 'out',
-  classified: true,
-  operation_type: 'expense',
-  expense_category: 'stock',
-  mpesa_sender_name: null,
-  mpesa_sender_phone: null,
-  mpesa_reference: null,
-  ...attribution,
-})
-        set((s) => ({ transactions: [savedTxn, ...s.transactions] }))
-
         if (get().notificationSettings.stockPurchaseAlerts !== false) {
           get().addNotification({
             type: 'stock_purchase',
@@ -596,8 +571,8 @@ const savedTxn = await dbAddTransaction({
 
       // Local purchase history record (no dedicated backend table yet)
       const record = {
-        id: `purchase-${Date.now()}`,
-        date: purchaseDate || new Date().toISOString(),
+        id: result.purchase?.id || `purchase-${Date.now()}`,
+        date: result.purchase?.purchase_date || purchaseDate || new Date().toISOString(),
         supplier: supplier || null,
         notes: notes || null,
         items,
