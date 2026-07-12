@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import Icon from '../components/ui/Icon'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
 import useAppStore from '../store/useAppStore'
-import { getEmployees } from '../lib/db'
 import {
   buildEmployeeInviteLink,
-  createEmployeeInvite,
-  createShopId,
-  getEmployeeInvites,
-} from '../utils/employeeInvitations'
+  createEmployeeInvitation,
+  getShopTeam,
+  listEmployeeInvitations,
+  revokeEmployeeInvitation,
+} from '../lib/invitations'
 
 function InviteInfo({ label, value }) {
   return (
@@ -33,41 +33,55 @@ function InviteInfo({ label, value }) {
 
 export default function EmployeesScreen() {
   const session = useAppStore((s) => s.session)
-  const [invite, setInvite] = useState(() => getEmployeeInvites()[0] || null)
+  const [invite, setInvite] = useState(null)
   const [copied, setCopied] = useState(false)
   const [employees, setEmployees] = useState([])
   const [loadingEmployees, setLoadingEmployees] = useState(true)
+  const [working, setWorking] = useState(false)
+  const [screenError, setScreenError] = useState('')
 
-  const shopId = createShopId(session?.shopName, session?.name)
+  const shopId = session?.shopId
 
   useEffect(() => {
     let cancelled = false
     setLoadingEmployees(true)
-    getEmployees(shopId).then((data) => {
+    if (!shopId) return undefined
+    Promise.all([getShopTeam(shopId), listEmployeeInvitations(shopId)]).then(([team, invitations]) => {
       if (!cancelled) {
-        setEmployees(data)
+        setEmployees(team)
+        setInvite(invitations.find((item) => item.status === 'pending' && new Date(item.expires_at) > new Date()) || null)
         setLoadingEmployees(false)
       }
+    }).catch((error) => {
+      if (!cancelled) { setScreenError(error.message); setLoadingEmployees(false) }
     })
     return () => {
       cancelled = true
     }
   }, [shopId])
 
-  function createInvite() {
-    const nextInvite = createEmployeeInvite({
-      shopName: session?.shopName,
-      ownerName: session?.name,
-    })
+  async function createInvite() {
+    setWorking(true); setScreenError('')
+    try {
+      const nextInvite = await createEmployeeInvitation(shopId)
+      setInvite({ ...nextInvite, shopName: session?.shopName })
+      setCopied(false)
+    } catch (error) { setScreenError(error.message) }
+    finally { setWorking(false) }
+  }
 
-    setInvite(nextInvite)
-    setCopied(false)
+  async function revokeInvite() {
+    if (!invite) return
+    setWorking(true); setScreenError('')
+    try { await revokeEmployeeInvitation(invite.id); setInvite(null) }
+    catch (error) { setScreenError(error.message) }
+    finally { setWorking(false) }
   }
 
   async function copyInvite() {
     if (!invite) return
 
-    const link = invite.link || buildEmployeeInviteLink(invite.code)
+    const link = buildEmployeeInviteLink(invite.code)
     const text = `Join ${invite.shopName || 'my Duka shop'} using this invitation code: ${invite.code}\n${link}`
 
     try {
@@ -84,7 +98,7 @@ export default function EmployeesScreen() {
     await navigator.share({
       title: 'Duka Employee Invitation',
       text: `Join ${invite.shopName || 'my Duka shop'} using invitation code ${invite.code}`,
-      url: invite.link || buildEmployeeInviteLink(invite.code),
+      url: buildEmployeeInviteLink(invite.code),
     })
   }
 
@@ -148,7 +162,7 @@ export default function EmployeesScreen() {
             </p>
             {employees.map((employee) => (
               <div
-                key={employee.employee_id}
+                key={employee.user_id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -173,7 +187,7 @@ export default function EmployeesScreen() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 12, fontWeight: 650, color: 'var(--text-hi)' }}>
-                    {employee.name || 'Employee'}
+                    {employee.full_name || 'Employee'}
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
                     {employee.phone || 'No phone on file'}
@@ -223,10 +237,11 @@ export default function EmployeesScreen() {
           >
             <InviteInfo label="Shop" value={invite.shopName || 'Duka Shop'} />
             <InviteInfo label="Invitation code" value={invite.code} />
-            <InviteInfo label="Invitation link" value={invite.link || buildEmployeeInviteLink(invite.code)} />
+            <InviteInfo label="Invitation link" value={buildEmployeeInviteLink(invite.code)} />
+            <InviteInfo label="Expires" value={new Date(invite.expires_at).toLocaleString()} />
 
             <p style={{ margin: '4px 0 0', fontSize: 10, color: 'var(--text-low)', lineHeight: 1.5 }}>
-              This only creates an invitation. Employee registration, permissions, and analytics are not active yet.
+              This code can be used once and expires after seven days.
             </p>
           </div>
         )}
@@ -234,6 +249,7 @@ export default function EmployeesScreen() {
         <button
           type="button"
           onClick={createInvite}
+          disabled={working}
           style={{
             width: '100%',
             marginTop: 12,
@@ -253,7 +269,7 @@ export default function EmployeesScreen() {
           }}
         >
           <Icon name="plus" size={15} color="#06121F" />
-          {invite ? 'Generate New Invite' : 'Invite Employee'}
+          {working ? 'Please wait...' : invite ? 'Generate New Invite' : 'Invite Employee'}
         </button>
 
         {invite && (
@@ -297,6 +313,9 @@ export default function EmployeesScreen() {
             )}
           </div>
         )}
+
+        {invite && <button type="button" onClick={revokeInvite} disabled={working} style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 12, border: '1px solid rgba(255,107,91,.25)', background: 'rgba(255,107,91,.08)', color: '#FF6B5B', cursor: 'pointer' }}>Revoke Invitation</button>}
+        {screenError && <p style={{ margin: '10px 0 0', fontSize: 11, color: '#FF6B5B' }}>{screenError}</p>}
       </div>
     </div>
   )

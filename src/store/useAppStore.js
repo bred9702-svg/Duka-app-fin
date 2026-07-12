@@ -17,9 +17,10 @@ import {
 } from '../lib/db'
 import {
   registerOwnerAccount,
-  signInOwnerAccount,
-  restoreOwnerAccount,
-  signOutOwnerAccount,
+  registerEmployeeAccount,
+  signInAccount,
+  restoreAccount,
+  signOutAccount,
 } from '../lib/auth'
 
 function loadSession() {
@@ -276,34 +277,19 @@ registerOwner: async (data) => {
   return registerOwnerAccount(data)
 },
 
-signIn: async (data) => {
-  if ((data.role || 'owner') === 'owner') {
-    const result = await signInOwnerAccount(data)
-    localStorage.setItem('duka-session', JSON.stringify(result.session))
-    set({ session: result.session, error: null })
-    await get().bootstrap()
-    return result
-  }
+registerEmployee: async (data) => {
+  clearLocalAppData()
+  localStorage.removeItem('duka-session')
+  set({ session: null, error: null })
+  return registerEmployeeAccount(data)
+},
 
-  const session = {
-    role: data.role || 'owner',
-    name: data.name || data.employeeName || 'Shop Owner',
-    phone: data.phone,
-    shopName: data.shopName || null,
-    shopAddress: data.shopAddress || null,
-    photo: null,
-    isOnboarded: true,
-    ...(data.employeeId ? { employeeId: data.employeeId } : {}),
-    ...(data.employeeName ? { employeeName: data.employeeName } : {}),
-    ...(data.shopId ? { shopId: data.shopId } : {}),
-  }
-  localStorage.setItem('duka-session', JSON.stringify(session))
-  set({ session })
-  // signOut() empties products/transactions/customers — reload them now
-  // that a session is active again, since bootstrap() only runs once
-  // on initial app mount.
+signIn: async (data) => {
+  const result = await signInAccount(data)
+  localStorage.setItem('duka-session', JSON.stringify(result.session))
+  set({ session: result.session, error: null })
   await get().bootstrap()
-  return { session }
+  return result
 },
 
 completeOnboarding: () => {
@@ -316,12 +302,10 @@ completeOnboarding: () => {
 },
 
 signOut: async () => {
-  if (get().session?.role === 'owner') {
-    try {
-      await signOutOwnerAccount()
-    } catch (error) {
-      console.error('Supabase sign out failed:', error)
-    }
+  try {
+    await signOutAccount()
+  } catch (error) {
+    console.error('Supabase sign out failed:', error)
   }
   localStorage.removeItem('duka-session')
   clearLocalAppData()
@@ -352,19 +336,11 @@ bootstrap: async () => {
   })
   set({ loading: true, error: null })
     try {
-      const cachedSession = loadSession()
-      let session = cachedSession
+      const accountContext = await restoreAccount()
+      const session = accountContext?.session || null
 
-      if (cachedSession?.role !== 'employee') {
-        const ownerContext = await restoreOwnerAccount()
-        session = ownerContext?.session || null
-
-        if (session) {
-          localStorage.setItem('duka-session', JSON.stringify(session))
-        } else {
-          localStorage.removeItem('duka-session')
-        }
-      }
+      if (session) localStorage.setItem('duka-session', JSON.stringify(session))
+      else localStorage.removeItem('duka-session')
 
       set({ session })
 

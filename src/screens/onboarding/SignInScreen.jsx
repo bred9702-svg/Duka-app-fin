@@ -3,23 +3,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
-import { getEmployeeInviteByCode, normalizeInviteCode, saveJoinedEmployee } from '../../utils/employeeInvitations'
-
-function createEmployeeId(inviteCode) {
-  const normalizedCode = normalizeInviteCode(inviteCode)
-  return `employee-${normalizedCode || Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
+import { normalizeInviteCode, previewEmployeeInvitation } from '../../lib/invitations'
 
 export default function SignInScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const signIn = useAppStore((s) => s.signIn)
+  const registerEmployee = useAppStore((s) => s.registerEmployee)
 
   const inviteFromLink = normalizeInviteCode(searchParams.get('invite') || '')
   const startsInJoinMode = searchParams.get('mode') === 'join' || Boolean(inviteFromLink)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState(startsInJoinMode ? 'employee' : 'owner')
   const [inviteCode, setInviteCode] = useState(inviteFromLink)
   const [inviteError, setInviteError] = useState('')
@@ -31,11 +28,14 @@ export default function SignInScreen() {
 
   const shouldCheckEmail = searchParams.get('checkEmail') === '1'
   const emailConfirmed = searchParams.get('confirmed') === '1'
+  const isConfirmedJoin = isJoinMode && emailConfirmed
 
   const isJoinMode = role === 'employee'
   const isCreatingEmployeeProfile = isJoinMode && Boolean(validatedInvite)
   const canSubmit = isCreatingEmployeeProfile
-    ? employeeName.trim().length > 0 && employeePhone.trim().length > 0
+    ? isConfirmedJoin
+      ? email.trim().length > 0 && password.length >= 8 && !submitting
+      : employeeName.trim().length > 0 && employeePhone.trim().length > 0 && email.trim().length > 0 && password.length >= 8 && password === confirmPassword && !submitting
     : isJoinMode
       ? inviteCode.trim().length > 0
       : email.trim().length > 0 && password.length >= 8 && !submitting
@@ -46,32 +46,30 @@ export default function SignInScreen() {
 
     if (isJoinMode) {
       if (!validatedInvite) {
-        const invite = getEmployeeInviteByCode(inviteCode)
-
-        if (!invite) {
+        try {
+          const invite = await previewEmployeeInvitation(inviteCode)
+          setValidatedInvite(invite)
+          setInviteError('')
+        } catch {
           setInviteError('Invalid invitation code. Ask the shop owner to send a new invite.')
-          return
         }
-
-        setValidatedInvite(invite)
-        setInviteError('')
         return
       }
 
       const normalizedCode = normalizeInviteCode(validatedInvite.code || inviteCode)
-      const employeeProfile = saveJoinedEmployee({
-        role: 'employee',
-        employeeId: createEmployeeId(normalizedCode),
-        employeeName: employeeName.trim(),
-        name: employeeName.trim(),
-        phone: employeePhone.trim(),
-        shopId: validatedInvite.shopId || normalizedCode,
-        shopName: validatedInvite.shopName,
-        shopAddress: null,
-      })
-
-      await signIn(employeeProfile)
-      navigate('/', { replace: true })
+      setSubmitting(true)
+      try {
+        if (isConfirmedJoin) {
+          await signIn({ email: email.trim(), password, role: 'employee', inviteCode: normalizedCode })
+          navigate('/', { replace: true })
+        } else {
+          await registerEmployee({ name: employeeName.trim(), email: email.trim(), phone: employeePhone.trim(), password, inviteCode: normalizedCode })
+          navigate(`/sign-in?mode=join&invite=${encodeURIComponent(normalizedCode)}&checkEmail=1`, { replace: true })
+        }
+      } catch (error) {
+        setAuthError(error?.message || 'Unable to continue right now.')
+        setSubmitting(false)
+      }
       return
     }
 
@@ -227,8 +225,7 @@ export default function SignInScreen() {
                 </p>
               </div>
 
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Full Name</p>
-              <input
+              {!isConfirmedJoin && <><p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Full Name</p><input
                 type="text"
                 value={employeeName}
                 onChange={(e) => setEmployeeName(e.target.value)}
@@ -238,9 +235,9 @@ export default function SignInScreen() {
                   borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
                   fontFamily: 'inherit', outline: 'none', marginBottom: 14,
                 }}
-              />
+              /></>}
 
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
+              {!isConfirmedJoin && <><p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
               <input
                 type="tel"
                 value={employeePhone}
@@ -251,7 +248,14 @@ export default function SignInScreen() {
                   borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
                   fontFamily: 'inherit', outline: 'none', marginBottom: 14,
                 }}
-              />
+              /></>}
+
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Email Address</p>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />
+              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Password</p>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={isConfirmedJoin ? 'current-password' : 'new-password'} style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />
+              {!isConfirmedJoin && <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" autoComplete="new-password" style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />}
+              {authError && <p style={{ margin: '0 0 12px', fontSize: 11, color: '#FF6B5B' }}>{authError}</p>}
             </>
           )}
 
@@ -318,7 +322,7 @@ export default function SignInScreen() {
               opacity: canSubmit ? 1 : 0.4, transition: 'opacity 200ms ease',
             }}
           >
-            {isCreatingEmployeeProfile ? 'Create Profile' : isJoinMode ? 'Continue' : submitting ? 'Signing In...' : 'Sign In'}
+            {isCreatingEmployeeProfile ? (submitting ? 'Please wait...' : isConfirmedJoin ? 'Join Shop' : 'Create Employee Account') : isJoinMode ? 'Continue' : submitting ? 'Signing In...' : 'Sign In'}
           </button>
         </FadeIn>
       </div>
