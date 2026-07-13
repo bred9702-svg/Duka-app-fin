@@ -4,6 +4,12 @@ import useAppStore from '../store/useAppStore'
 
 const SECTIONS = [
   {
+    title: 'Billing',
+    items: [
+      { label: 'Subscription & Billing', icon: 'star', color: '#F0A93D', path: '/subscription' },
+    ],
+  },
+  {
     title: 'Business',
     items: [
       { label: 'Shop Profile', icon: 'store', color: '#5FD97A', path: '/shop' },
@@ -125,7 +131,7 @@ export default function MeScreen() {
   const signOut = useAppStore((s) => s.signOut)
   const trialDaysRemaining = getTrialDaysRemaining(session)
   const visibleSections = session?.role === 'employee'
-    ? SECTIONS.map((section) => section.title === 'Business'
+    ? SECTIONS.map((section) => ['Business', 'Billing'].includes(section.title)
       ? { ...section, items: [] }
       : section)
         .filter((section) => section.items.length > 0)
@@ -253,8 +259,9 @@ export default function MeScreen() {
           </div>
         </div>
 
-        {trialDaysRemaining !== null && (
+        {session?.role !== 'employee' && (
           <div
+            onClick={() => navigate('/subscription')}
             style={{
               marginTop: 10,
               padding: '12px 14px',
@@ -265,14 +272,19 @@ export default function MeScreen() {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 12,
+              cursor: 'pointer',
             }}
           >
             <div>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: '#F0A93D', margin: 0 }}>
-                Pro Trial
+                {session?.subscriptionStatus === 'active' ? 'Dukwise Pro' : trialDaysRemaining !== null ? 'Pro Trial' : 'Dukwise Free'}
               </p>
               <p style={{ fontSize: 11, color: 'var(--text-low)', marginTop: 3 }}>
-                {trialDaysRemaining} day{trialDaysRemaining === 1 ? '' : 's'} remaining
+                {session?.subscriptionStatus === 'active'
+                  ? 'Active subscription'
+                  : trialDaysRemaining !== null
+                    ? `${trialDaysRemaining} day${trialDaysRemaining === 1 ? '' : 's'} remaining`
+                    : 'View plans and upgrade'}
               </p>
             </div>
             <Icon name="star" size={20} color="#F0A93D" />

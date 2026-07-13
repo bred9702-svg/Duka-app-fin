@@ -33,6 +33,7 @@ import FAQScreen from './screens/settings/FAQScreen'
 import TermsScreen from './screens/settings/TermsScreen'
 import PrivacyScreen from './screens/settings/PrivacyScreen'
 import AccountScreen from './screens/settings/AccountScreen'
+import SubscriptionScreen from './screens/settings/SubscriptionScreen'
 
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
@@ -320,6 +321,14 @@ export default function App() {
             <Route path="/terms" element={<TermsScreen />} />
             <Route path="/privacy" element={<PrivacyScreen />} />
             <Route path="/account" element={<AccountScreen />} />
+            <Route
+              path="/subscription"
+              element={
+                <RequireOwner title="Subscription">
+                  <SubscriptionScreen />
+                </RequireOwner>
+              }
+            />
           </Routes>
         </FadeIn>
       </div>
