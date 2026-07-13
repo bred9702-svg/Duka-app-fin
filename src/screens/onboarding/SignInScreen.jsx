@@ -1,9 +1,50 @@
-import { useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import useAppStore from '../../store/useAppStore'
 import FadeIn from '../../components/animation/FadeIn'
 import { normalizeInviteCode, previewEmployeeInvitation } from '../../lib/invitations'
+
+const AuthInput = memo(function AuthInput({
+  label,
+  value,
+  onValueChange,
+  hasError = false,
+  marginBottom = 14,
+  displayFont = false,
+  letterSpacing,
+  textTransform,
+  ...inputProps
+}) {
+  return (
+    <>
+      {label && (
+        <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>
+          {label}
+        </p>
+      )}
+      <input
+        {...inputProps}
+        value={value}
+        onChange={(event) => onValueChange(event.target.value)}
+        style={{
+          width: '100%',
+          background: 'var(--glass-fill-soft)',
+          border: hasError ? '1px solid rgba(255,107,91,.55)' : '1px solid var(--glass-border)',
+          borderRadius: 10,
+          padding: '11px 12px',
+          fontSize: 13,
+          color: 'var(--text-hi)',
+          fontFamily: displayFont ? 'var(--font-display)' : 'inherit',
+          outline: 'none',
+          marginBottom,
+          letterSpacing,
+          textTransform,
+        }}
+      />
+    </>
+  )
+})
 
 export default function SignInScreen() {
   const navigate = useNavigate()
@@ -82,17 +123,17 @@ export default function SignInScreen() {
     }
   }
 
-  function updateInviteCode(value) {
+  const updateInviteCode = useCallback((value) => {
     setInviteCode(value)
     setInviteError('')
     setValidatedInvite(null)
-  }
+  }, [])
 
-  function switchRole(nextRole) {
+  const switchRole = useCallback((nextRole) => {
     setRole(nextRole)
     setInviteError('')
     setValidatedInvite(null)
-  }
+  }, [])
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '20px 20px 32px', position: 'relative' }}>
@@ -141,32 +182,24 @@ export default function SignInScreen() {
                 </div>
               )}
 
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Email Address</p>
-              <input
+              <AuthInput
+                label="Email Address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onValueChange={setEmail}
                 placeholder="you@example.com"
                 autoComplete="email"
-                style={{
-                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
-                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
-                }}
               />
 
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Password</p>
-              <input
+              <AuthInput
+                label="Password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onValueChange={setPassword}
                 placeholder="Your password"
                 autoComplete="current-password"
-                style={{
-                  width: '100%', background: 'var(--glass-fill-soft)', border: authError ? '1px solid rgba(255,107,91,.55)' : '1px solid var(--glass-border)',
-                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-                  fontFamily: 'inherit', outline: 'none', marginBottom: authError ? 6 : 14,
-                }}
+                hasError={Boolean(authError)}
+                marginBottom={authError ? 6 : 14}
               />
 
               {authError && (
@@ -183,19 +216,18 @@ export default function SignInScreen() {
 
           {isJoinMode && !validatedInvite && (
             <>
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Invitation Code</p>
-              <input
+              <AuthInput
+                label="Invitation Code"
                 type="text"
                 value={inviteCode}
-                onChange={(e) => updateInviteCode(e.target.value)}
+                onValueChange={updateInviteCode}
                 placeholder="DUKWISE-XXXXXX"
                 autoCapitalize="characters"
-                style={{
-                  width: '100%', background: 'var(--glass-fill-soft)', border: inviteError ? '1px solid rgba(255,107,91,0.55)' : '1px solid var(--glass-border)',
-                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-                  fontFamily: 'var(--font-display)', outline: 'none', marginBottom: inviteError ? 6 : 14,
-                  letterSpacing: '0.04em', textTransform: 'uppercase',
-                }}
+                displayFont
+                letterSpacing="0.04em"
+                textTransform="uppercase"
+                hasError={Boolean(inviteError)}
+                marginBottom={inviteError ? 6 : 14}
               />
               {inviteError && (
                 <p style={{ margin: '0 0 14px', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
@@ -224,36 +256,25 @@ export default function SignInScreen() {
                 </p>
               </div>
 
-              {!isConfirmedJoin && <><p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Full Name</p><input
+              {!isConfirmedJoin && <AuthInput
+                label="Full Name"
                 type="text"
                 value={employeeName}
-                onChange={(e) => setEmployeeName(e.target.value)}
+                onValueChange={setEmployeeName}
                 placeholder="Your full name"
-                style={{
-                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
-                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
-                }}
-              /></>}
+              />}
 
-              {!isConfirmedJoin && <><p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Phone Number</p>
-              <input
+              {!isConfirmedJoin && <AuthInput
+                label="Phone Number"
                 type="tel"
                 value={employeePhone}
-                onChange={(e) => setEmployeePhone(e.target.value)}
+                onValueChange={setEmployeePhone}
                 placeholder="+254 7XX XXX XXX"
-                style={{
-                  width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)',
-                  borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)',
-                  fontFamily: 'inherit', outline: 'none', marginBottom: 14,
-                }}
-              /></>}
+              />}
 
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Email Address</p>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />
-              <p style={{ fontSize: 9, color: 'var(--text-low)', marginBottom: 5, fontWeight: 500 }}>Password</p>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={isConfirmedJoin ? 'current-password' : 'new-password'} style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />
-              {!isConfirmedJoin && <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" autoComplete="new-password" style={{ width: '100%', background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: '11px 12px', fontSize: 13, color: 'var(--text-hi)', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }} />}
+              <AuthInput label="Email Address" type="email" value={email} onValueChange={setEmail} placeholder="you@example.com" autoComplete="email" />
+              <AuthInput label="Password" type="password" value={password} onValueChange={setPassword} placeholder="At least 8 characters" autoComplete={isConfirmedJoin ? 'current-password' : 'new-password'} />
+              {!isConfirmedJoin && <AuthInput type="password" value={confirmPassword} onValueChange={setConfirmPassword} placeholder="Confirm password" autoComplete="new-password" />}
               {authError && <p style={{ margin: '0 0 12px', fontSize: 11, color: '#FF6B5B' }}>{authError}</p>}
             </>
           )}

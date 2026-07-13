@@ -423,29 +423,41 @@ bootstrap: async () => {
         return
       }
 
-      const [transactions, customers, products, todayStats] = await Promise.all([
+      // Authentication is enough to release the interface. Business data is
+      // hydrated immediately afterwards without blocking startup or typing.
+      set({ loading: false })
+
+      Promise.all([
         getTransactions(50),
         getCustomers(),
         getProducts(),
         getTodayStats(),
+        getBusinessPreferences(session.shopId).catch((preferencesError) => {
+          console.error('Load Business Preferences failed:', preferencesError)
+          return loadBusinessPreferences()
+        }),
       ])
-      let businessPreferences = loadBusinessPreferences()
-      try {
-        businessPreferences = await getBusinessPreferences(session.shopId)
-        saveBusinessPreferences(businessPreferences)
-      } catch (preferencesError) {
-        console.error('Load Business Preferences failed:', preferencesError)
-      }
-      set({
-        transactions,
-        customers,
-        products,
-        todayStats,
-        businessPreferences,
-        businessPreferencesSaving: false,
-        businessPreferencesError: null,
-        loading: false,
-      })
+        .then(([transactions, customers, products, todayStats, businessPreferences]) => {
+          // Ignore a late response if the user signed out or changed shops.
+          if (get().session?.shopId !== session.shopId) return
+
+          saveBusinessPreferences(businessPreferences)
+          set({
+            transactions,
+            customers,
+            products,
+            todayStats,
+            businessPreferences,
+            businessPreferencesSaving: false,
+            businessPreferencesError: null,
+          })
+        })
+        .catch((dataError) => {
+          console.error('Background shop hydration failed:', dataError)
+          if (get().session?.shopId === session.shopId) {
+            set({ error: dataError.message })
+          }
+        })
     } catch (err) {
       console.error('Bootstrap error:', err)
       set({ error: err.message, loading: false })

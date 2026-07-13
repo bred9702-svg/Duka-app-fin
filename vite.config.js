@@ -12,6 +12,18 @@ export default defineConfig({
       output: {
         entryFileNames: `assets/[name]-[hash]-v2.js`,
         chunkFileNames: `assets/[name]-[hash]-v2.js`,
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('@capacitor')) return 'capacitor'
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router') ||
+            id.includes('/scheduler/')
+          ) return 'react-vendor'
+          return undefined
+        },
       }
     }
   }

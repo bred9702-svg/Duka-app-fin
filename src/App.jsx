@@ -1,41 +1,6 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
-import { Capacitor } from '@capacitor/core'
-import { SplashScreen as NativeSplashScreen } from '@capacitor/splash-screen'
 import useAppStore from './store/useAppStore'
-
-import HomeScreen from './screens/HomeScreen'
-import TransactionsScreen from './screens/TransactionsScreen'
-import ClassifyScreen from './screens/ClassifyScreen'
-import DebtsScreen from './screens/DebtsScreen'
-import CustomerDetailScreen from './screens/CustomerDetailScreen'
-
-import AnalyticsScreen from './screens/AnalyticsScreen'
-import FinancialAnalysisScreen from './screens/FinancialAnalysisScreen'
-import BusinessTrendsScreen from './screens/BusinessTrendsScreen'
-import AdvisorScreen from './screens/AdvisorScreen'
-import DukaAIScreen from './screens/DukaAIScreen'
-import InventoryInvestmentScreen from './screens/InventoryInvestmentScreen'
-import NewSaleScreen from './screens/NewSaleScreen'
-import NewDebtScreen from './screens/NewDebtScreen'
-import InventoryInsightsScreen from './screens/InventoryInsightsScreen'
-import InsightsScreen from './screens/InsightsScreen'
-import MeScreen from './screens/MeScreen'
-import NotificationCenterScreen from './screens/NotificationCenterScreen'
-import EmployeesScreen from './screens/EmployeesScreen'
-import EmployeePerformanceScreen from './screens/EmployeePerformanceScreen'
-
-import ShopProfileScreen from './screens/settings/ShopProfileScreen'
-import PaymentModeScreen from './screens/settings/PaymentModeScreen'
-import StoreSettingsScreen from './screens/settings/StoreSettingsScreen'
-import NotificationsScreen from './screens/settings/NotificationsScreen'
-import ThemeScreen from './screens/settings/ThemeScreen'
-import HelpScreen from './screens/settings/HelpScreen'
-import FAQScreen from './screens/settings/FAQScreen'
-import TermsScreen from './screens/settings/TermsScreen'
-import PrivacyScreen from './screens/settings/PrivacyScreen'
-import AccountScreen from './screens/settings/AccountScreen'
-import SubscriptionScreen from './screens/settings/SubscriptionScreen'
 
 import BottomNav from './components/BottomNav'
 import FadeIn from './components/animation/FadeIn'
@@ -43,11 +8,41 @@ import RequireOwner from './components/auth/RequireOwner'
 import RequireEntitlement from './components/auth/RequireEntitlement'
 import InAppNotification from './components/notifications/InAppNotification'
 
-import SplashScreen from './screens/onboarding/SplashScreen'
-import WelcomeScreen from './screens/onboarding/WelcomeScreen'
-import OwnerRegistrationScreen from './screens/onboarding/OwnerRegistrationScreen'
-import InitialInventorySetupScreen from './screens/onboarding/InitialInventorySetupScreen'
-import SignInScreen from './screens/onboarding/SignInScreen'
+const HomeScreen = lazy(() => import('./screens/HomeScreen'))
+const TransactionsScreen = lazy(() => import('./screens/TransactionsScreen'))
+const ClassifyScreen = lazy(() => import('./screens/ClassifyScreen'))
+const DebtsScreen = lazy(() => import('./screens/DebtsScreen'))
+const CustomerDetailScreen = lazy(() => import('./screens/CustomerDetailScreen'))
+const AnalyticsScreen = lazy(() => import('./screens/AnalyticsScreen'))
+const FinancialAnalysisScreen = lazy(() => import('./screens/FinancialAnalysisScreen'))
+const BusinessTrendsScreen = lazy(() => import('./screens/BusinessTrendsScreen'))
+const AdvisorScreen = lazy(() => import('./screens/AdvisorScreen'))
+const DukaAIScreen = lazy(() => import('./screens/DukaAIScreen'))
+const InventoryInvestmentScreen = lazy(() => import('./screens/InventoryInvestmentScreen'))
+const NewSaleScreen = lazy(() => import('./screens/NewSaleScreen'))
+const NewDebtScreen = lazy(() => import('./screens/NewDebtScreen'))
+const InventoryInsightsScreen = lazy(() => import('./screens/InventoryInsightsScreen'))
+const InsightsScreen = lazy(() => import('./screens/InsightsScreen'))
+const MeScreen = lazy(() => import('./screens/MeScreen'))
+const NotificationCenterScreen = lazy(() => import('./screens/NotificationCenterScreen'))
+const EmployeesScreen = lazy(() => import('./screens/EmployeesScreen'))
+const EmployeePerformanceScreen = lazy(() => import('./screens/EmployeePerformanceScreen'))
+const ShopProfileScreen = lazy(() => import('./screens/settings/ShopProfileScreen'))
+const PaymentModeScreen = lazy(() => import('./screens/settings/PaymentModeScreen'))
+const StoreSettingsScreen = lazy(() => import('./screens/settings/StoreSettingsScreen'))
+const NotificationsScreen = lazy(() => import('./screens/settings/NotificationsScreen'))
+const ThemeScreen = lazy(() => import('./screens/settings/ThemeScreen'))
+const HelpScreen = lazy(() => import('./screens/settings/HelpScreen'))
+const FAQScreen = lazy(() => import('./screens/settings/FAQScreen'))
+const TermsScreen = lazy(() => import('./screens/settings/TermsScreen'))
+const PrivacyScreen = lazy(() => import('./screens/settings/PrivacyScreen'))
+const AccountScreen = lazy(() => import('./screens/settings/AccountScreen'))
+const SubscriptionScreen = lazy(() => import('./screens/settings/SubscriptionScreen'))
+const SplashScreen = lazy(() => import('./screens/onboarding/SplashScreen'))
+const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'))
+const OwnerRegistrationScreen = lazy(() => import('./screens/onboarding/OwnerRegistrationScreen'))
+const InitialInventorySetupScreen = lazy(() => import('./screens/onboarding/InitialInventorySetupScreen'))
+const SignInScreen = lazy(() => import('./screens/onboarding/SignInScreen'))
 
 function LoadingScreen() {
   return (
@@ -97,26 +92,6 @@ export default function App() {
 
   useEffect(() => {
     bootstrap()
-  }, [])
-
-  // Keep Android's native splash visible until React has painted its first
-  // real frame. This prevents a blank window between Android and Dukwise.
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return undefined
-
-    let secondFrame
-    const firstFrame = requestAnimationFrame(() => {
-      secondFrame = requestAnimationFrame(() => {
-        NativeSplashScreen.hide().catch((error) => {
-          console.error('Could not hide the native splash screen:', error)
-        })
-      })
-    })
-
-    return () => {
-      cancelAnimationFrame(firstFrame)
-      if (secondFrame) cancelAnimationFrame(secondFrame)
-    }
   }, [])
 
   const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']
@@ -175,6 +150,7 @@ export default function App() {
             width: '100%',
           }}
         >
+          <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/splash" element={<SplashScreen />} />
             <Route path="/welcome" element={<WelcomeScreen />} />
@@ -352,6 +328,7 @@ export default function App() {
               }
             />
           </Routes>
+          </Suspense>
         </FadeIn>
       </div>
 

@@ -8,18 +8,14 @@ export default function SplashScreen() {
   const session = useAppStore((s) => s.session)
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (session?.isOnboarded) {
-        navigate('/', { replace: true })
-      } else if (session && !session.isOnboarded) {
-        navigate('/setup-inventory', { replace: true })
-      } else {
-        navigate('/welcome', { replace: true })
-      }
-    }, 1400)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (session?.isOnboarded) {
+      navigate('/', { replace: true })
+    } else if (session) {
+      navigate('/setup-inventory', { replace: true })
+    } else {
+      navigate('/welcome', { replace: true })
+    }
+  }, [navigate, session])
 
   return (
     <div
