@@ -1,5 +1,12 @@
 {
   "appId": "com.dukwise.app",
   "appName": "Dukwise",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0B0905",
+      "showSpinner": false
+    }
+  }
 }

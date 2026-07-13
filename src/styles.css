@@ -198,6 +198,31 @@ button:active { transform: scale(0.97); }
   }
 }
 
+/* The phone-shaped shell is a web presentation aid. Inside Capacitor the
+   operating-system window already is the device viewport, so Dukwise must
+   occupy it directly instead of rendering a second screen inside it. */
+[data-platform="native"] #root {
+  width: 100%;
+  max-width: none;
+}
+
+[data-platform="native"] body {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+[data-platform="native"] .app-shell {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* ── Shared utilities ───────────────────────────────────── */
 .bg-blob {
   position: absolute;

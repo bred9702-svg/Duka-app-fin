@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
+import { SplashScreen as NativeSplashScreen } from '@capacitor/splash-screen'
 import useAppStore from './store/useAppStore'
 
 import HomeScreen from './screens/HomeScreen'
@@ -95,6 +97,26 @@ export default function App() {
 
   useEffect(() => {
     bootstrap()
+  }, [])
+
+  // Keep Android's native splash visible until React has painted its first
+  // real frame. This prevents a blank window between Android and Dukwise.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined
+
+    let secondFrame
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        NativeSplashScreen.hide().catch((error) => {
+          console.error('Could not hide the native splash screen:', error)
+        })
+      })
+    })
+
+    return () => {
+      cancelAnimationFrame(firstFrame)
+      if (secondFrame) cancelAnimationFrame(secondFrame)
+    }
   }, [])
 
   const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']

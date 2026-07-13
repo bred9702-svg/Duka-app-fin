@@ -176,7 +176,9 @@ const useAppStore = create((set, get) => ({
   customers: [],
   products: [],
   todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
-  loading: false,
+  // Render a real loading screen on the very first React frame while the
+  // persisted Supabase session and shop data are being restored.
+  loading: true,
   error: null,
   theme: localStorage.getItem('duka-theme') || 'dark',
   session: loadSession(),
