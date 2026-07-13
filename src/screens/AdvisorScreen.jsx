@@ -292,8 +292,8 @@ export default function AdvisorScreen() {
           </>
         )}
 
-        {/* Ask Duka AI */}
-        <SectionTitle>Ask Duka AI</SectionTitle>
+        {/* Ask Dukwise AI */}
+        <SectionTitle>Ask Dukwise AI</SectionTitle>
 
         {(messages.length > 0 || thinking) && (
           <div style={{ marginBottom: 10 }}>
@@ -360,7 +360,7 @@ export default function AdvisorScreen() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && ask(input)}
-            placeholder="Ask Duka AI anything about your business..."
+            placeholder="Ask Dukwise AI anything about your business..."
             disabled={thinking}
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',

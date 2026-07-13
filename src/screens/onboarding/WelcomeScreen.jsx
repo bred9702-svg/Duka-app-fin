@@ -35,7 +35,7 @@ export default function WelcomeScreen() {
           </h1>
 
           <p style={{ fontSize: 14, color: 'var(--text-mid)', lineHeight: 1.5 }}>
-            Duka is an AI manager for your shop. It learns from your own sales, stock, and customers, then tells you exactly what to do next, every day.
+            Dukwise is an AI manager for your shop. It learns from your own sales, stock, and customers, then tells you exactly what to do next, every day.
           </p>
         </FadeIn>
 

@@ -203,7 +203,7 @@ export default function StoreSettingsScreen() {
           type="number"
         />
 
-        <SectionTitle>Duka AI</SectionTitle>
+        <SectionTitle>Dukwise AI</SectionTitle>
         <ToggleRow
           label="Daily AI Brief"
           sub="Show a short daily business brief"

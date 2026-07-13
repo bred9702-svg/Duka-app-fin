@@ -368,7 +368,7 @@ export default function DukaAIScreen() {
       />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <SubScreenHeader title="Duka AI" />
+        <SubScreenHeader title="Dukwise AI" />
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 16 }}>
           A quick, rule-based read of your business — no chat, just the essentials.

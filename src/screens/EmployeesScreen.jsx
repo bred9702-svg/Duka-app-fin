@@ -33,7 +33,6 @@ function InviteInfo({ label, value }) {
 
 export default function EmployeesScreen() {
   const session = useAppStore((s) => s.session)
-  const canManageEmployees = session?.entitlements?.employees === true
   const [invite, setInvite] = useState(null)
   const [copied, setCopied] = useState(false)
   const [employees, setEmployees] = useState([])
@@ -46,12 +45,7 @@ export default function EmployeesScreen() {
   useEffect(() => {
     let cancelled = false
     setLoadingEmployees(true)
-    if (!shopId || !canManageEmployees) {
-      setEmployees([])
-      setInvite(null)
-      setLoadingEmployees(false)
-      return undefined
-    }
+    if (!shopId) return undefined
     Promise.all([getShopTeam(shopId), listEmployeeInvitations(shopId)]).then(([team, invitations]) => {
       if (!cancelled) {
         setEmployees(team)
@@ -64,10 +58,9 @@ export default function EmployeesScreen() {
     return () => {
       cancelled = true
     }
-  }, [shopId, canManageEmployees])
+  }, [shopId])
 
   async function createInvite() {
-    if (!canManageEmployees) return
     setWorking(true); setScreenError('')
     try {
       const nextInvite = await createEmployeeInvitation(shopId)
@@ -89,7 +82,7 @@ export default function EmployeesScreen() {
     if (!invite) return
 
     const link = buildEmployeeInviteLink(invite.code)
-    const text = `Join ${invite.shopName || 'my Duka shop'} using this invitation code: ${invite.code}\n${link}`
+    const text = `Join ${invite.shopName || 'my Dukwise shop'} using this invitation code: ${invite.code}\n${link}`
 
     try {
       await navigator.clipboard.writeText(text)
@@ -103,42 +96,10 @@ export default function EmployeesScreen() {
     if (!invite || !navigator.share) return
 
     await navigator.share({
-      title: 'Duka Employee Invitation',
-      text: `Join ${invite.shopName || 'my Duka shop'} using invitation code ${invite.code}`,
+      title: 'Dukwise Employee Invitation',
+      text: `Join ${invite.shopName || 'my Dukwise shop'} using invitation code ${invite.code}`,
       url: buildEmployeeInviteLink(invite.code),
     })
-  }
-
-  if (!canManageEmployees) {
-    return (
-      <div style={{ flex: 1, width: '100%', padding: '16px 14px 8px', position: 'relative' }}>
-        <div className="bg-blob" style={{ width: 140, height: 140, top: -30, right: -20, background: 'rgba(240,169,61,0.16)' }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <SubScreenHeader title="Employees" />
-          <div
-            style={{
-              marginTop: 20,
-              padding: '28px 18px',
-              borderRadius: 18,
-              textAlign: 'center',
-              background: 'linear-gradient(160deg, rgba(240,169,61,.15), rgba(255,255,255,.03))',
-              border: '1px solid rgba(240,169,61,.28)',
-            }}
-          >
-            <Icon name="star" size={32} color="#F0A93D" />
-            <p style={{ margin: '14px 0 6px', fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 750, color: 'var(--text-hi)' }}>
-              Employees are available with Duka Pro
-            </p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-low)', lineHeight: 1.6 }}>
-              Upgrade to invite employees, attribute their transactions and monitor their performance.
-            </p>
-            <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 12, background: 'rgba(240,169,61,.10)', color: '#F0A93D', fontSize: 12, fontWeight: 700 }}>
-              Duka Pro · KES {Number(session?.subscriptionAmountKes || 2999).toLocaleString()} / month
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -274,7 +235,7 @@ export default function EmployeesScreen() {
               border: '1px solid var(--glass-border)',
             }}
           >
-            <InviteInfo label="Shop" value={invite.shopName || 'Duka Shop'} />
+            <InviteInfo label="Shop" value={invite.shopName || 'Dukwise Shop'} />
             <InviteInfo label="Invitation code" value={invite.code} />
             <InviteInfo label="Invitation link" value={buildEmployeeInviteLink(invite.code)} />
             <InviteInfo label="Expires" value={new Date(invite.expires_at).toLocaleString()} />

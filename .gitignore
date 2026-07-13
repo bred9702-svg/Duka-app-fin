@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# Capacitor / Android local files
+android/.gradle/
+android/local.properties
+android/**/build/
+*.jks
+*.keystore
+
+# Local environment files
+.env
+.env.local
+.env.*.local

@@ -32,7 +32,7 @@ export default function InitialInventorySetupScreen() {
             Set up your inventory
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 22 }}>
-            Duka needs your first products to start tracking sales, profit, and stock. You can always add more later.
+            Dukwise needs your first products to start tracking sales, profit, and stock. You can always add more later.
           </p>
         </FadeIn>
 

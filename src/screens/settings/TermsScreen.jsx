@@ -5,87 +5,87 @@ const list = (...items) => ({ type: 'list', items })
 
 const SECTIONS = [
   {
-    title: '1. About Duka',
+    title: '1. About Dukwise',
     blocks: [
-      p('Duka is a business management platform designed to help small businesses manage sales, expenses, inventory, customer debts, employees, payments and business insights.'),
-      p('Duka is currently operated by Bred Mwepu as an independently operated product undergoing an initial limited release in Kenya. These Terms apply during both the testing and early commercial phases of Duka, including when users purchase a paid subscription.'),
-      p('The operation of Duka may later be transferred to a formally registered business entity. If this occurs, users will be informed and these Terms will be updated accordingly.'),
-      p('In these Terms, “Duka,” “we,” “us” and “our” refer to Duka and its current operator. “You” refers to the individual or business accessing or using the Service.'),
+      p('Dukwise is a business management platform designed to help small businesses manage sales, expenses, inventory, customer debts, employees, payments and business insights.'),
+      p('Dukwise is currently operated by Bred Mwepu as an independently operated product undergoing an initial limited release in Kenya. These Terms apply during both the testing and early commercial phases of Dukwise, including when users purchase a paid subscription.'),
+      p('The operation of Dukwise may later be transferred to a formally registered business entity. If this occurs, users will be informed and these Terms will be updated accordingly.'),
+      p('In these Terms, “Dukwise,” “we,” “us” and “our” refer to Dukwise and its current operator. “You” refers to the individual or business accessing or using the Service.'),
     ],
   },
   {
     title: '2. Acceptance of These Terms',
     blocks: [
-      p('These Terms of Service govern your access to and use of Duka.'),
-      p('By creating an account, creating a shop, accepting an employee invitation, starting a free trial, purchasing a subscription or otherwise using Duka, you agree to these Terms. If you do not agree, you must not access or use Duka.'),
+      p('These Terms of Service govern your access to and use of Dukwise.'),
+      p('By creating an account, creating a shop, accepting an employee invitation, starting a free trial, purchasing a subscription or otherwise using Dukwise, you agree to these Terms. If you do not agree, you must not access or use Dukwise.'),
     ],
   },
   {
     title: '3. Eligibility',
     blocks: [
-      p('You must be at least 18 years old and legally capable of entering into an agreement to use Duka.'),
-      p('If you use Duka on behalf of a business, you confirm that you have authority to accept these Terms and manage the Duka account for that business. Duka may only be used for legitimate and lawful business activities.'),
+      p('You must be at least 18 years old and legally capable of entering into an agreement to use Dukwise.'),
+      p('If you use Dukwise on behalf of a business, you confirm that you have authority to accept these Terms and manage the Dukwise account for that business. Dukwise may only be used for legitimate and lawful business activities.'),
     ],
   },
   {
     title: '4. Accounts and Account Security',
     blocks: [
       p('You must provide accurate, complete and current information when creating or managing your account.'),
-      list('Keep your login credentials secure.', 'Protect the devices used to access Duka.', 'Control access to your account.', 'Keep your shop information accurate.', 'Notify Duka promptly if you suspect unauthorized access.'),
-      p('You must not share your credentials with an unauthorized person or allow another person to impersonate you. You are responsible for activities performed through your account unless they result directly from a security failure within Duka’s systems.'),
+      list('Keep your login credentials secure.', 'Protect the devices used to access Dukwise.', 'Control access to your account.', 'Keep your shop information accurate.', 'Notify Dukwise promptly if you suspect unauthorized access.'),
+      p('You must not share your credentials with an unauthorized person or allow another person to impersonate you. You are responsible for activities performed through your account unless they result directly from a security failure within Dukwise’s systems.'),
     ],
   },
   {
     title: '5. Shop Owners and Employees',
     blocks: [
       p('A Shop Owner may invite employees to access and use specific parts of the shop’s account.'),
-      list('Decide which employees may access the shop.', 'Assign appropriate roles and permissions.', 'Review employee activity.', 'Remove access when an employee leaves or should no longer use Duka.', 'Ensure that employees use Duka lawfully.'),
-      p('Employees may only use shop information for authorized business purposes and must not access, copy, alter, disclose or misuse shop information without the Shop Owner’s authorization. Duka may rely on the roles, permissions and instructions configured by the Shop Owner.'),
+      list('Decide which employees may access the shop.', 'Assign appropriate roles and permissions.', 'Review employee activity.', 'Remove access when an employee leaves or should no longer use Dukwise.', 'Ensure that employees use Dukwise lawfully.'),
+      p('Employees may only use shop information for authorized business purposes and must not access, copy, alter, disclose or misuse shop information without the Shop Owner’s authorization. Dukwise may rely on the roles, permissions and instructions configured by the Shop Owner.'),
     ],
   },
   {
     title: '6. Business Data',
     blocks: [
-      p('You retain ownership of the business data you lawfully submit to Duka, including product and inventory records, sales and expenses, customer debts, employee information, payments, shop settings and business preferences.'),
-      p('You grant Duka a limited right to host, store, process, organize, analyse and display this information only as necessary to operate, secure, maintain and improve the Service. This permission does not transfer ownership of your business data to Duka.'),
+      p('You retain ownership of the business data you lawfully submit to Dukwise, including product and inventory records, sales and expenses, customer debts, employee information, payments, shop settings and business preferences.'),
+      p('You grant Dukwise a limited right to host, store, process, organize, analyse and display this information only as necessary to operate, secure, maintain and improve the Service. This permission does not transfer ownership of your business data to Dukwise.'),
     ],
   },
   {
     title: '7. Customer and Employee Information',
     blocks: [
-      p('You are responsible for ensuring that you have a lawful reason to collect and enter customer or employee information into Duka.'),
+      p('You are responsible for ensuring that you have a lawful reason to collect and enter customer or employee information into Dukwise.'),
       list('Collect only information reasonably necessary for your business.', 'Provide any notice required by applicable law.', 'Obtain consent where legally required.', 'Keep personal information accurate and appropriately protected.', 'Do not enter information that you are prohibited from collecting or sharing.'),
-      p('Duka’s handling of personal information is explained separately in the Duka Privacy Policy.'),
+      p('Dukwise’s handling of personal information is explained separately in the Dukwise Privacy Policy.'),
     ],
   },
   {
     title: '8. Sales, Debts and Financial Records',
     blocks: [
-      p('Duka is a business-recording and decision-support platform. It is not a bank, payment institution, accounting or auditing firm, debt-collection agency, or tax, legal or financial adviser.'),
-      p('You are responsible for reviewing and confirming all sales, expenses, customer debts, debt payments, stock movements, profit calculations and other records entered into or generated by Duka.'),
-      list('Duka does not guarantee that user-entered information is accurate.', 'A recorded transaction may not be genuine or complete.', 'A customer may not repay a debt.', 'Digital inventory may not always match physical stock.', 'Calculations may not satisfy your accounting, tax or regulatory obligations.'),
+      p('Dukwise is a business-recording and decision-support platform. It is not a bank, payment institution, accounting or auditing firm, debt-collection agency, or tax, legal or financial adviser.'),
+      p('You are responsible for reviewing and confirming all sales, expenses, customer debts, debt payments, stock movements, profit calculations and other records entered into or generated by Dukwise.'),
+      list('Dukwise does not guarantee that user-entered information is accurate.', 'A recorded transaction may not be genuine or complete.', 'A customer may not repay a debt.', 'Digital inventory may not always match physical stock.', 'Calculations may not satisfy your accounting, tax or regulatory obligations.'),
       p('You should maintain appropriate supporting records and seek professional advice where necessary.'),
     ],
   },
   {
     title: '9. Payments and Third-Party Services',
     blocks: [
-      p('Duka may receive, display, classify or process information connected to third-party services, including mobile-money, payment or communication providers.'),
-      p('Third-party services operate independently and may have their own terms, fees, limits and privacy policies. Duka is not responsible for delays, outages, reversals, errors, restrictions or failures caused by them.'),
-      p('A payment displayed in Duka does not replace official confirmation from the relevant payment provider. You must confirm that money was actually received before delivering goods, closing a debt or making another financial decision.'),
+      p('Dukwise may receive, display, classify or process information connected to third-party services, including mobile-money, payment or communication providers.'),
+      p('Third-party services operate independently and may have their own terms, fees, limits and privacy policies. Dukwise is not responsible for delays, outages, reversals, errors, restrictions or failures caused by them.'),
+      p('A payment displayed in Dukwise does not replace official confirmation from the relevant payment provider. You must confirm that money was actually received before delivering goods, closing a debt or making another financial decision.'),
     ],
   },
   {
-    title: '10. Duka AI and Business Insights',
+    title: '10. Dukwise AI and Business Insights',
     blocks: [
-      p('Duka may provide automated classifications, recommendations, forecasts, summaries, alerts or other AI-assisted insights. These outputs are for informational and decision-support purposes and may be incomplete, inaccurate or unsuitable for a particular situation.'),
-      p('You remain responsible for reviewing all AI-generated outputs before acting on them. Duka AI does not provide legal, accounting, tax, investment or other professional advice.'),
+      p('Dukwise may provide automated classifications, recommendations, forecasts, summaries, alerts or other AI-assisted insights. These outputs are for informational and decision-support purposes and may be incomplete, inaccurate or unsuitable for a particular situation.'),
+      p('You remain responsible for reviewing all AI-generated outputs before acting on them. Dukwise AI does not provide legal, accounting, tax, investment or other professional advice.'),
     ],
   },
   {
     title: '11. Free Plan and Pro Trial',
     blocks: [
-      p('Duka may provide a Free Plan with limited features and a Pro Plan with additional or premium features.'),
+      p('Dukwise may provide a Free Plan with limited features and a Pro Plan with additional or premium features.'),
       p('Each eligible new Shop Owner receives a 15-day free trial of the Pro Plan. No payment is required to begin the trial unless clearly stated otherwise. The trial begins when the Shop Owner’s account or shop is successfully created.'),
       p('Each Shop Owner or shop is normally entitled to one free trial. Creating additional accounts or shops to obtain repeated trials is prohibited.'),
       p('When the trial ends, the account automatically returns to the Free Plan unless the Shop Owner purchases Pro. The account and existing business data are not automatically deleted, but Pro features and limits may become restricted.'),
@@ -95,72 +95,72 @@ const SECTIONS = [
   {
     title: '12. Pro Subscription',
     blocks: [
-      p('The current Duka Pro subscription costs KES 2,999 per month, unless a different price is clearly displayed before payment.'),
-      list('Subscriptions are initially activated manually.', 'Payments may be made using the M-Pesa details provided by Duka.', 'Pro begins after payment is received and verified.', 'Subscriptions do not renew automatically.'),
+      p('The current Dukwise Pro subscription costs KES 2,999 per month, unless a different price is clearly displayed before payment.'),
+      list('Subscriptions are initially activated manually.', 'Payments may be made using the M-Pesa details provided by Dukwise.', 'Pro begins after payment is received and verified.', 'Subscriptions do not renew automatically.'),
       p('To continue using Pro after a paid period ends, the Shop Owner must make a new payment. Without renewal, the account returns to Free and its data is not automatically deleted.'),
-      p('Duka may change its price in the future. A new price will not affect a period already paid for and will be displayed or communicated before the next payment.'),
+      p('Dukwise may change its price in the future. A new price will not affect a period already paid for and will be displayed or communicated before the next payment.'),
     ],
   },
   {
     title: '13. Cancellations and Refunds',
     blocks: [
-      p('Duka subscriptions do not initially renew automatically. If you do not wish to continue Pro, simply do not make the next payment. Pro access remains active until the end of the period already paid for.'),
+      p('Dukwise subscriptions do not initially renew automatically. If you do not wish to continue Pro, simply do not make the next payment. Pro access remains active until the end of the period already paid for.'),
       p('A refund request must normally be submitted within 24 hours after payment and concern a genuine, verifiable payment or activation error, such as:'),
-      list('A duplicate payment.', 'Payment to incorrect details supplied as Duka’s details.', 'Payment of an incorrect amount.', 'Failure to activate Pro after a valid payment.', 'Another genuine and verifiable payment error.'),
-      p('A change of mind does not automatically qualify for a refund. After 24 hours, or after Pro has been substantially used, payments are normally non-refundable except where Kenyan law requires a refund or Duka approves one in exceptional circumstances.'),
-      p('Duka may request reasonable information to verify the original payment and reason. Approved refunds will be sent through an appropriate payment method after verification.'),
+      list('A duplicate payment.', 'Payment to incorrect details supplied as Dukwise’s details.', 'Payment of an incorrect amount.', 'Failure to activate Pro after a valid payment.', 'Another genuine and verifiable payment error.'),
+      p('A change of mind does not automatically qualify for a refund. After 24 hours, or after Pro has been substantially used, payments are normally non-refundable except where Kenyan law requires a refund or Dukwise approves one in exceptional circumstances.'),
+      p('Dukwise may request reasonable information to verify the original payment and reason. Approved refunds will be sent through an appropriate payment method after verification.'),
     ],
   },
   {
     title: '14. Acceptable Use',
     blocks: [
       p('You must not:'),
-      list('Use Duka for fraud, theft, money laundering or another illegal activity.', 'Access another shop or account without authorization.', 'Bypass security controls, restrictions or permissions.', 'Introduce malware or interfere with Duka.', 'Submit deliberately false, harmful or misleading information.', 'Impersonate another person or business.', 'Harass, exploit or unlawfully monitor another person.', 'Extract data through unauthorized automated methods.', 'Reverse engineer Duka except where law permits.', 'Resell Duka without written authorization.', 'Create multiple accounts or shops to abuse trials or promotions.'),
+      list('Use Dukwise for fraud, theft, money laundering or another illegal activity.', 'Access another shop or account without authorization.', 'Bypass security controls, restrictions or permissions.', 'Introduce malware or interfere with Dukwise.', 'Submit deliberately false, harmful or misleading information.', 'Impersonate another person or business.', 'Harass, exploit or unlawfully monitor another person.', 'Extract data through unauthorized automated methods.', 'Reverse engineer Dukwise except where law permits.', 'Resell Dukwise without written authorization.', 'Create multiple accounts or shops to abuse trials or promotions.'),
     ],
   },
   {
     title: '15. Availability and Product Changes',
     blocks: [
-      p('We aim to keep Duka reliable and available, but do not guarantee uninterrupted or error-free operation. Maintenance, upgrades, internet or hosting failures, third-party outages, security incidents, technical problems or circumstances beyond our reasonable control may cause interruptions.'),
-      p('We may add, modify, restrict or discontinue features to improve Duka, maintain security, comply with law or develop the product. Where practicable, we will give reasonable notice if a change materially reduces an essential paid feature.'),
+      p('We aim to keep Dukwise reliable and available, but do not guarantee uninterrupted or error-free operation. Maintenance, upgrades, internet or hosting failures, third-party outages, security incidents, technical problems or circumstances beyond our reasonable control may cause interruptions.'),
+      p('We may add, modify, restrict or discontinue features to improve Dukwise, maintain security, comply with law or develop the product. Where practicable, we will give reasonable notice if a change materially reduces an essential paid feature.'),
     ],
   },
   {
     title: '16. Suspension of Access',
     blocks: [
-      p('Duka may reasonably restrict or suspend access to protect users, data or systems; investigate fraud or unauthorized access; prevent illegal activity; address unpaid charges; enforce these Terms; or comply with a legal obligation.'),
+      p('Dukwise may reasonably restrict or suspend access to protect users, data or systems; investigate fraud or unauthorized access; prevent illegal activity; address unpaid charges; enforce these Terms; or comply with a legal obligation.'),
       p('Where appropriate and legally permitted, we will notify the user and provide a reasonable opportunity to correct the issue. Serious fraud, security abuse or illegal activity may result in immediate suspension.'),
     ],
   },
   {
     title: '17. Account Closure and Data Deletion',
     blocks: [
-      p('You may request deletion of your Duka account at any time. Once confirmed, the account is deactivated immediately and is no longer accessible.'),
-      p('Duka maintains a 30-day recovery period for accidental deletion. During this period, the account may be restored after appropriate identity and ownership verification. After 30 days, the account and active business data will be permanently deleted.'),
+      p('You may request deletion of your Dukwise account at any time. Once confirmed, the account is deactivated immediately and is no longer accessible.'),
+      p('Dukwise maintains a 30-day recovery period for accidental deletion. During this period, the account may be restored after appropriate identity and ownership verification. After 30 days, the account and active business data will be permanently deleted.'),
       p('Residual copies may remain in secure technical backups for up to 90 days before automatic removal.'),
-      p('Duka may retain limited information longer to comply with legal, tax, accounting or regulatory obligations; maintain payment records; investigate fraud or security incidents; or establish, exercise or defend legal claims. Retained information will not remain accessible through the deleted account.'),
+      p('Dukwise may retain limited information longer to comply with legal, tax, accounting or regulatory obligations; maintain payment records; investigate fraud or security incidents; or establish, exercise or defend legal claims. Retained information will not remain accessible through the deleted account.'),
       p('Account deletion does not cancel payment obligations incurred before deletion.'),
     ],
   },
   {
     title: '18. Intellectual Property',
     blocks: [
-      p('Duka’s software, design, branding, interfaces, documentation and original content are owned by or licensed to Duka and its operator.'),
-      p('These Terms give you a limited, non-exclusive, non-transferable and revocable right to use Duka for authorized business purposes. They do not transfer ownership of Duka, its branding or technology. You continue to own business data you lawfully submit.'),
-      p('Feedback or suggestions may be used to improve Duka without transferring ownership of your existing business information.'),
+      p('Dukwise’s software, design, branding, interfaces, documentation and original content are owned by or licensed to Dukwise and its operator.'),
+      p('These Terms give you a limited, non-exclusive, non-transferable and revocable right to use Dukwise for authorized business purposes. They do not transfer ownership of Dukwise, its branding or technology. You continue to own business data you lawfully submit.'),
+      p('Feedback or suggestions may be used to improve Dukwise without transferring ownership of your existing business information.'),
     ],
   },
   {
     title: '19. Disclaimers',
     blocks: [
-      p('Duka is provided on an “as available” basis. To the extent permitted by Kenyan law, we do not guarantee that it will always be uninterrupted, completely secure, error-free or suitable for every business purpose.'),
-      p('Duka does not guarantee specific revenue, profit, debt recovery, inventory performance or business results. Nothing in these Terms excludes a right, guarantee or remedy that cannot lawfully be excluded.'),
+      p('Dukwise is provided on an “as available” basis. To the extent permitted by Kenyan law, we do not guarantee that it will always be uninterrupted, completely secure, error-free or suitable for every business purpose.'),
+      p('Dukwise does not guarantee specific revenue, profit, debt recovery, inventory performance or business results. Nothing in these Terms excludes a right, guarantee or remedy that cannot lawfully be excluded.'),
     ],
   },
   {
     title: '20. Limitation of Liability',
     blocks: [
-      p('To the extent permitted by law, Duka will not be responsible for indirect or consequential losses, including lost profits or business opportunities.'),
+      p('To the extent permitted by law, Dukwise will not be responsible for indirect or consequential losses, including lost profits or business opportunities.'),
       list('Inaccurate or incomplete user-entered information.', 'Business decisions made without reviewing records.', 'Reliance on unverified AI outputs.', 'An employee acting beyond granted authority.', 'Failure to protect an account or device.', 'The conduct or failure of a third-party provider.'),
       p('Nothing in these Terms limits liability where such limitation would be unlawful under Kenyan law.'),
     ],
@@ -168,22 +168,22 @@ const SECTIONS = [
   {
     title: '21. Governing Law and Disputes',
     blocks: [
-      p('These Terms are governed by the laws of Kenya. If a dispute arises, you and Duka should first attempt to resolve it in good faith through Duka support.'),
+      p('These Terms are governed by the laws of Kenya. If a dispute arises, you and Dukwise should first attempt to resolve it in good faith through Dukwise support.'),
       p('If it cannot be resolved informally, either party may use the courts or another legally available dispute-resolution process in Kenya. Nothing prevents a user from exercising a mandatory consumer, privacy or data-protection right.'),
     ],
   },
   {
     title: '22. Changes to These Terms',
     blocks: [
-      p('We may update these Terms when Duka’s features, business model, operator or legal obligations change. If an update materially affects your rights or obligations, we will provide reasonable notice before it takes effect.'),
-      p('Continued use after the effective date means you accept the updated Terms. If you disagree with a material update, you may stop using Duka and request account closure.'),
+      p('We may update these Terms when Dukwise’s features, business model, operator or legal obligations change. If an update materially affects your rights or obligations, we will provide reasonable notice before it takes effect.'),
+      p('Continued use after the effective date means you accept the updated Terms. If you disagree with a material update, you may stop using Dukwise and request account closure.'),
     ],
   },
   {
     title: '23. Contact',
     blocks: [
-      p('For questions, payment issues or concerns about these Terms, contact Duka support through WhatsApp: +254 742 599 719.'),
-      p('A formal business address and support email may be added after Duka’s business registration and official domain setup.'),
+      p('For questions, payment issues or concerns about these Terms, contact Dukwise support through WhatsApp: +254 742 599 719.'),
+      p('A formal business address and support email may be added after Dukwise’s business registration and official domain setup.'),
     ],
   },
 ]
@@ -193,7 +193,7 @@ export default function TermsScreen() {
     <LegalDocumentScreen
       title="Terms of Service"
       updatedAt="July 12, 2026"
-      intro="These Terms govern your access to and use of Duka. Please read them carefully."
+      intro="These Terms govern your access to and use of Dukwise. Please read them carefully."
       sections={SECTIONS}
     />
   )

@@ -45,7 +45,7 @@ export default function SplashScreen() {
           </div>
 
           <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em' }}>
-            Duka
+            Dukwise
           </p>
         </div>
       </FadeIn>

@@ -4,24 +4,24 @@ import Icon from '../../components/ui/Icon'
 
 const FAQS = [
   {
-    question: 'What is Duka?',
+    question: 'What is Dukwise?',
     answer:
-      'Duka is a simple shop tracker that helps small business owners record sales, expenses, customer debts, inventory, and daily performance in one place.',
+      'Dukwise is a simple shop tracker that helps small business owners record sales, expenses, customer debts, inventory, and daily performance in one place.',
   },
   {
     question: 'How do I record a sale?',
     answer:
-      'Use the New Sale screen to select the customer if needed, add the products sold, confirm the quantities, and save the sale. Duka will update your totals and stock information.',
+      'Use the New Sale screen to select the customer if needed, add the products sold, confirm the quantities, and save the sale. Dukwise will update your totals and stock information.',
   },
   {
     question: 'How do I track customer debts?',
     answer:
-      'When a customer buys on credit, record it as a debt. Duka keeps the unpaid balance visible on the Debts and Customer screens until payments are recorded.',
+      'When a customer buys on credit, record it as a debt. Dukwise keeps the unpaid balance visible on the Debts and Customer screens until payments are recorded.',
   },
   {
     question: 'How do I record a debt payment?',
     answer:
-      'Open the customer or debt details, enter the payment amount, and save it. Duka reduces the remaining balance and closes the debt once it is fully paid.',
+      'Open the customer or debt details, enter the payment amount, and save it. Dukwise reduces the remaining balance and closes the debt once it is fully paid.',
   },
   {
     question: 'How does inventory stock update?',
@@ -39,9 +39,9 @@ const FAQS = [
       'Yes. Go to Me, then Business Preferences. You can update currency, tax settings, stock alerts, low stock threshold, and AI preferences.',
   },
   {
-    question: 'Does Duka translate my product or customer names?',
+    question: 'Does Dukwise translate my product or customer names?',
     answer:
-      'No. Duka only translates app labels. Your product names, customer names, shop name, and other business data stay exactly as you entered them.',
+      'No. Dukwise only translates app labels. Your product names, customer names, shop name, and other business data stay exactly as you entered them.',
   },
 ]
 
@@ -147,7 +147,7 @@ export default function FAQScreen() {
             lineHeight: 1.5,
           }}
         >
-          Quick answers to common questions about using Duka.
+          Quick answers to common questions about using Dukwise.
         </p>
 
         {FAQS.map((item, index) => (

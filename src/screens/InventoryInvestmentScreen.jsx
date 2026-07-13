@@ -276,7 +276,7 @@ export default function InventoryInvestmentScreen() {
               borderRadius: 12, padding: '10px 12px', marginTop: 8,
             }}>
               <p style={{ margin: 0, fontSize: 9, fontWeight: 600, color: 'var(--text-low)', marginBottom: 4 }}>
-                DUKA AI
+                DUKWISE AI
               </p>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.5 }}>
                 {summary.productCount} product{summary.productCount > 1 ? 's' : ''} added to inventory.{' '}

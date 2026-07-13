@@ -37,7 +37,7 @@ export default function AIAdvisorCard({
           color: 'var(--text-low)',
         }}
       >
-        DUKA AI
+        DUKWISE AI
       </p>
 
       {!current ? (

@@ -234,8 +234,8 @@ export default function App() {
             <Route
               path="/duka-ai"
               element={
-                <RequireOwner title="Duka AI">
-                  <RequireEntitlement feature="smart_insights" title="Duka AI"><DukaAIScreen /></RequireEntitlement>
+                <RequireOwner title="Dukwise AI">
+                  <RequireEntitlement feature="smart_insights" title="Dukwise AI"><DukaAIScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />

@@ -39,9 +39,9 @@ export default function AccountScreen() {
           <div style={{ width: 42, height: 42, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,107,91,.14)', marginBottom: 12 }}>
             <Icon name="shield" size={20} color="#FF6B5B" />
           </div>
-          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--text-hi)' }}>Delete Duka account</h1>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--text-hi)' }}>Delete Dukwise account</h1>
           <p style={{ margin: '9px 0 0', fontSize: 11, lineHeight: 1.6, color: 'var(--text-mid)' }}>
-            Access is disabled immediately. You have 30 days to request recovery through Duka Support after identity verification.
+            Access is disabled immediately. You have 30 days to request recovery through Dukwise Support after identity verification.
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 11, lineHeight: 1.6, color: 'var(--text-mid)' }}>
             {role === 'owner'

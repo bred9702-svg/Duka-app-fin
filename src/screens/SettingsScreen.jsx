@@ -83,7 +83,7 @@ export default function SettingsScreen() {
         </Card>
         <Card style={{ marginBottom: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)', marginBottom: 4 }}>Version</p>
-          <p style={{ fontSize: 13, color: 'var(--text-low)' }}>Duka v0.3</p>
+          <p style={{ fontSize: 13, color: 'var(--text-low)' }}>Dukwise v0.3</p>
         </Card>
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', marginTop: 24 }}>

@@ -91,7 +91,7 @@ export default function OwnerRegistrationScreen() {
             Create your account
           </h1>
           <p style={{ fontSize: 12, color: 'var(--text-low)', marginBottom: 20 }}>
-            Set up your shop on Duka in a minute
+            Set up your shop on Dukwise in a minute
           </p>
         </FadeIn>
 
@@ -118,7 +118,7 @@ export default function OwnerRegistrationScreen() {
             </div>
           </div>
 
-          <Field label="Full Name" value={name} onChange={setName} placeholder="e.g. Bred Mwepu" />
+          <Field label="Full Name" value={name} onChange={setName} placeholder="e.g. John Kamau" />
           <Field label="Email Address" value={email} onChange={setEmail} placeholder="you@example.com" type="email" autoComplete="email" />
           <Field label="Phone Number" value={phone} onChange={setPhone} placeholder="+254 7XX XXX XXX" type="tel" autoComplete="tel" />
           <Field label="Password" value={password} onChange={setPassword} placeholder="At least 8 characters" type="password" autoComplete="new-password" />
@@ -151,7 +151,7 @@ export default function OwnerRegistrationScreen() {
 
           <div style={{ height: 1, background: 'var(--glass-border)', marginBottom: 16 }} />
 
-          <Field label="Shop Name" value={shopName} onChange={setShopName} placeholder="e.g. Bred's Wines & Spirits" />
+          <Field label="Shop Name" value={shopName} onChange={setShopName} placeholder="e.g. My Wine & Spirits Shop" />
           <Field label="Shop Address" value={shopAddress} onChange={setShopAddress} placeholder="e.g. Nairobi, Kenya" />
 
           {formError && (

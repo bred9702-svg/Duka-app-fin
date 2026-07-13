@@ -129,7 +129,7 @@ export default function SignInScreen() {
               {shouldCheckEmail && (
                 <div style={{ padding: '11px 12px', borderRadius: 12, background: 'rgba(91,159,240,.1)', border: '1px solid rgba(91,159,240,.28)', marginBottom: 14 }}>
                   <p style={{ margin: 0, fontSize: 11, color: '#7DB7FF', lineHeight: 1.5 }}>
-                    Check your email to confirm your Duka account before signing in.
+                    Check your email to confirm your Dukwise account before signing in.
                   </p>
                 </div>
               )}
@@ -176,7 +176,7 @@ export default function SignInScreen() {
               )}
 
               <p style={{ margin: '0 0 14px', fontSize: 10, color: 'var(--text-low)' }}>
-                Forgot your password? Contact Duka support on WhatsApp.
+                Forgot your password? Contact Dukwise support on WhatsApp.
               </p>
             </>
           )}
@@ -188,7 +188,7 @@ export default function SignInScreen() {
                 type="text"
                 value={inviteCode}
                 onChange={(e) => updateInviteCode(e.target.value)}
-                placeholder="DUKA-XXXXXX"
+                placeholder="DUKWISE-XXXXXX"
                 autoCapitalize="characters"
                 style={{
                   width: '100%', background: 'var(--glass-fill-soft)', border: inviteError ? '1px solid rgba(255,107,91,0.55)' : '1px solid var(--glass-border)',
@@ -220,7 +220,7 @@ export default function SignInScreen() {
                   Invitation accepted
                 </p>
                 <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
-                  Joining {validatedInvite?.shopName || 'Duka Shop'} as an employee.
+                  Joining {validatedInvite?.shopName || 'Dukwise Shop'} as an employee.
                 </p>
               </div>
 
