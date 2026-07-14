@@ -6,7 +6,15 @@ import { Capacitor } from '@capacitor/core'
 import { SplashScreen as NativeSplashScreen } from '@capacitor/splash-screen'
 import './styles.css'
 
-document.documentElement.dataset.platform = Capacitor.isNativePlatform() ? 'native' : 'web'
+const isStandaloneWebApp =
+  window.matchMedia?.('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true
+
+document.documentElement.dataset.platform = Capacitor.isNativePlatform()
+  ? 'native'
+  : isStandaloneWebApp
+    ? 'standalone'
+    : 'web'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 
