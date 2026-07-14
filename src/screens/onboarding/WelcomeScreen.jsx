@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import FadeIn from '../../components/animation/FadeIn'
+import dukwiseLogo from '../../../assets/branding/dukwise-logo-master.png'
 
 export default function WelcomeScreen() {
   const navigate = useNavigate()
@@ -17,18 +18,15 @@ export default function WelcomeScreen() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
         <FadeIn duration={320} y={14}>
-          <div
+          <img
+            src={dukwiseLogo}
+            alt="Dukwise"
+            draggable={false}
             style={{
-              width: 56, height: 56, borderRadius: 16,
-              background: 'linear-gradient(160deg, #F0A93D, #C9861F)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 20,
+              display: 'block', width: 64, height: 64,
+              objectFit: 'contain', marginBottom: 20,
             }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#0F1117' }}>
-              D
-            </span>
-          </div>
+          />
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--text-hi)', letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 10 }}>
             Your business, understood.
