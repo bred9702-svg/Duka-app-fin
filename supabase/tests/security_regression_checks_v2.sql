@@ -121,6 +121,16 @@ security_events_check as (
       and not has_table_privilege('authenticated', 'public.security_events', 'DELETE')
     then 'PASS' else 'FAIL' end as result
 ),
+transaction_attribution_types_check as (
+  select
+    'Transaction tenant attribution uses UUIDs' as check_name,
+    case when count(*) = 3 and bool_and(udt_name = 'uuid')
+      then 'PASS' else 'FAIL' end as result
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'transactions'
+    and column_name in ('shop_id', 'employee_id', 'performed_by_user_id')
+),
 all_checks as (
   select * from rls_checks
   union all select * from anonymous_table_checks
@@ -131,6 +141,7 @@ all_checks as (
   union all select * from push_dispatch_check
   union all select * from push_tables_check
   union all select * from security_events_check
+  union all select * from transaction_attribution_types_check
 )
 select check_name, result
 from all_checks

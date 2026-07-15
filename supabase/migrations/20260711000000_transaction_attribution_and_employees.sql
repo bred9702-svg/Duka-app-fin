@@ -10,10 +10,9 @@ alter table public.transactions
   add column if not exists employee_name text,
   add column if not exists shop_id text;
 
--- Clean slate: this table is brand new and unused, safe to drop/recreate.
-drop table if exists public.employees cascade;
-
-create table public.employees (
+-- Preserve a legacy registry if it already exists. Some production databases
+-- received this table before the migration history was introduced.
+create table if not exists public.employees (
   employee_id text primary key,
   shop_id text not null,
   name text,
@@ -23,7 +22,15 @@ create table public.employees (
   updated_at timestamptz not null default now()
 );
 
-create index employees_shop_id_idx
+alter table public.employees
+  add column if not exists shop_id text,
+  add column if not exists name text,
+  add column if not exists phone text,
+  add column if not exists invite_code text,
+  add column if not exists joined_at timestamptz default now(),
+  add column if not exists updated_at timestamptz default now();
+
+create index if not exists employees_shop_id_idx
   on public.employees (shop_id);
 
 alter table public.employees enable row level security;
@@ -33,7 +40,34 @@ create policy "employees_allow_all" on public.employees
   for all
   using (true)
   with check (true);
--- employee_id pre-existed as uuid on some environments; app-generated
--- employee IDs are strings like "employee-DUKA-XXXXXX-xxxxx", not UUIDs.
-alter table public.transactions
-  alter column employee_id type text using employee_id::text;
+-- Never downgrade modern UUID attribution columns to text. The following
+-- migration archives text identifiers and keeps UUID columns/FKs in place.
+-- When this database is already on the modern schema, create empty archive
+-- columns so that the follow-up migration remains idempotent.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'shop_id' and udt_name = 'uuid'
+  ) then
+    alter table public.transactions add column if not exists legacy_shop_id text;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'employee_id' and udt_name = 'uuid'
+  ) then
+    alter table public.transactions add column if not exists legacy_employee_id text;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'performed_by_user_id' and udt_name = 'uuid'
+  ) then
+    alter table public.transactions add column if not exists legacy_performed_by_user_id text;
+  end if;
+end;
+$$;

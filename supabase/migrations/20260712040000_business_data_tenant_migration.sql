@@ -55,7 +55,7 @@ do $$
 declare
   target_shop_id uuid;
   owner_shop_count integer;
-  business_row_count bigint;
+  rows_requiring_backfill bigint;
 begin
   select count(distinct shop_id)
   into owner_shop_count
@@ -63,18 +63,20 @@ begin
   where role = 'owner' and status = 'active';
 
   select
-    (select count(*) from public.products)
-    + (select count(*) from public.customers)
-    + (select count(*) from public.transactions)
-  into business_row_count;
+    (select count(*) from public.products where shop_id is null)
+    + (select count(*) from public.customers where shop_id is null)
+    + (select count(*) from public.transactions where shop_id is null)
+  into rows_requiring_backfill;
 
-  if business_row_count > 0 and owner_shop_count <> 1 then
+  -- A database that already uses UUID tenant attribution needs no legacy
+  -- backfill, even when it legitimately contains several Owner shops.
+  if rows_requiring_backfill > 0 and owner_shop_count <> 1 then
     raise exception using
       errcode = '55000',
       message = 'Legacy business data requires exactly one active Owner shop for safe backfill.';
   end if;
 
-  if owner_shop_count = 1 then
+  if rows_requiring_backfill > 0 and owner_shop_count = 1 then
     select shop_id
     into target_shop_id
     from public.shop_members
