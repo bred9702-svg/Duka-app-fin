@@ -54,3 +54,13 @@ export async function getShopTeam(shopId) {
   if (error) throw error
   return data || []
 }
+
+export async function setEmployeeMembershipStatus(shopId, userId, status) {
+  const { data, error } = await supabase.rpc('set_employee_membership_status', {
+    target_shop_id: shopId,
+    target_user_id: userId,
+    target_status: status,
+  })
+  if (error) throw error
+  return data
+}

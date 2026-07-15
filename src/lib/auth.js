@@ -78,6 +78,20 @@ async function getContext() {
   return { ...data, entitlements }
 }
 
+async function getInactiveEmployeeMembership(userId) {
+  const { data, error } = await supabase
+    .from('shop_members')
+    .select('status')
+    .eq('user_id', userId)
+    .eq('role', 'employee')
+    .in('status', ['suspended', 'removed'])
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 function toSession(user, context, isOnboarded = true) {
   const { profile, membership, shop, subscription, entitlements } = context
   const effectivePlan = entitlements?.plan || subscription?.plan || 'free'
@@ -105,7 +119,18 @@ async function ensureContext(user, { role, inviteCode } = {}) {
   let context = await getContext()
   let created = false
   if (!context && role === 'owner') { await createPendingOwnerShop(user); context = await getContext(); created = true }
-  if (!context && role === 'employee') { await acceptEmployeeInvitation(inviteCode || user.user_metadata?.pending_invite_code); context = await getContext(); created = true }
+  if (!context && role === 'employee') {
+    const inactiveMembership = await getInactiveEmployeeMembership(user.id)
+    if (inactiveMembership?.status === 'suspended') {
+      throw new Error('Your access to this shop has been deactivated by the Shop Owner.')
+    }
+    if (inactiveMembership?.status === 'removed') {
+      throw new Error('Your employee membership is no longer active.')
+    }
+    await acceptEmployeeInvitation(inviteCode || user.user_metadata?.pending_invite_code)
+    context = await getContext()
+    created = true
+  }
   if (!context) throw new Error('No active Duka shop is linked to this account.')
   return { createdShop: created && role === 'owner', session: toSession(user, context, role === 'employee' ? true : !created) }
 }

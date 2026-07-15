@@ -8,6 +8,7 @@ import {
   getShopTeam,
   listEmployeeInvitations,
   revokeEmployeeInvitation,
+  setEmployeeMembershipStatus,
 } from '../lib/invitations'
 
 function InviteInfo({ label, value }) {
@@ -38,6 +39,7 @@ export default function EmployeesScreen() {
   const [employees, setEmployees] = useState([])
   const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [working, setWorking] = useState(false)
+  const [updatingEmployeeId, setUpdatingEmployeeId] = useState(null)
   const [screenError, setScreenError] = useState('')
 
   const shopId = session?.shopId
@@ -100,6 +102,27 @@ export default function EmployeesScreen() {
       text: `Join ${invite.shopName || 'my Dukwise shop'} using invitation code ${invite.code}`,
       url: buildEmployeeInviteLink(invite.code),
     })
+  }
+
+  async function changeEmployeeStatus(employee) {
+    const isActive = employee.status === 'active'
+    const nextStatus = isActive ? 'suspended' : 'active'
+    const action = isActive ? 'deactivate' : 'reactivate'
+    const employeeName = employee.full_name || 'this employee'
+    if (!window.confirm(`Are you sure you want to ${action} ${employeeName}?`)) return
+
+    setUpdatingEmployeeId(employee.user_id)
+    setScreenError('')
+    try {
+      const result = await setEmployeeMembershipStatus(shopId, employee.user_id, nextStatus)
+      setEmployees((current) => current.map((item) => (
+        item.user_id === employee.user_id ? { ...item, status: result.status } : item
+      )))
+    } catch (error) {
+      setScreenError(error.message)
+    } finally {
+      setUpdatingEmployeeId(null)
+    }
   }
 
   return (
@@ -192,7 +215,43 @@ export default function EmployeesScreen() {
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-low)' }}>
                     {employee.phone || 'No phone on file'}
                   </p>
+                  <p
+                    style={{
+                      margin: '3px 0 0',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: employee.status === 'active' ? '#5FD97A' : '#F0A93D',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    {employee.status === 'active' ? 'Active' : 'Deactivated'}
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => changeEmployeeStatus(employee)}
+                  disabled={updatingEmployeeId === employee.user_id}
+                  style={{
+                    padding: '7px 9px',
+                    borderRadius: 9,
+                    border: employee.status === 'active'
+                      ? '1px solid rgba(255,107,91,.28)'
+                      : '1px solid rgba(95,217,122,.28)',
+                    background: employee.status === 'active'
+                      ? 'rgba(255,107,91,.08)'
+                      : 'rgba(95,217,122,.08)',
+                    color: employee.status === 'active' ? '#FF6B5B' : '#5FD97A',
+                    cursor: 'pointer',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {updatingEmployeeId === employee.user_id
+                    ? 'Please wait...'
+                    : employee.status === 'active' ? 'Deactivate' : 'Reactivate'}
+                </button>
               </div>
             ))}
           </div>

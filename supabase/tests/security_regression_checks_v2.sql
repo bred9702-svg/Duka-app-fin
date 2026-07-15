@@ -64,7 +64,8 @@ protected_functions as (
     ) as activation_function,
     to_regprocedure('public.restore_deleted_account(uuid)') as recovery_function,
     to_regprocedure('public.enqueue_due_scheduled_push_notifications()') as push_schedule_function,
-    to_regprocedure('public.claim_push_notification_queue(integer)') as push_claim_function
+    to_regprocedure('public.claim_push_notification_queue(integer)') as push_claim_function,
+    to_regprocedure('public.set_employee_membership_status(uuid,uuid,text)') as employee_status_function
 ),
 manual_activation_check as (
   select
@@ -97,6 +98,15 @@ push_dispatch_check as (
       and not has_function_privilege('authenticated', push_claim_function, 'EXECUTE')
       and not has_function_privilege('anon', push_schedule_function, 'EXECUTE')
       and not has_function_privilege('anon', push_claim_function, 'EXECUTE')
+    then 'PASS' else 'FAIL' end as result
+  from protected_functions
+),
+employee_management_check as (
+  select
+    'Employee membership management requires authentication' as check_name,
+    case when employee_status_function is not null
+      and has_function_privilege('authenticated', employee_status_function, 'EXECUTE')
+      and not has_function_privilege('anon', employee_status_function, 'EXECUTE')
     then 'PASS' else 'FAIL' end as result
   from protected_functions
 ),
@@ -139,6 +149,7 @@ all_checks as (
   union all select * from manual_activation_check
   union all select * from account_recovery_check
   union all select * from push_dispatch_check
+  union all select * from employee_management_check
   union all select * from push_tables_check
   union all select * from security_events_check
   union all select * from transaction_attribution_types_check
