@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 jobs:
-  build-debug-apk:
-    name: Build test APK
+  build-release-apk:
+    name: Build signed test APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -42,22 +42,51 @@ jobs:
           test -n "$VITE_SUPABASE_URL" || { echo "Missing VITE_SUPABASE_URL repository secret"; exit 1; }
           test -n "$VITE_SUPABASE_ANON_KEY" || { echo "Missing VITE_SUPABASE_ANON_KEY repository secret"; exit 1; }
 
+      - name: Validate Android signing configuration
+        env:
+          DUKWISE_ANDROID_KEYSTORE_BASE64: ${{ secrets.DUKWISE_ANDROID_KEYSTORE_BASE64 }}
+          DUKWISE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.DUKWISE_ANDROID_KEYSTORE_PASSWORD }}
+          DUKWISE_ANDROID_KEY_ALIAS: ${{ secrets.DUKWISE_ANDROID_KEY_ALIAS }}
+          DUKWISE_ANDROID_KEY_PASSWORD: ${{ secrets.DUKWISE_ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$DUKWISE_ANDROID_KEYSTORE_BASE64" || { echo "Missing DUKWISE_ANDROID_KEYSTORE_BASE64 repository secret"; exit 1; }
+          test -n "$DUKWISE_ANDROID_KEYSTORE_PASSWORD" || { echo "Missing DUKWISE_ANDROID_KEYSTORE_PASSWORD repository secret"; exit 1; }
+          test -n "$DUKWISE_ANDROID_KEY_ALIAS" || { echo "Missing DUKWISE_ANDROID_KEY_ALIAS repository secret"; exit 1; }
+          test -n "$DUKWISE_ANDROID_KEY_PASSWORD" || { echo "Missing DUKWISE_ANDROID_KEY_PASSWORD repository secret"; exit 1; }
+
+      - name: Prepare Android signing key
+        env:
+          DUKWISE_ANDROID_KEYSTORE_BASE64: ${{ secrets.DUKWISE_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$DUKWISE_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/dukwise-release.jks"
+
       - name: Build and sync Capacitor
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run cap:sync
 
-      - name: Build Android test APK
+      - name: Build signed Android test APK
         working-directory: android
+        env:
+          DUKWISE_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/dukwise-release.jks
+          DUKWISE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.DUKWISE_ANDROID_KEYSTORE_PASSWORD }}
+          DUKWISE_ANDROID_KEY_ALIAS: ${{ secrets.DUKWISE_ANDROID_KEY_ALIAS }}
+          DUKWISE_ANDROID_KEY_PASSWORD: ${{ secrets.DUKWISE_ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
 
-      - name: Upload Dukwise test APK
+      - name: Verify APK signature
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER" || { echo "Android apksigner was not found"; exit 1; }
+          "$APKSIGNER" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload signed Dukwise test APK
         uses: actions/upload-artifact@v4
         with:
-          name: dukwise-android-test-v0.3.0
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: dukwise-android-signed-test-v0.3.1
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

@@ -11,6 +11,7 @@ import { getLowStock } from '../utils/inventoryEngine'
 import { getTopProducts } from '../lib/db'
 
 const MPESA_AMOUNTS = [500, 800, 1000, 1500, 2000, 2500]
+const SHOW_MPESA_SIMULATOR = import.meta.env.DEV
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -234,32 +235,36 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* Simulate M-Pesa */}
-        <button
-          onClick={simulateMpesa}
-          disabled={simulating}
-          style={{
-            width: '100%',
-            background: simulating ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
-            color: simulating ? '#FFD98A' : '#2A1A05',
-            border: simulating ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
-            borderRadius: 12,
-            padding: 11,
-            fontFamily: 'var(--font-display)',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-            marginBottom: 14,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            boxShadow: simulating ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
-          }}
-        >
-          <Icon name={simulating ? 'loader' : 'phone'} size={15} spin={simulating} />
-          {simulating ? 'Simulating M-Pesa...' : 'Simulate M-Pesa payment'}
-        </button>
+        {SHOW_MPESA_SIMULATOR && (
+          <>
+            {/* Development-only M-Pesa simulator */}
+            <button
+              onClick={simulateMpesa}
+              disabled={simulating}
+              style={{
+                width: '100%',
+                background: simulating ? 'rgba(240,169,61,0.15)' : 'linear-gradient(135deg, #FFC56B 0%, #F0A93D 100%)',
+                color: simulating ? '#FFD98A' : '#2A1A05',
+                border: simulating ? '1px solid rgba(240,169,61,0.3)' : '1px solid rgba(255,255,255,0.4)',
+                borderRadius: 12,
+                padding: 11,
+                fontFamily: 'var(--font-display)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: 14,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                boxShadow: simulating ? 'none' : '0 8px 24px -6px rgba(240,169,61,0.5)',
+              }}
+            >
+              <Icon name={simulating ? 'loader' : 'phone'} size={15} spin={simulating} />
+              {simulating ? 'Simulating M-Pesa...' : 'Simulate M-Pesa payment'}
+            </button>
+          </>
+        )}
 
         {/* Recent transactions */}
         {recent.length > 0 && (
