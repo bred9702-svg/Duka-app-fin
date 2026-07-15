@@ -9,7 +9,8 @@ tenant_tables(table_name) as (
     ('employee_invitations'), ('products'), ('customers'), ('transactions'),
     ('stock_purchases'), ('stock_purchase_items'),
     ('shop_business_preferences'), ('account_deletion_requests'),
-    ('security_events')
+    ('security_events'), ('push_devices'), ('push_notification_preferences'),
+    ('push_notification_queue')
 ),
 rls_checks as (
   select
@@ -61,7 +62,9 @@ protected_functions as (
     to_regprocedure(
       'public.activate_manual_pro_subscription(uuid,text,integer,timestamp with time zone)'
     ) as activation_function,
-    to_regprocedure('public.restore_deleted_account(uuid)') as recovery_function
+    to_regprocedure('public.restore_deleted_account(uuid)') as recovery_function,
+    to_regprocedure('public.enqueue_due_scheduled_push_notifications()') as push_schedule_function,
+    to_regprocedure('public.claim_push_notification_queue(integer)') as push_claim_function
 ),
 manual_activation_check as (
   select
@@ -83,6 +86,32 @@ account_recovery_check as (
     then 'PASS' else 'FAIL' end as result
   from protected_functions
 ),
+push_dispatch_check as (
+  select
+    'Push dispatch functions are service-role only' as check_name,
+    case when push_schedule_function is not null
+      and push_claim_function is not null
+      and has_function_privilege('service_role', push_schedule_function, 'EXECUTE')
+      and has_function_privilege('service_role', push_claim_function, 'EXECUTE')
+      and not has_function_privilege('authenticated', push_schedule_function, 'EXECUTE')
+      and not has_function_privilege('authenticated', push_claim_function, 'EXECUTE')
+      and not has_function_privilege('anon', push_schedule_function, 'EXECUTE')
+      and not has_function_privilege('anon', push_claim_function, 'EXECUTE')
+    then 'PASS' else 'FAIL' end as result
+  from protected_functions
+),
+push_tables_check as (
+  select
+    'Push infrastructure cannot be written directly by clients' as check_name,
+    case when
+      not has_table_privilege('authenticated', 'public.push_devices', 'INSERT')
+      and not has_table_privilege('authenticated', 'public.push_devices', 'UPDATE')
+      and not has_table_privilege('authenticated', 'public.push_notification_preferences', 'INSERT')
+      and not has_table_privilege('authenticated', 'public.push_notification_preferences', 'UPDATE')
+      and not has_table_privilege('authenticated', 'public.push_notification_queue', 'INSERT')
+      and not has_table_privilege('authenticated', 'public.push_notification_queue', 'UPDATE')
+    then 'PASS' else 'FAIL' end as result
+),
 security_events_check as (
   select
     'Security events cannot be written by clients' as check_name,
@@ -99,6 +128,8 @@ all_checks as (
   union all select * from search_path_check
   union all select * from manual_activation_check
   union all select * from account_recovery_check
+  union all select * from push_dispatch_check
+  union all select * from push_tables_check
   union all select * from security_events_check
 )
 select check_name, result

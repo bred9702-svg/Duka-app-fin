@@ -5,6 +5,7 @@ dist/
 android/.gradle/
 android/local.properties
 android/**/build/
+android/app/google-services.json
 *.jks
 *.keystore
 

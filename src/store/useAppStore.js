@@ -25,6 +25,7 @@ import {
   getBusinessPreferences,
   saveBusinessPreferences as saveRemoteBusinessPreferences,
 } from '../lib/businessPreferences'
+import { disablePushNotifications, savePushPreferences } from '../lib/pushNotifications'
 
 let businessPreferencesSaveTimer = null
 
@@ -51,6 +52,9 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   saleAlerts: true,
   stockPurchaseAlerts: true,
   cashOutAlerts: true,
+  trialAlerts: true,
+  paymentReviewAlerts: true,
+  employeeActivityAlerts: true,
 }
 
 export const DEFAULT_BUSINESS_PREFERENCES = {
@@ -299,13 +303,22 @@ clearAllNotifications: () => {
 },
 
 updateNotificationSetting: (id, value) => {
+  let nextSettings
   set((s) => {
     const notificationSettings = saveNotificationSettings({
       ...s.notificationSettings,
       [id]: value,
     })
+    nextSettings = notificationSettings
     return { notificationSettings }
   })
+
+  const currentSession = get().session
+  if (currentSession?.shopId && nextSettings) {
+    savePushPreferences(currentSession.shopId, nextSettings).catch((error) => {
+      console.error('Save push preferences failed:', error)
+    })
+  }
 },
 
 registerOwner: async (data) => {
@@ -370,6 +383,14 @@ updateShopProfile: async (profile, logoFile = null) => {
 },
 
 signOut: async () => {
+  const currentSession = get().session
+  if (currentSession?.shopId) {
+    try {
+      await disablePushNotifications(currentSession)
+    } catch (error) {
+      console.error('Push device unregister failed:', error)
+    }
+  }
   try {
     await signOutAccount()
   } catch (error) {

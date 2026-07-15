@@ -7,6 +7,7 @@ import FadeIn from './components/animation/FadeIn'
 import RequireOwner from './components/auth/RequireOwner'
 import RequireEntitlement from './components/auth/RequireEntitlement'
 import InAppNotification from './components/notifications/InAppNotification'
+import { initializePushNotifications } from './lib/pushNotifications'
 
 const HomeScreen = lazy(() => import('./screens/HomeScreen'))
 const TransactionsScreen = lazy(() => import('./screens/TransactionsScreen'))
@@ -93,6 +94,21 @@ export default function App() {
   useEffect(() => {
     bootstrap()
   }, [])
+
+  // Never prompts on startup. Existing permission is reused silently; the
+  // explicit permission request remains on the Notifications settings screen.
+  useEffect(() => {
+    if (!session?.authUserId || !session?.shopId) return undefined
+
+    let cancelled = false
+    initializePushNotifications(session).catch((error) => {
+      if (!cancelled) console.error('Push notification initialization failed:', error)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [session?.authUserId, session?.shopId])
 
   const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']
   const isOnboardingRoute = ONBOARDING_PATHS.some((p) => location.pathname.startsWith(p))
