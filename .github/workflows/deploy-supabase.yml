@@ -1,4 +1,4 @@
-name: Deploy Dukwise Supabase Push Backend
+name: Deploy Dukwise Supabase Backend
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Apply migration and deploy push dispatcher
+    name: Apply migrations and deploy Edge Functions
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -43,3 +43,6 @@ jobs:
 
       - name: Deploy push dispatcher
         run: supabase functions deploy dispatch-push --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy Dukwise AI
+        run: supabase functions deploy dukwise-ai --project-ref "$SUPABASE_PROJECT_REF"

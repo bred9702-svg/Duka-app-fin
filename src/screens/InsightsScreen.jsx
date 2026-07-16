@@ -32,15 +32,8 @@ const ITEMS = [
     path: '/trends',
   },
   {
-    title: 'AI Advisor',
-    subtitle: 'Recommendations for your shop',
-    icon: 'bell',
-    color: '#FF6B5B',
-    path: '/advisor',
-  },
-  {
     title: 'Dukwise AI',
-    subtitle: 'Quick rule-based business insights',
+    subtitle: 'Your business and Wines & Spirits expert',
     icon: 'star',
     color: '#F0A93D',
     path: '/duka-ai',

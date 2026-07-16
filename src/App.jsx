@@ -17,7 +17,6 @@ const CustomerDetailScreen = lazy(() => import('./screens/CustomerDetailScreen')
 const AnalyticsScreen = lazy(() => import('./screens/AnalyticsScreen'))
 const FinancialAnalysisScreen = lazy(() => import('./screens/FinancialAnalysisScreen'))
 const BusinessTrendsScreen = lazy(() => import('./screens/BusinessTrendsScreen'))
-const AdvisorScreen = lazy(() => import('./screens/AdvisorScreen'))
 const DukaAIScreen = lazy(() => import('./screens/DukaAIScreen'))
 const InventoryInvestmentScreen = lazy(() => import('./screens/InventoryInvestmentScreen'))
 const NewSaleScreen = lazy(() => import('./screens/NewSaleScreen'))
@@ -240,8 +239,8 @@ export default function App() {
             <Route
               path="/advisor"
               element={
-                <RequireOwner title="AI Advisor">
-                  <RequireEntitlement feature="smart_insights" title="AI Advisor"><AdvisorScreen /></RequireEntitlement>
+                <RequireOwner title="Dukwise AI">
+                  <RequireEntitlement feature="smart_insights" title="Dukwise AI"><DukaAIScreen /></RequireEntitlement>
                 </RequireOwner>
               }
             />

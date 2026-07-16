@@ -10,7 +10,7 @@ tenant_tables(table_name) as (
     ('stock_purchases'), ('stock_purchase_items'),
     ('shop_business_preferences'), ('account_deletion_requests'),
     ('security_events'), ('push_devices'), ('push_notification_preferences'),
-    ('push_notification_queue')
+    ('push_notification_queue'), ('dukwise_ai_usage')
 ),
 rls_checks as (
   select
@@ -65,7 +65,8 @@ protected_functions as (
     to_regprocedure('public.restore_deleted_account(uuid)') as recovery_function,
     to_regprocedure('public.enqueue_due_scheduled_push_notifications()') as push_schedule_function,
     to_regprocedure('public.claim_push_notification_queue(integer)') as push_claim_function,
-    to_regprocedure('public.set_employee_membership_status(uuid,uuid,text)') as employee_status_function
+    to_regprocedure('public.set_employee_membership_status(uuid,uuid,text)') as employee_status_function,
+    to_regprocedure('public.authorize_dukwise_ai_request(uuid)') as dukwise_ai_authorization_function
 ),
 manual_activation_check as (
   select
@@ -110,6 +111,25 @@ employee_management_check as (
     then 'PASS' else 'FAIL' end as result
   from protected_functions
 ),
+dukwise_ai_authorization_check as (
+  select
+    'Dukwise AI authorization requires authentication' as check_name,
+    case when dukwise_ai_authorization_function is not null
+      and has_function_privilege('authenticated', dukwise_ai_authorization_function, 'EXECUTE')
+      and not has_function_privilege('anon', dukwise_ai_authorization_function, 'EXECUTE')
+    then 'PASS' else 'FAIL' end as result
+  from protected_functions
+),
+dukwise_ai_usage_check as (
+  select
+    'Dukwise AI usage cannot be read or written directly by clients' as check_name,
+    case when
+      not has_table_privilege('authenticated', 'public.dukwise_ai_usage', 'SELECT')
+      and not has_table_privilege('authenticated', 'public.dukwise_ai_usage', 'INSERT')
+      and not has_table_privilege('authenticated', 'public.dukwise_ai_usage', 'UPDATE')
+      and not has_table_privilege('authenticated', 'public.dukwise_ai_usage', 'DELETE')
+    then 'PASS' else 'FAIL' end as result
+),
 push_tables_check as (
   select
     'Push infrastructure cannot be written directly by clients' as check_name,
@@ -150,6 +170,8 @@ all_checks as (
   union all select * from account_recovery_check
   union all select * from push_dispatch_check
   union all select * from employee_management_check
+  union all select * from dukwise_ai_authorization_check
+  union all select * from dukwise_ai_usage_check
   union all select * from push_tables_check
   union all select * from security_events_check
   union all select * from transaction_attribution_types_check

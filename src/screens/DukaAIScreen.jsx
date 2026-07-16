@@ -9,6 +9,15 @@ import { getDailyAIBrief } from '../utils/dailyAIBrief'
 import { getDukaAIInsights } from '../utils/dukaAIInsights'
 import { getDukaAIRecommendations } from '../utils/dukaAIRecommendations'
 import { fmtKES } from '../utils/formatters'
+import { askDukwiseAI } from '../lib/dukwiseAI'
+
+const QUICK_QUESTIONS = [
+  'What should I restock first?',
+  'Which products should I bundle?',
+  'Why did my profit drop?',
+  'Who owes me the most?',
+  'How can I increase weekend sales?',
+]
 
 function CollapsibleSection({ id, title, expanded, onToggle, children }) {
   return (
@@ -337,11 +346,186 @@ function DailyBriefCard({ brief }) {
   )
 }
 
+function DukwiseAIChat({ shopId }) {
+  const [messages, setMessages] = useState([])
+  const [question, setQuestion] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [remaining, setRemaining] = useState(null)
+
+  async function submitQuestion(value = question) {
+    const trimmed = String(value || '').trim()
+    if (!trimmed || sending) return
+
+    const previousMessages = messages
+    const userMessage = { role: 'user', content: trimmed }
+    setMessages([...previousMessages, userMessage])
+    setQuestion('')
+    setError('')
+    setSending(true)
+
+    try {
+      const result = await askDukwiseAI({
+        shopId,
+        question: trimmed,
+        history: previousMessages,
+      })
+      setMessages((current) => [
+        ...current,
+        { role: 'assistant', content: result.answer },
+      ])
+      setRemaining(result.remaining_today)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      submitQuestion()
+    }
+  }
+
+  return (
+    <div
+      style={{
+        background: 'var(--glass-fill-soft)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 14,
+      }}
+    >
+      {messages.length === 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-hi)', marginBottom: 4 }}>
+            Ask about your shop
+          </p>
+          <p style={{ fontSize: 10, color: 'var(--text-low)', lineHeight: 1.45 }}>
+            Get answers grounded in your business data and Wines &amp; Spirits retail expertise.
+          </p>
+        </div>
+      )}
+
+      {messages.length > 0 && (
+        <div style={{ display: 'grid', gap: 9, marginBottom: 12 }}>
+          {messages.map((message, index) => (
+            <div
+              key={`${message.role}-${index}`}
+              style={{
+                justifySelf: message.role === 'user' ? 'end' : 'start',
+                maxWidth: '88%',
+                padding: '10px 12px',
+                borderRadius: message.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                background: message.role === 'user' ? 'rgba(240,169,61,0.18)' : 'rgba(255,255,255,0.055)',
+                border: message.role === 'user' ? '1px solid rgba(240,169,61,0.25)' : '1px solid var(--glass-border)',
+                color: 'var(--text-hi)',
+                fontSize: 11,
+                lineHeight: 1.55,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {message.content}
+            </div>
+          ))}
+          {sending && (
+            <div style={{ fontSize: 10, color: 'var(--text-low)', padding: '4px 2px' }}>
+              Dukwise AI is analysing your shop...
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 9 }}>
+        {QUICK_QUESTIONS.map((item) => (
+          <button
+            key={item}
+            type="button"
+            disabled={sending}
+            onClick={() => submitQuestion(item)}
+            style={{
+              flexShrink: 0,
+              border: '1px solid var(--glass-border)',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.04)',
+              color: 'var(--text-low)',
+              padding: '7px 10px',
+              fontSize: 9,
+              cursor: sending ? 'default' : 'pointer',
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+        <textarea
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask Dukwise AI..."
+          rows={2}
+          maxLength={1200}
+          disabled={sending}
+          style={{
+            flex: 1,
+            resize: 'none',
+            border: '1px solid var(--glass-border)',
+            borderRadius: 12,
+            background: 'rgba(0,0,0,0.12)',
+            color: 'var(--text-hi)',
+            padding: '10px 11px',
+            fontFamily: 'inherit',
+            fontSize: 11,
+            lineHeight: 1.4,
+            outline: 'none',
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => submitQuestion()}
+          disabled={sending || !question.trim()}
+          style={{
+            height: 38,
+            minWidth: 58,
+            border: 0,
+            borderRadius: 11,
+            background: '#F0A93D',
+            color: '#17120A',
+            fontSize: 10,
+            fontWeight: 700,
+            opacity: sending || !question.trim() ? 0.5 : 1,
+            cursor: sending || !question.trim() ? 'default' : 'pointer',
+          }}
+        >
+          Send
+        </button>
+      </div>
+
+      {error && (
+        <p style={{ marginTop: 8, fontSize: 10, color: '#FF6B5B', lineHeight: 1.4 }}>
+          {error}
+        </p>
+      )}
+      {remaining !== null && (
+        <p style={{ marginTop: 8, fontSize: 9, color: 'var(--text-low)' }}>
+          {remaining} questions remaining today
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function DukaAIScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const businessPreferences = useAppStore((s) => s.businessPreferences)
+  const shopId = useAppStore((s) => s.session?.shopId)
 
   const dailyBrief = getDailyAIBrief({ products, transactions, customers })
   const insights = getDukaAIInsights({ products, transactions, customers })
@@ -371,8 +555,10 @@ export default function DukaAIScreen() {
         <SubScreenHeader title="Dukwise AI" />
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 16 }}>
-          A quick, rule-based read of your business — no chat, just the essentials.
+          Your business intelligence and Wines &amp; Spirits expert in one assistant.
         </p>
+
+        <DukwiseAIChat shopId={shopId} />
 
         {businessPreferences.dailyAiBrief !== false && (
           <CollapsibleSection
