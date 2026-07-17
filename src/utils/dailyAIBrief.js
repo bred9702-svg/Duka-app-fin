@@ -2,8 +2,6 @@ import { fmtKES } from './formatters'
 import { getBestSeller, getLowStock, getOutOfStock } from './inventoryEngine'
 import { getJoinedEmployees } from './employeeInvitations'
 
-const DAILY_AI_BRIEF_KEY = 'duka-daily-ai-brief'
-
 function getTodayKey(date = new Date()) {
   return date.toISOString().slice(0, 10)
 }
@@ -291,7 +289,10 @@ function createDailyBrief({ products = [], transactions = [], customers = [], no
     0
   )
 
-  const estimatedProfit = recordedProfit || todaySales - todayExpenses
+  const hasRecordedProfit = todaySalesTransactions.some(
+    (transaction) => transaction.profit !== null && transaction.profit !== undefined
+  )
+  const estimatedProfit = hasRecordedProfit ? recordedProfit : todaySales - todayExpenses
 
   const bestSeller = getBestSeller(products, todaySalesTransactions)
   const lowStock = getLowStock(products)
@@ -331,43 +332,11 @@ function createDailyBrief({ products = [], transactions = [], customers = [], no
   }
 }
 
-function loadCachedBrief(todayKey) {
-  try {
-    const raw = localStorage.getItem(DAILY_AI_BRIEF_KEY)
-    if (!raw) return null
-
-    const cached = JSON.parse(raw)
-
-    if (cached?.date !== todayKey) return null
-
-    return cached
-  } catch {
-    return null
-  }
-}
-
-function saveCachedBrief(brief) {
-  try {
-    localStorage.setItem(DAILY_AI_BRIEF_KEY, JSON.stringify(brief))
-  } catch {
-    // Ignore storage failures so the screen can still render a fresh brief.
-  }
-}
-
 export function getDailyAIBrief({ products = [], transactions = [], customers = [], now = new Date() }) {
-  const todayKey = getTodayKey(now)
-  const cached = loadCachedBrief(todayKey)
-
-  if (cached) return cached
-
-  const brief = createDailyBrief({
+  return createDailyBrief({
     products,
     transactions,
     customers,
     now,
   })
-
-  saveCachedBrief(brief)
-
-  return brief
 }

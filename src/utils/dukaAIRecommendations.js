@@ -21,6 +21,92 @@ function getProductSalesMap(transactions = []) {
   return map
 }
 
+function productText(product = {}) {
+  return `${product.name || ''} ${product.category || ''}`.toLowerCase()
+}
+
+function getMarginRecommendation({ products }) {
+  const candidates = products
+    .filter((product) => Number(product.unit_price || 0) > 0 && Number(product.stock_current || 0) > 0)
+    .map((product) => ({
+      ...product,
+      marginValue: Number(product.unit_price || 0) - Number(product.cost_price || 0),
+    }))
+    .filter((product) => product.marginValue > 0)
+    .sort((a, b) => b.marginValue - a.marginValue)
+
+  if (!candidates.length) {
+    return {
+      id: 'margin-recommendation',
+      title: 'Margin Opportunity',
+      icon: 'cash',
+      color: '#5B9FF0',
+      headline: 'Add cost prices to unlock margin analysis',
+      detail: 'Why: Dukwise needs both cost and selling prices to identify the products that contribute the most cash per unit.',
+    }
+  }
+
+  const top = candidates[0]
+  return {
+    id: 'margin-recommendation',
+    title: 'Margin Opportunity',
+    icon: 'cash',
+    color: '#F0A93D',
+    headline: `${top.name} adds ${fmtKES(top.marginValue)} KES per unit`,
+    detail: `Why: it has the strongest recorded unit margin among products currently in stock. Recommend it when it genuinely fits the customer's request.`,
+  }
+}
+
+function getBundleRecommendation({ products, transactions }) {
+  const salesMap = getProductSalesMap(transactions)
+  const alcoholWords = ['gin', 'vodka', 'whisky', 'whiskey', 'rum', 'tequila', 'brandy', 'cognac', 'wine']
+  const mixerWords = ['tonic', 'soda', 'coke', 'cola', 'juice', 'water', 'energy', 'sprite', 'fanta']
+  const anchors = products
+    .filter((product) => alcoholWords.some((word) => productText(product).includes(word)))
+    .sort((a, b) => (salesMap[b.id] || 0) - (salesMap[a.id] || 0))
+  const mixers = products.filter((product) => mixerWords.some((word) => productText(product).includes(word)))
+
+  if (!anchors.length) {
+    return {
+      id: 'bundle-recommendation',
+      title: 'Bundle Opportunity',
+      icon: 'star',
+      color: '#7C5CFC',
+      headline: 'Use clearer product categories for matching',
+      detail: 'Why: categories such as Gin, Whisky, Wine, Tonic and Juice let Dukwise recommend bundles using products actually stocked in your shop.',
+    }
+  }
+
+  const anchor = anchors[0]
+  const text = productText(anchor)
+  let mixer = mixers[0]
+  if (text.includes('gin')) mixer = mixers.find((product) => productText(product).includes('tonic')) || mixer
+  if (text.includes('vodka')) mixer = mixers.find((product) => /juice|energy|soda/.test(productText(product))) || mixer
+  if (/whisky|whiskey|rum|brandy|cognac/.test(text)) {
+    mixer = mixers.find((product) => /coke|cola|soda|water/.test(productText(product))) || mixer
+  }
+
+  if (!mixer) {
+    return {
+      id: 'bundle-recommendation',
+      title: 'Bundle Opportunity',
+      icon: 'star',
+      color: '#7C5CFC',
+      headline: `${anchor.name} needs a complementary mixer`,
+      detail: 'Why: it can anchor a higher-value basket, but no suitable mixer is currently identifiable in your catalogue.',
+    }
+  }
+
+  return {
+    id: 'bundle-recommendation',
+    title: 'Bundle Opportunity',
+    icon: 'star',
+    color: '#7C5CFC',
+    headline: `Test ${anchor.name} + ${mixer.name}`,
+    detail: 'Why: both products already exist in your catalogue. Use a small discount only if the combined selling price stays safely above combined cost.',
+  }
+}
+
 function getTopDebtor(customers = []) {
   return customers
     .filter((c) => (c.total_owed || 0) > 0)
@@ -242,6 +328,8 @@ export function getDukaAIRecommendations({ products = [], transactions = [], cus
 
   return [
     getRestockRecommendation(ctx),
+    getMarginRecommendation(ctx),
+    getBundleRecommendation(ctx),
     getDebtFollowUpRecommendation(ctx),
     getUnderperformerRecommendation(ctx),
     getFastestSellerRecommendation(ctx),

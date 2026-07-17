@@ -33,7 +33,7 @@ const ITEMS = [
   },
   {
     title: 'Dukwise AI',
-    subtitle: 'Your business and Wines & Spirits expert',
+    subtitle: 'Private intelligence from your live shop data',
     icon: 'star',
     color: '#F0A93D',
     path: '/duka-ai',

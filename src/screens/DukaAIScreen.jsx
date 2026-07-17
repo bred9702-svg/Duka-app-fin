@@ -9,7 +9,7 @@ import { getDailyAIBrief } from '../utils/dailyAIBrief'
 import { getDukaAIInsights } from '../utils/dukaAIInsights'
 import { getDukaAIRecommendations } from '../utils/dukaAIRecommendations'
 import { fmtKES } from '../utils/formatters'
-import { askDukwiseAI } from '../lib/dukwiseAI'
+import { askLocalDukwiseAI } from '../utils/dukwiseLocalAI'
 
 const QUICK_QUESTIONS = [
   'What should I restock first?',
@@ -215,7 +215,7 @@ function DailyBriefCard({ brief }) {
               marginBottom: 4,
             }}
           >
-            Generated once today
+            Updated from your latest data
           </p>
           <p
             style={{
@@ -346,40 +346,35 @@ function DailyBriefCard({ brief }) {
   )
 }
 
-function DukwiseAIChat({ shopId }) {
+function DukwiseAIChat({ products, transactions, customers }) {
   const [messages, setMessages] = useState([])
   const [question, setQuestion] = useState('')
   const [sending, setSending] = useState(false)
-  const [error, setError] = useState('')
-  const [remaining, setRemaining] = useState(null)
+  const [coverage, setCoverage] = useState(null)
 
   async function submitQuestion(value = question) {
     const trimmed = String(value || '').trim()
     if (!trimmed || sending) return
 
-    const previousMessages = messages
     const userMessage = { role: 'user', content: trimmed }
-    setMessages([...previousMessages, userMessage])
+    setMessages((current) => [...current, userMessage])
     setQuestion('')
-    setError('')
     setSending(true)
 
-    try {
-      const result = await askDukwiseAI({
-        shopId,
+    window.setTimeout(() => {
+      const result = askLocalDukwiseAI({
         question: trimmed,
-        history: previousMessages,
+        products,
+        transactions,
+        customers,
       })
       setMessages((current) => [
         ...current,
         { role: 'assistant', content: result.answer },
       ])
-      setRemaining(result.remaining_today)
-    } catch (requestError) {
-      setError(requestError.message)
-    } finally {
+      setCoverage(`${result.confidence} · ${result.dataPoints} recorded data points analysed locally`)
       setSending(false)
-    }
+    }, 180)
   }
 
   function handleKeyDown(event) {
@@ -405,7 +400,7 @@ function DukwiseAIChat({ shopId }) {
             Ask about your shop
           </p>
           <p style={{ fontSize: 10, color: 'var(--text-low)', lineHeight: 1.45 }}>
-            Get answers grounded in your business data and Wines &amp; Spirits retail expertise.
+            Instant answers from your recorded sales, margins, stock, expenses and debts — no external service required.
           </p>
         </div>
       )}
@@ -506,14 +501,9 @@ function DukwiseAIChat({ shopId }) {
         </button>
       </div>
 
-      {error && (
-        <p style={{ marginTop: 8, fontSize: 10, color: '#FF6B5B', lineHeight: 1.4 }}>
-          {error}
-        </p>
-      )}
-      {remaining !== null && (
+      {coverage && (
         <p style={{ marginTop: 8, fontSize: 9, color: 'var(--text-low)' }}>
-          {remaining} questions remaining today
+          {coverage}
         </p>
       )}
     </div>
@@ -525,7 +515,6 @@ export default function DukaAIScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const businessPreferences = useAppStore((s) => s.businessPreferences)
-  const shopId = useAppStore((s) => s.session?.shopId)
 
   const dailyBrief = getDailyAIBrief({ products, transactions, customers })
   const insights = getDukaAIInsights({ products, transactions, customers })
@@ -538,7 +527,9 @@ export default function DukaAIScreen() {
   }
 
   const salesInsights = insights.filter(
-    (i) => i.id === 'sales-trend-insight' || i.id === 'top-product-insight'
+    (i) => i.id === 'sales-trend-insight'
+      || i.id === 'profit-quality-insight'
+      || i.id === 'top-product-insight'
   )
   const inventoryInsights = insights.filter((i) => i.id === 'stock-insight')
   const debtInsights = insights.filter((i) => i.id === 'debt-risk-insight')
@@ -555,15 +546,15 @@ export default function DukaAIScreen() {
         <SubScreenHeader title="Dukwise AI" />
 
         <p style={{ fontSize: 11, color: 'var(--text-low)', lineHeight: 1.5, marginBottom: 16 }}>
-          Your business intelligence and Wines &amp; Spirits expert in one assistant.
+          Private business intelligence and Wines &amp; Spirits guidance, calculated from your latest shop data.
         </p>
 
-        <DukwiseAIChat shopId={shopId} />
+        <DukwiseAIChat products={products} transactions={transactions} customers={customers} />
 
         {businessPreferences.dailyAiBrief !== false && (
           <CollapsibleSection
             id="brief"
-            title="Daily AI Brief"
+            title="Live Business Brief"
             expanded={expandedSection === 'brief'}
             onToggle={toggleSection}
           >

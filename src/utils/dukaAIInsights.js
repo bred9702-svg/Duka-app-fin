@@ -20,6 +20,7 @@ const WEEK_MS = 7 * DAY_MS
 
 function getRevenueWindow(transactions, now = Date.now()) {
   const sales = transactions.filter((t) => t.operation_type === 'sale')
+  const expenses = transactions.filter((t) => t.operation_type === 'expense')
 
   const thisWeek = sales.filter(
     (t) => new Date(t.created_at || t.ts || now).getTime() >= now - WEEK_MS
@@ -31,13 +32,37 @@ function getRevenueWindow(transactions, now = Date.now()) {
 
   const thisWeekTotal = thisWeek.reduce((a, t) => a + (t.amount || 0), 0)
   const lastWeekTotal = lastWeek.reduce((a, t) => a + (t.amount || 0), 0)
+  const thisWeekProfit = thisWeek.reduce((a, t) => a + Number(t.profit || 0), 0)
+  const lastWeekProfit = lastWeek.reduce((a, t) => a + Number(t.profit || 0), 0)
+  const thisWeekExpenses = expenses
+    .filter((t) => new Date(t.created_at || t.ts || now).getTime() >= now - WEEK_MS)
+    .reduce((a, t) => a + Number(t.amount || 0), 0)
+  const lastWeekExpenses = expenses
+    .filter((t) => {
+      const ts = new Date(t.created_at || t.ts || now).getTime()
+      return ts >= now - WEEK_MS * 2 && ts < now - WEEK_MS
+    })
+    .reduce((a, t) => a + Number(t.amount || 0), 0)
 
   const revenueDelta =
     lastWeekTotal > 0
       ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100)
       : null
 
-  return { thisWeekTotal, lastWeekTotal, revenueDelta }
+  const profitDelta = lastWeekProfit > 0
+    ? Math.round(((thisWeekProfit - lastWeekProfit) / lastWeekProfit) * 100)
+    : null
+
+  return {
+    thisWeekTotal,
+    lastWeekTotal,
+    revenueDelta,
+    thisWeekProfit,
+    lastWeekProfit,
+    profitDelta,
+    thisWeekExpenses,
+    lastWeekExpenses,
+  }
 }
 
 // ── 1. SALES TREND INSIGHT ────────────────────────────────────────
@@ -66,6 +91,44 @@ function getSalesTrendInsight({ thisWeekTotal, lastWeekTotal, revenueDelta }) {
     id: 'sales-trend-insight',
     title: 'Sales Trend',
     icon: 'trendingUp',
+    color,
+    headline,
+    detail,
+  }
+}
+
+function getProfitQualityInsight({
+  thisWeekTotal,
+  thisWeekProfit,
+  lastWeekProfit,
+  profitDelta,
+  thisWeekExpenses,
+  lastWeekExpenses,
+}) {
+  const margin = thisWeekTotal > 0 ? Math.round((thisWeekProfit / thisWeekTotal) * 100) : null
+  let color = '#F0A93D'
+  let headline = `${fmtKES(thisWeekProfit)} KES product profit this week`
+  let detail = margin === null
+    ? 'Record product sales and cost prices to measure margin quality.'
+    : `${margin}% recorded product margin, with ${fmtKES(thisWeekExpenses)} KES in classified expenses.`
+
+  if (profitDelta !== null && profitDelta >= 0) {
+    color = '#5FD97A'
+    headline = `Product profit is up ${profitDelta}%`
+    detail = `${fmtKES(thisWeekProfit)} KES this week versus ${fmtKES(lastWeekProfit)} KES last week; classified expenses are ${fmtKES(thisWeekExpenses)} KES.`
+  } else if (profitDelta !== null) {
+    color = '#FF6B5B'
+    headline = `Product profit is down ${Math.abs(profitDelta)}%`
+    const expenseSignal = thisWeekExpenses > lastWeekExpenses
+      ? ` Expenses also increased from ${fmtKES(lastWeekExpenses)} to ${fmtKES(thisWeekExpenses)} KES.`
+      : ''
+    detail = `${fmtKES(thisWeekProfit)} KES this week versus ${fmtKES(lastWeekProfit)} KES last week.${expenseSignal}`
+  }
+
+  return {
+    id: 'profit-quality-insight',
+    title: 'Profit Quality',
+    icon: 'cash',
     color,
     headline,
     detail,
@@ -226,7 +289,7 @@ export function getDukaAIInsights({ products = [], transactions = [], customers 
   const topDebtor = debtors[0] || null
   const debtsTotal = debtors.reduce((a, c) => a + (c.total_owed || 0), 0)
 
-  const { thisWeekTotal, lastWeekTotal, revenueDelta } = getRevenueWindow(transactions)
+  const performance = getRevenueWindow(transactions)
 
   const ctx = {
     health,
@@ -238,15 +301,14 @@ export function getDukaAIInsights({ products = [], transactions = [], customers 
     debtors,
     topDebtor,
     debtsTotal,
-    thisWeekTotal,
-    lastWeekTotal,
-    revenueDelta,
+    ...performance,
     customers,
     transactions,
   }
 
   return [
     getSalesTrendInsight(ctx),
+    getProfitQualityInsight(ctx),
     getStockInsight(ctx),
     getDebtRiskInsight(ctx),
     getTopSellingProductInsight(ctx),
