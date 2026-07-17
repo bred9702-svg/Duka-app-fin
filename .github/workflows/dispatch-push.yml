@@ -19,18 +19,21 @@ jobs:
     timeout-minutes: 5
     env:
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
 
     steps:
       - name: Validate push dispatcher configuration
         run: |
           test -n "$SUPABASE_PROJECT_REF" || { echo "Missing SUPABASE_PROJECT_REF repository secret"; exit 1; }
+          test -n "$SUPABASE_ANON_KEY" || { echo "Missing VITE_SUPABASE_ANON_KEY repository secret"; exit 1; }
           test -n "$PUSH_DISPATCH_SECRET" || { echo "Missing PUSH_DISPATCH_SECRET repository secret"; exit 1; }
 
       - name: Dispatch queued notifications
         run: |
           curl --fail-with-body --silent --show-error \
             --request POST \
+            --header "authorization: Bearer $SUPABASE_ANON_KEY" \
             --header "x-dispatch-secret: $PUSH_DISPATCH_SECRET" \
             --header "content-type: application/json" \
             --data '{}' \
