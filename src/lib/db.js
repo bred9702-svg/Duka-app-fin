@@ -172,6 +172,15 @@ export async function classifyTransaction(id, classification) {
   }
 }
 
+export async function setTransactionIgnored(id, ignored) {
+  const { data, error } = await supabase.rpc('set_unclassified_transaction_ignored', {
+    target_transaction_id: id,
+    ignored,
+  })
+  if (error) throw error
+  return data
+}
+
 // ── CUSTOMERS ─────────────────────────────────────────────────
 
 export async function getCustomers() {

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-release-apk:
@@ -99,7 +99,22 @@ jobs:
       - name: Upload signed Dukwise test APK
         uses: actions/upload-artifact@v4
         with:
-          name: dukwise-android-signed-test-v0.3.1
+          name: dukwise-android-signed-test-v0.3.2
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish latest signed Dukwise APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk dukwise-latest.apk
+          if gh release view dukwise-latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload dukwise-latest dukwise-latest.apk --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create dukwise-latest dukwise-latest.apk \
+              --prerelease \
+              --title "Dukwise Android Test" \
+              --notes "Latest signed Dukwise Android test APK." \
+              --repo "$GITHUB_REPOSITORY"
+          fi

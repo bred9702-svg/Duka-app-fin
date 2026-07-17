@@ -63,6 +63,7 @@ function buildEmployeePerformance(transactions = []) {
   const employees = new Map()
 
   transactions.forEach((transaction) => {
+    if (transaction.operation_type === 'ignored') return
     const employeeKey = getEmployeeKey(transaction)
     if (!employeeKey) return
 

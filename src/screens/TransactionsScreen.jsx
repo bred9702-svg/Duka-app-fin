@@ -13,15 +13,19 @@ export default function TransactionsScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const addTransaction = useAppStore((s) => s.addTransaction)
+  const session = useAppStore((s) => s.session)
 
   const [showAllUnclassified, setShowAllUnclassified] = useState(false)
   const [showAllClassified, setShowAllClassified] = useState(false)
+  const [showAllIgnored, setShowAllIgnored] = useState(false)
 
   const unclassified = transactions.filter((t) => !t.classified)
-  const classified = transactions.filter((t) => t.classified)
+  const ignored = transactions.filter((t) => t.classified && t.operation_type === 'ignored')
+  const classified = transactions.filter((t) => t.classified && t.operation_type !== 'ignored')
 
   const visibleUnclassified = showAllUnclassified ? unclassified : unclassified.slice(0, LIST_LIMIT)
   const visibleClassified = showAllClassified ? classified : classified.slice(0, LIST_LIMIT)
+  const visibleIgnored = showAllIgnored ? ignored : ignored.slice(0, LIST_LIMIT)
 
   async function addCash(direction) {
     const raw = window.prompt(
@@ -266,6 +270,46 @@ export default function TransactionsScreen() {
                 }}
               >
                 {showAllClassified ? 'Show Less' : `Show More (${classified.length - LIST_LIMIT})`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {session?.role === 'owner' && ignored.length > 0 && (
+          <div>
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 10,
+                fontWeight: 600,
+                color: 'var(--text-low)',
+                margin: '12px 0 8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              Ignored duplicates
+            </p>
+
+            {visibleIgnored.map((transaction, index) => (
+              <TransactionRow
+                key={transaction.id}
+                txn={transaction}
+                customers={customers}
+                delay={index * 0.03}
+                onClick={() => navigate(`/classify/${transaction.id}`)}
+              />
+            ))}
+
+            {ignored.length > LIST_LIMIT && (
+              <div
+                onClick={() => setShowAllIgnored((value) => !value)}
+                style={{
+                  textAlign: 'center', padding: '8px 0 2px', fontSize: 11, fontWeight: 600,
+                  color: '#94A3B8', cursor: 'pointer',
+                }}
+              >
+                {showAllIgnored ? 'Show Less' : `Show More (${ignored.length - LIST_LIMIT})`}
               </div>
             )}
           </div>

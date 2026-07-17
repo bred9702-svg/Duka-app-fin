@@ -20,6 +20,15 @@ export default function TransactionRow({
   let subtitle = ''
 
   if (isClassified && opType) {
+    if (opType === 'ignored') {
+      title = 'Ignored duplicate'
+      subtitle = `${isMpesa ? 'M-Pesa' : 'Cash'} · Not included in totals`
+      iconName = 'x'
+      iconBg = 'rgba(148,163,184,.14)'
+      iconFg = '#94A3B8'
+      barColor = '#94A3B8'
+    }
+
     if (opType === 'sale') {
       title = txn.product?.name || 'Sale'
       subtitle = `Sale · ${fmtKES(txn.amount)}`
@@ -164,7 +173,9 @@ fontSize: 8,
 letterSpacing: '.02em',
             fontWeight: 600,
             background:
-              opType === 'sale'
+              opType === 'ignored'
+                ? 'rgba(148,163,184,.12)'
+                : opType === 'sale'
                 ? 'rgba(95,217,122,.12)'
                 : opType === 'expense'
                 ? 'rgba(255,107,91,.12)'
@@ -172,7 +183,9 @@ letterSpacing: '.02em',
                 ? 'rgba(91,159,240,.12)'
                 : 'rgba(240,169,61,.12)',
             color:
-              opType === 'sale'
+              opType === 'ignored'
+                ? '#94A3B8'
+                : opType === 'sale'
                 ? '#5FD97A'
                 : opType === 'expense'
                 ? '#FF6B5B'
@@ -182,7 +195,9 @@ letterSpacing: '.02em',
           }}
         >
           {isClassified
-            ? opType === 'sale'
+            ? opType === 'ignored'
+              ? 'Ignored'
+              : opType === 'sale'
               ? 'Sale'
               : opType === 'expense'
               ? 'Expense'

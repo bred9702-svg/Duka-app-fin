@@ -3,6 +3,7 @@ import {
   getTransactions,
   addTransaction as dbAddTransaction,
   classifyTransaction as dbClassify,
+  setTransactionIgnored as dbSetTransactionIgnored,
   getCustomers,
   addDebtPayment as dbAddDebtPayment,
   addNewCustomer,
@@ -563,6 +564,22 @@ bootstrap: async () => {
       return updated
     } catch (err) {
       console.error('Classify error:', err)
+    }
+  },
+
+  setTransactionIgnored: async (id, ignored) => {
+    try {
+      const updated = await dbSetTransactionIgnored(id, ignored)
+      set((s) => ({
+        transactions: s.transactions.map((transaction) =>
+          transaction.id === id ? { ...transaction, ...updated } : transaction
+        ),
+      }))
+      await get().refreshTodayStats()
+      return updated
+    } catch (err) {
+      console.error('Update duplicate transaction error:', err)
+      throw err
     }
   },
 

@@ -32,7 +32,9 @@ export default function ClassifyScreen() {
   const transactions = useAppStore((s) => s.transactions)
   const customers = useAppStore((s) => s.customers)
   const products = useAppStore((s) => s.products)
+  const session = useAppStore((s) => s.session)
   const classifyTransaction = useAppStore((s) => s.classifyTransaction)
+  const setTransactionIgnored = useAppStore((s) => s.setTransactionIgnored)
   const addCustomer = useAppStore((s) => s.addCustomer)
   const addPendingStockPurchase = useAppStore((s) => s.addPendingStockPurchase)
 
@@ -50,6 +52,7 @@ export default function ClassifyScreen() {
   const [addingNew, setAddingNew] = useState(false)
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -93,6 +96,66 @@ export default function ClassifyScreen() {
       <div style={{ flex: 1, padding: 24 }}>
         <BackButton to="/inbox" />
         <p style={{ color: 'var(--text-hi)' }}>Transaction not found.</p>
+      </div>
+    )
+  }
+
+  const isOwner = session?.role === 'owner'
+  const isIgnored = txn.operation_type === 'ignored'
+
+  async function changeIgnoredState(ignored) {
+    if (!isOwner || saving) return
+    const confirmed = window.confirm(
+      ignored
+        ? 'Mark this unclassified transaction as a duplicate? It will not be included in business totals.'
+        : 'Restore this transaction to the classification inbox?'
+    )
+    if (!confirmed) return
+
+    setSaving(true)
+    setActionError('')
+    try {
+      await setTransactionIgnored(txn.id, ignored)
+      navigate('/inbox', { replace: true })
+    } catch (error) {
+      setActionError(error?.message || 'Unable to update this transaction right now.')
+      setSaving(false)
+    }
+  }
+
+  if (isIgnored) {
+    return (
+      <div style={{ flex: 1, padding: '14px 14px 8px', position: 'relative' }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <BackButton to="/inbox" />
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700, color: 'var(--text-hi)', marginBottom: 14 }}>
+            Ignored duplicate
+          </h1>
+
+          <div className="glass-card" style={{ textAlign: 'center', padding: 16, marginBottom: 16 }}>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+              Not included in business totals
+            </p>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, color: 'var(--text-hi)', margin: '5px 0' }}>
+              {(txn.direction === 'in' ? '+' : '-') + fmtKES(txn.amount)}
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-low)' }}>
+              The original record remains available for audit purposes.
+            </p>
+          </div>
+
+          {actionError && (
+            <p style={{ margin: '0 0 12px', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+              {actionError}
+            </p>
+          )}
+
+          {isOwner && (
+            <Button variant="ghost" onClick={() => changeIgnoredState(false)} disabled={saving} icon={saving ? 'loader' : 'inbox'}>
+              {saving ? 'Restoring...' : 'Restore transaction'}
+            </Button>
+          )}
+        </div>
       </div>
     )
   }
@@ -525,6 +588,24 @@ export default function ClassifyScreen() {
           >
             {saving ? 'Saving...' : isDebtPayment ? 'Confirm debt payment' : type ? `Confirm ${type}` : 'Select a type'}
           </Button>
+
+          {isOwner && (
+            <Button
+              variant="ghost"
+              onClick={() => changeIgnoredState(true)}
+              disabled={saving}
+              icon="x"
+              style={{ marginTop: 8, color: '#94A3B8' }}
+            >
+              Mark as duplicate
+            </Button>
+          )}
+
+          {actionError && (
+            <p style={{ margin: '10px 0 0', fontSize: 11, color: '#FF6B5B', lineHeight: 1.45 }}>
+              {actionError}
+            </p>
+          )}
         </div>
       </div>
     </div>

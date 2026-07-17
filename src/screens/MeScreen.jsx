@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from '../components/ui/Icon'
+import { APP_VERSION, checkAndStartAppUpdate } from '../lib/appUpdates'
 import useAppStore from '../store/useAppStore'
 
 const SECTIONS = [
@@ -25,6 +27,7 @@ const SECTIONS = [
       { label: 'Notification Center', icon: 'bell', color: '#FF6B5B', path: '/notification-center' },
       { label: 'Notification Settings', icon: 'settings', color: '#F0A93D', path: '/notifications' },
       { label: 'Theme', icon: 'moon', color: '#7C5CFC', path: '/appearance' },
+      { label: 'Check for updates', icon: 'loader', color: '#5FD97A', action: 'update' },
     ],
   },
   {
@@ -127,6 +130,7 @@ function getTrialDaysRemaining(session) {
 
 export default function MeScreen() {
   const navigate = useNavigate()
+  const [updateState, setUpdateState] = useState({ checking: false, message: '' })
   const session = useAppStore((s) => s.session)
   const signOut = useAppStore((s) => s.signOut)
   const trialDaysRemaining = getTrialDaysRemaining(session)
@@ -141,6 +145,26 @@ export default function MeScreen() {
   const shopType = session?.shopType || 'Owner'
   const shopLogo = session?.shopLogo || session?.photo || null
   const shopCity = session?.shopCity || null
+
+  async function handleCheckForUpdates() {
+    if (updateState.checking) return
+
+    setUpdateState({ checking: true, message: 'Checking for updates…' })
+
+    try {
+      const result = await checkAndStartAppUpdate()
+      if (result.status === 'current') {
+        setUpdateState({ checking: false, message: `Dukwise ${result.version} is up to date.` })
+      } else if (result.status === 'download-opened') {
+        setUpdateState({ checking: false, message: 'Download opened. Confirm the Android update when asked.' })
+      }
+    } catch (error) {
+      setUpdateState({
+        checking: false,
+        message: error?.message || 'Unable to check for updates right now.',
+      })
+    }
+  }
 
   return (
     <div
@@ -300,12 +324,26 @@ export default function MeScreen() {
                 <Row
                   key={item.label}
                   item={item}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => item.action === 'update' ? handleCheckForUpdates() : navigate(item.path)}
                   isFirst={i === 0}
                   isLast={i === section.items.length - 1}
                 />
               ))}
             </div>
+
+            {section.title === 'Application' && updateState.message && (
+              <p
+                role="status"
+                style={{
+                  margin: '7px 4px 0',
+                  fontSize: 10,
+                  lineHeight: 1.45,
+                  color: 'var(--text-low)',
+                }}
+              >
+                {updateState.message}
+              </p>
+            )}
           </div>
         ))}
 
@@ -340,7 +378,7 @@ export default function MeScreen() {
             marginTop: 14,
           }}
         >
-          Version 1.0.0
+          Version {APP_VERSION}
         </p>
       </div>
     </div>
