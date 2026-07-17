@@ -1,0 +1,37 @@
+name: Dispatch Dukwise Push Notifications
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dukwise-push-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Deliver queued push notifications
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
+
+    steps:
+      - name: Validate push dispatcher configuration
+        run: |
+          test -n "$SUPABASE_PROJECT_REF" || { echo "Missing SUPABASE_PROJECT_REF repository secret"; exit 1; }
+          test -n "$PUSH_DISPATCH_SECRET" || { echo "Missing PUSH_DISPATCH_SECRET repository secret"; exit 1; }
+
+      - name: Dispatch queued notifications
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "x-dispatch-secret: $PUSH_DISPATCH_SECRET" \
+            --header "content-type: application/json" \
+            --data '{}' \
+            "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/dispatch-push"
