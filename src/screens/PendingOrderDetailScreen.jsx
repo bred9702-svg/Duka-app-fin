@@ -56,6 +56,7 @@ export default function PendingOrderDetailScreen() {
             <span style={{ padding: '6px 8px', borderRadius: 999, background: `${statusColor}18`, color: statusColor, fontSize: 8, fontWeight: 700 }}>{statusLabel}</span>
           </div>
           <div style={{ marginTop: 16 }}><div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span style={muted}>Payment progress</span><span style={{ fontSize: 9, color: statusColor, fontWeight: 700 }}>{Math.round(progress)}%</span></div><div style={track}><div style={{ width: `${progress}%`, height: '100%', borderRadius: 999, background: progress === 100 ? '#5FD97A' : 'linear-gradient(90deg,#F0A93D,#FFD98A)' }} /></div></div>
+          <div style={sellerLine}><div style={{ ...productIcon, width: 28, height: 28 }}><Icon name="users" size={13} color="#5B9FF0" /></div><div><p style={{ fontSize: 8, color: 'var(--text-low)', textTransform: 'uppercase' }}>Sold by</p><p style={{ fontSize: 10, fontWeight: 700, color: '#5B9FF0', marginTop: 1 }}>{order.seller_name || 'Shop team member'}{order.seller_role ? ` · ${order.seller_role === 'owner' ? 'Owner' : 'Employee'}` : ''}</p></div></div>
         </div>
       </FadeIn>
 
@@ -129,6 +130,7 @@ const customerPanel = { marginTop: 7, padding: 6, borderRadius: 12, border: '1px
 const customerSearch = { display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', marginBottom: 4, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)' }
 const customerSearchInput = { flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 11 }
 const customerRow = { width: '100%', padding: 8, border: 0, borderBottom: '1px solid var(--glass-border)', borderRadius: 8, background: 'transparent', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }
+const sellerLine = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--glass-border)' }
 const receiptCard = { padding: 12, borderRadius: 14, border: '1px solid rgba(240,169,61,.18)', background: 'linear-gradient(145deg,rgba(240,169,61,.08),rgba(255,255,255,.018))' }
 const receiptSecondary = { padding: 9, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 9, fontWeight: 700, cursor: 'pointer' }
 const receiptPrimary = { ...receiptSecondary, border: '1px solid rgba(255,255,255,.3)', background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506' }

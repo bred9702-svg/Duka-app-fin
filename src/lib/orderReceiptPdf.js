@@ -72,6 +72,8 @@ export function createOrderReceiptPdf(order, shopName) {
   labelValue('Date', new Date(order.created_at).toLocaleString('en-KE'))
   labelValue('Customer', order.customer?.name || 'Walk-in customer')
   if (order.customer?.phone) labelValue('Phone', order.customer.phone)
+  labelValue('Sold by', order.seller_name || 'Shop team member')
+  if (order.seller_role) labelValue('Seller role', order.seller_role === 'owner' ? 'Owner' : 'Employee')
   labelValue('Status', STATUS_LABELS[order.status] || order.status)
   y += 2
   divider()

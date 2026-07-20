@@ -55,6 +55,7 @@ export default function PendingOrdersScreen() {
       const searchable = [
         String(order.order_number || ''),
         order.customer?.name,
+        order.seller_name,
         ...(order.items || []).map((item) => item.product_name),
       ].filter(Boolean).join(' ').toLowerCase()
       return searchable.includes(query)
@@ -140,6 +141,7 @@ export default function PendingOrdersScreen() {
                       <div style={{ minWidth: 0 }}>
                         <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text-hi)' }}>Order #{order.order_number}</p>
                         <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.customer?.name || 'Walk-in customer'} · {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p style={{ fontSize: 8, color: '#5B9FF0', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sold by {order.seller_name || 'Shop team member'}{order.seller_role ? ` · ${order.seller_role === 'owner' ? 'Owner' : 'Employee'}` : ''}</p>
                       </div>
                     </div>
                     <span style={{ padding: '5px 7px', borderRadius: 999, fontSize: 8, fontWeight: 700, color: status.color, background: status.bg, whiteSpace: 'nowrap' }}>{status.label}</span>
