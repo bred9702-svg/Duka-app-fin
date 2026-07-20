@@ -805,7 +805,7 @@ bootstrap: async () => {
         ),
       }))
 
-      await get().refreshTodayStats()
+      await Promise.all([get().refreshTodayStats(), get().refreshPendingOrders()])
 
       if (get().notificationSettings.saleAlerts !== false) {
         get().addNotification({
@@ -821,6 +821,7 @@ bootstrap: async () => {
         itemCount: items.length,
         totalQuantity: items.reduce((a, it) => a + it.quantity, 0),
         transaction: updatedTxn,
+        order: result.order || null,
       }
     } catch (err) {
       console.error('Complete sale error:', err)

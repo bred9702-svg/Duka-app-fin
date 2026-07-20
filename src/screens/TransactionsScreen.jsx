@@ -11,6 +11,7 @@ const LIST_LIMIT = 8
 export default function TransactionsScreen() {
   const navigate = useNavigate()
   const transactions = useAppStore((s) => s.transactions)
+  const pendingOrders = useAppStore((s) => s.pendingOrders)
   const customers = useAppStore((s) => s.customers)
   const addTransaction = useAppStore((s) => s.addTransaction)
   const session = useAppStore((s) => s.session)
@@ -26,6 +27,12 @@ export default function TransactionsScreen() {
   const visibleUnclassified = showAllUnclassified ? unclassified : unclassified.slice(0, LIST_LIMIT)
   const visibleClassified = showAllClassified ? classified : classified.slice(0, LIST_LIMIT)
   const visibleIgnored = showAllIgnored ? ignored : ignored.slice(0, LIST_LIMIT)
+
+  function linkedOrderFor(transactionId) {
+    return pendingOrders.find((order) =>
+      order.payments?.some((payment) => payment.transaction_id === transactionId)
+    ) || null
+  }
 
   async function addCash(direction) {
     const raw = window.prompt(
@@ -252,14 +259,19 @@ export default function TransactionsScreen() {
               Classified
             </p>
 
-            {visibleClassified.map((t, i) => (
-              <TransactionRow
-                key={t.id}
-                txn={t}
-                customers={customers}
-                delay={i * 0.03}
-              />
-            ))}
+            {visibleClassified.map((t, i) => {
+              const linkedOrder = linkedOrderFor(t.id)
+              return (
+                <TransactionRow
+                  key={t.id}
+                  txn={t}
+                  order={linkedOrder}
+                  customers={customers}
+                  delay={i * 0.03}
+                  onClick={linkedOrder ? () => navigate(`/orders/${linkedOrder.id}`) : undefined}
+                />
+              )
+            })}
 
             {classified.length > LIST_LIMIT && (
               <div

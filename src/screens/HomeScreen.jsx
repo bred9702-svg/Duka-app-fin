@@ -44,6 +44,7 @@ function Stars({ count }) {
 export default function HomeScreen() {
   const navigate = useNavigate()
   const transactions = useAppStore((s) => s.transactions)
+  const pendingOrders = useAppStore((s) => s.pendingOrders)
   const customers = useAppStore((s) => s.customers)
   const products = useAppStore((s) => s.products)
   const todayStats = useAppStore((s) => s.todayStats)
@@ -273,13 +274,25 @@ export default function HomeScreen() {
               Recent transactions
             </p>
             {recent.map((t, i) => (
-              <TransactionRow
-                key={t.id}
-                txn={t}
-                customers={customers}
-                delay={0.25 + i * 0.05}
-                onClick={!t.classified ? () => navigate(`/classify/${t.id}`) : undefined}
-              />
+              (() => {
+                const linkedOrder = pendingOrders.find((order) =>
+                  order.payments?.some((payment) => payment.transaction_id === t.id)
+                ) || null
+                return (
+                  <TransactionRow
+                    key={t.id}
+                    txn={t}
+                    order={linkedOrder}
+                    customers={customers}
+                    delay={0.25 + i * 0.05}
+                    onClick={!t.classified
+                      ? () => navigate(`/classify/${t.id}`)
+                      : linkedOrder
+                        ? () => navigate(`/orders/${linkedOrder.id}`)
+                        : undefined}
+                  />
+                )
+              })()
             ))}
           </>
         )}

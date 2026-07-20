@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useAppStore from '../store/useAppStore'
 import SubScreenHeader from '../components/layout/SubScreenHeader'
@@ -19,7 +19,14 @@ export default function PendingOrderDetailScreen() {
   const record = useAppStore((s) => s.recordPendingOrderPayment); const finalize = useAppStore((s) => s.finalizePendingOrder)
   const convert = useAppStore((s) => s.convertPendingOrderToDebt); const cancel = useAppStore((s) => s.cancelPendingOrder)
   const [amount, setAmount] = useState(''); const [method, setMethod] = useState('cash')
-  const [customerId, setCustomerId] = useState(order?.customer_id || ''); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
+  const [customerId, setCustomerId] = useState(order?.customer_id || ''); const [customerQuery, setCustomerQuery] = useState(''); const [showCustomers, setShowCustomers] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
+  const selectedCustomer = customers.find((customer) => customer.id === customerId) || null
+  const customerMatches = useMemo(() => {
+    const query = customerQuery.trim().toLowerCase()
+    if (!query) return customers.slice(0, 8)
+    return customers.filter((customer) => [customer.name, customer.phone, customer.mpesa_name]
+      .filter(Boolean).some((value) => value.toLowerCase().includes(query))).slice(0, 8)
+  }, [customers, customerQuery])
   if (!order) return <div style={{ padding: 24, color: 'var(--text-low)' }}>Order not found.</div>
   const balance = Number(order.total_amount) - Number(order.paid_amount); const open = ['awaiting_payment', 'partially_paid', 'paid'].includes(order.status)
   const [statusLabel, statusColor] = STATUS[order.status] || STATUS.cancelled
@@ -58,7 +65,23 @@ export default function PendingOrderDetailScreen() {
       {order.status === 'paid' && <div style={completeCard}><div style={completeIcon}><Icon name="circleCheck" size={22} color="#5FD97A" /></div><div style={{ flex: 1 }}><p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-hi)' }}>Payment complete</p><p style={muted}>Finalize this order and deduct reserved stock.</p></div><button disabled={busy} onClick={() => act(async () => { await finalize(id); navigate('/orders') })} style={completeButton}>Complete sale</button></div>}
 
       {['awaiting_payment', 'partially_paid'].includes(order.status) && <ActionCard icon="userDollar" title="Convert balance to debt" subtitle="A saved customer is required">
-        <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} style={input}><option value="">Select customer...</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</select>
+        <button type="button" onClick={() => setShowCustomers((visible) => !visible)} style={{ ...customerSelector, borderColor: showCustomers ? 'rgba(240,169,61,.55)' : 'var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            {selectedCustomer ? <Avatar name={selectedCustomer.name} color="blue" size={32} /> : <div style={smallCustomerIcon}><Icon name="users" size={14} color="#F0A93D" /></div>}
+            <div style={{ textAlign: 'left' }}><p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-hi)' }}>{selectedCustomer?.name || 'Select customer'}</p><p style={muted}>{selectedCustomer?.phone || 'Required before creating the debt'}</p></div>
+          </div>
+          <Icon name="chevronRight" size={14} color="var(--text-low)" style={{ transform: showCustomers ? 'rotate(90deg)' : 'none' }} />
+        </button>
+        {showCustomers && <div style={customerPanel}>
+          <div style={customerSearch}><Icon name="search" size={14} color="var(--text-low)" /><input autoFocus value={customerQuery} onChange={(event) => setCustomerQuery(event.target.value)} placeholder="Search customer..." style={customerSearchInput} /></div>
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {customerMatches.map((customer) => {
+              const selected = customer.id === customerId
+              return <button type="button" key={customer.id} onClick={() => { setCustomerId(customer.id); setCustomerQuery(customer.name); setShowCustomers(false) }} style={{ ...customerRow, background: selected ? 'rgba(91,159,240,.13)' : 'transparent' }}><Avatar name={customer.name} color="blue" size={30} /><div style={{ flex: 1, textAlign: 'left' }}><p style={{ fontSize: 11, fontWeight: 700 }}>{customer.name}</p><p style={muted}>{customer.phone || 'Saved customer'}</p></div>{selected && <Icon name="circleCheck" size={16} color="#5B9FF0" />}</button>
+            })}
+            {!customerMatches.length && <p style={{ padding: 13, textAlign: 'center', fontSize: 10, color: 'var(--text-low)' }}>No customer found</p>}
+          </div>
+        </div>}
         <button disabled={busy || !customerId} onClick={() => act(async () => { await convert(id, customerId); navigate('/orders') })} style={debtButton}>Convert {fmtKES(balance)} KES to debt</button>
       </ActionCard>}
 
@@ -80,6 +103,12 @@ const productIcon = { width: 32, height: 32, borderRadius: 10, background: 'rgba
 const summaryCard = { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7, padding: 13, borderRadius: 14, border: '1px solid rgba(240,169,61,.18)', background: 'linear-gradient(145deg,rgba(240,169,61,.08),rgba(255,255,255,.018))' }
 const actionCard = { padding: 13, marginTop: 11, borderRadius: 15, border: '1px solid var(--glass-border)', background: 'linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.015))' }
 const input = { width: '100%', padding: '10px 11px', borderRadius: 10, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', fontSize: 11, outline: 0 }
+const customerSelector = { width: '100%', padding: 9, borderRadius: 11, border: '1px solid', background: 'linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.015))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }
+const smallCustomerIcon = { width: 32, height: 32, borderRadius: 10, background: 'rgba(240,169,61,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+const customerPanel = { marginTop: 7, padding: 6, borderRadius: 12, border: '1px solid var(--card-elevated-border)', background: 'var(--card-elevated-bg)', boxShadow: 'var(--card-shadow)' }
+const customerSearch = { display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', marginBottom: 4, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)' }
+const customerSearchInput = { flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 11 }
+const customerRow = { width: '100%', padding: 8, border: 0, borderBottom: '1px solid var(--glass-border)', borderRadius: 8, background: 'transparent', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }
 const methodToggle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 2, border: '1px solid var(--glass-border)', borderRadius: 10, background: 'rgba(255,255,255,.02)' }
 const methodButton = { padding: 7, border: 0, borderRadius: 7, background: 'transparent', color: 'var(--text-low)', fontSize: 8, fontWeight: 700 }; const selectedMethod = { background: 'rgba(240,169,61,.14)', color: '#F0A93D' }
 const primary = { width: '100%', padding: 11, marginTop: 8, border: '1px solid rgba(255,255,255,.3)', borderRadius: 10, background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506', fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700 }

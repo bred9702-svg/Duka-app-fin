@@ -88,6 +88,7 @@ export default function NewSaleScreen() {
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [isWalkInCustomer, setIsWalkInCustomer] = useState(true)
   const [selectedPendingOrderId, setSelectedPendingOrderId] = useState(null)
+  const [showPendingOrders, setShowPendingOrders] = useState(false)
   const [addingCustomer, setAddingCustomer] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
   const [newCustomerPhone, setNewCustomerPhone] = useState('')
@@ -184,7 +185,7 @@ export default function NewSaleScreen() {
   const canSave =
     isLinkedCashInPayment &&
     ((selectedPendingOrder && Number(paymentAmount) > 0 && Number(paymentAmount) <= pendingBalance) ||
-      (cart.length > 0 && hasCustomer)) &&
+      (cart.length > 0 && hasCustomer && Number(paymentAmount) === grandTotal)) &&
     !saving &&
     !writeBlocked
 
@@ -357,24 +358,71 @@ export default function NewSaleScreen() {
         {pendingOrders.some((order) => ['awaiting_payment', 'partially_paid'].includes(order.status)) && (
           <>
             <SectionTitle>Pending order</SectionTitle>
-            <select
-              value={selectedPendingOrderId || ''}
-              onChange={(event) => {
-                setSelectedPendingOrderId(event.target.value || null)
-                if (event.target.value) setCart([])
+            <button
+              type="button"
+              onClick={() => setShowPendingOrders((open) => !open)}
+              style={{
+                width: '100%', padding: '11px 12px', borderRadius: 13,
+                border: showPendingOrders ? '1px solid rgba(240,169,61,.55)' : '1px solid var(--glass-border)',
+                background: 'linear-gradient(150deg,rgba(255,255,255,.05),rgba(255,255,255,.015))',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                color: 'var(--text-hi)', cursor: 'pointer', textAlign: 'left',
               }}
-              style={inputStyle}
             >
-              <option value="">This is a new sale</option>
-              {pendingOrders.filter((order) => ['awaiting_payment', 'partially_paid'].includes(order.status)).map((order) => {
-                const balance = Number(order.total_amount) - Number(order.paid_amount)
-                return <option key={order.id} value={order.id}>Order #{order.order_number} · Balance {fmtKES(balance)} KES</option>
-              })}
-            </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(240,169,61,.13)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={selectedPendingOrder ? 'package' : 'plus'} size={15} color="#F0A93D" />
+                </div>
+                <div>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: 'var(--text-hi)' }}>
+                    {selectedPendingOrder ? `Order #${selectedPendingOrder.order_number}` : 'This is a new sale'}
+                  </p>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 2 }}>
+                    {selectedPendingOrder ? `${fmtKES(pendingBalance)} KES remaining` : 'Not linked to an existing order'}
+                  </p>
+                </div>
+              </div>
+              <Icon name="chevronRight" size={15} color="var(--text-low)" style={{ transform: showPendingOrders ? 'rotate(90deg)' : 'none' }} />
+            </button>
+            {showPendingOrders && (
+              <div style={{ marginTop: 7, padding: 6, borderRadius: 13, border: '1px solid var(--card-elevated-border)', background: 'var(--card-elevated-bg)', boxShadow: 'var(--card-shadow)' }}>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedPendingOrderId(null); setShowPendingOrders(false) }}
+                  style={pendingOrderChoiceStyle}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(240,169,61,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="#F0A93D" /></div>
+                  <span style={{ flex: 1, textAlign: 'left' }}>This is a new sale</span>
+                  {!selectedPendingOrderId && <Icon name="circleCheck" size={16} color="#5FD97A" />}
+                </button>
+                {pendingOrders.filter((order) => ['awaiting_payment', 'partially_paid'].includes(order.status)).map((order) => {
+                  const balance = Number(order.total_amount) - Number(order.paid_amount)
+                  const selected = selectedPendingOrderId === order.id
+                  return (
+                    <button
+                      type="button"
+                      key={order.id}
+                      onClick={() => { setSelectedPendingOrderId(order.id); setCart([]); setShowPendingOrders(false) }}
+                      style={{ ...pendingOrderChoiceStyle, background: selected ? 'rgba(240,169,61,.10)' : 'transparent' }}
+                    >
+                      <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(240,169,61,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="package" size={14} color="#F0A93D" /></div>
+                      <div style={{ flex: 1, textAlign: 'left' }}><p style={{ fontSize: 11, fontWeight: 700 }}>Order #{order.order_number} · {order.customer?.name || 'Walk-in customer'}</p><p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 2 }}>{fmtKES(balance)} KES remaining</p></div>
+                      {selected && <Icon name="circleCheck" size={16} color="#5FD97A" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
             {selectedPendingOrder && Number(paymentAmount) > pendingBalance && (
               <p style={{ fontSize: 10, color: '#FF6B5B', marginTop: 6 }}>Payment exceeds this order's balance.</p>
             )}
           </>
+        )}
+
+        {!selectedPendingOrder && cart.length > 0 && paymentAmount !== null && Number(paymentAmount) !== grandTotal && (
+          <p style={{ fontSize: 10, color: '#FFB85C', margin: '8px 0 0' }}>
+            Payment must match the sale total. Use a pending order for a partial payment.
+          </p>
         )}
 
         <SectionTitle>Customer</SectionTitle>
@@ -761,4 +809,10 @@ const inputStyle = {
   background: 'var(--glass-fill-soft)',
   color: 'var(--text-hi)',
   outline: 'none',
+}
+
+const pendingOrderChoiceStyle = {
+  width: '100%', padding: 8, border: 0, borderBottom: '1px solid var(--glass-border)',
+  borderRadius: 9, background: 'transparent', color: 'var(--text-hi)',
+  display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', fontSize: 11,
 }

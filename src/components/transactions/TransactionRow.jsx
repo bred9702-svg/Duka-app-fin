@@ -3,6 +3,7 @@ import { fmtKES, fmtTime } from '../../utils/formatters'
 
 export default function TransactionRow({
   txn,
+  order = null,
   customers,
   onClick,
   delay = 0,
@@ -30,8 +31,21 @@ export default function TransactionRow({
     }
 
     if (opType === 'sale') {
-      title = txn.product?.name || 'Sale'
-      subtitle = `Sale · ${fmtKES(txn.amount)}`
+      const productNames = order?.items?.map((item) => item.product_name).filter(Boolean) || []
+      const customerName = order?.customer?.name || 'Walk-in customer'
+      const statusLabel = order?.status === 'partially_paid'
+        ? 'Partially paid'
+        : order?.status === 'converted_to_debt'
+          ? 'Converted to debt'
+          : order?.status === 'completed'
+            ? 'Completed'
+            : 'Sale'
+      title = productNames.length
+        ? productNames.slice(0, 2).join(', ') + (productNames.length > 2 ? ` +${productNames.length - 2}` : '')
+        : txn.product?.name || 'Sale'
+      subtitle = order
+        ? `${customerName} · ${statusLabel}`
+        : `Sale · ${fmtKES(txn.amount)}`
       iconName = 'bottle'
       iconBg = 'rgba(95,217,122,.14)'
       iconFg = '#5FD97A'
