@@ -53,6 +53,7 @@ export default function HomeScreen() {
   const session = useAppStore((s) => s.session)
   const [simulating, setSimulating] = useState(false)
   const [topProduct, setTopProduct] = useState(null)
+  const [shopLogoFailed, setShopLogoFailed] = useState(false)
 
   const { income, expenses, profit, unclassified: unclassifiedCount } = todayStats
   const marginPct = income > 0 ? (profit / income) * 100 : 0
@@ -70,6 +71,19 @@ export default function HomeScreen() {
   const showDailyAiBrief = businessPreferences?.dailyAiBrief !== false
   const isEmployee = session?.role === 'employee'
   const contextualStats = isEmployee ? { ...todayStats, profit: 0 } : todayStats
+  const shopName = session?.shopName || 'Dukwise Shop'
+  const shopLogo = session?.shopLogo || null
+  const shopInitials = shopName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase() || 'DS'
+
+  useEffect(() => {
+    setShopLogoFailed(false)
+  }, [shopLogo])
 
   useEffect(() => {
     getTopProducts(7).then(data => {
@@ -130,8 +144,19 @@ export default function HomeScreen() {
               </p>
             )}
           </div>
-          <button onClick={() => navigate('/me')} aria-label="Open shop profile" className="glass-card" style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: '#F0A93D' }}>
-            <Icon name="store" size={17} color="#F0A93D" />
+          <button onClick={() => navigate('/me')} aria-label="Open shop profile" className="glass-card" style={{ width: 38, height: 38, padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: '#F0A93D', overflow: 'hidden' }}>
+            {shopLogo && !shopLogoFailed ? (
+              <img
+                src={shopLogo}
+                alt={`${shopName} logo`}
+                onError={() => setShopLogoFailed(true)}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, color: '#F0A93D', letterSpacing: '-.02em' }}>
+                {shopInitials}
+              </span>
+            )}
           </button>
         </div>
 
