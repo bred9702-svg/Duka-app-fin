@@ -103,6 +103,37 @@ export async function getStockPurchases(limit = 100) {
   return data || []
 }
 
+export async function getStockPurchaseById(purchaseId) {
+  const { data, error } = await supabase
+    .from('stock_purchases')
+    .select(`
+      id,
+      purchase_date,
+      supplier,
+      notes,
+      total_investment,
+      expected_revenue,
+      expected_profit,
+      linked_transaction_id,
+      created_at,
+      items:stock_purchase_items(
+        id,
+        product_id,
+        quantity,
+        purchase_price,
+        unit_price,
+        stock_before,
+        stock_after,
+        created_at,
+        product:products(name,category)
+      )
+    `)
+    .eq('id', purchaseId)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function completeSalePayment(transactionId, { items, grandTotal, totalProfit, customerId = null, ...attribution }) {
   const { data, error } = await supabase.rpc('finalize_sale_atomic', {
     target_transaction_id: transactionId,

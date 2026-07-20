@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Icon from '../ui/Icon'
 import { fmtKES } from '../../utils/formatters'
 import { getStockPurchases } from '../../lib/db'
 
@@ -11,13 +13,14 @@ function fmtPurchaseDate(iso) {
 }
 
 export default function PurchaseHistorySection() {
+  const navigate = useNavigate()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
-    getStockPurchases()
+    getStockPurchases(3)
       .then((records) => {
         if (active) setHistory(records)
       })
@@ -37,17 +40,22 @@ export default function PurchaseHistorySection() {
   if (error) {
     return <p style={{ margin: '10px 0', fontSize: 10, color: '#FF6B5B' }}>{error}</p>
   }
-  if (history.length === 0) return null
-
   return (
     <div style={{ marginBottom: 8 }}>
-      <p style={{
-        fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600,
-        color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em',
-        margin: '10px 0 8px',
-      }}>
-        Purchase History ({history.length})
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '10px 0 8px' }}>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 600, color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Recent Stock Purchases
+        </p>
+        <button type="button" onClick={() => navigate('/inventory-purchase-history')} style={{ border: 0, background: 'transparent', color: '#F0A93D', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
+          View all <Icon name="chevronRight" size={12} color="#F0A93D" />
+        </button>
+      </div>
+
+      {history.length === 0 && (
+        <button type="button" onClick={() => navigate('/inventory-purchase-history')} style={{ width: '100%', padding: 16, borderRadius: 14, border: '1px solid var(--glass-border)', background: 'var(--glass-fill-soft)', color: 'var(--text-low)', fontSize: 10, cursor: 'pointer' }}>
+          No stock purchase recorded yet
+        </button>
+      )}
 
       {history.map((record) => {
         const expectedRevenue = Number(record.expected_revenue) || 0
@@ -60,9 +68,12 @@ export default function PurchaseHistorySection() {
           .join(', ')
 
         return (
-          <div
+          <button
             key={record.id}
+            type="button"
+            onClick={() => navigate(`/inventory-purchase-history/${record.id}`)}
             style={{
+              width: '100%', textAlign: 'left', color: 'inherit', cursor: 'pointer',
               background: 'var(--glass-fill-soft)',
               backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
               border: '1px solid var(--glass-border)',
@@ -110,7 +121,7 @@ export default function PurchaseHistorySection() {
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         )
       })}
     </div>

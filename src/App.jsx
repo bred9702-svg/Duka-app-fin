@@ -19,6 +19,8 @@ const FinancialAnalysisScreen = lazy(() => import('./screens/FinancialAnalysisSc
 const BusinessTrendsScreen = lazy(() => import('./screens/BusinessTrendsScreen'))
 const DukaAIScreen = lazy(() => import('./screens/DukaAIScreen'))
 const InventoryInvestmentScreen = lazy(() => import('./screens/InventoryInvestmentScreen'))
+const StockPurchaseHistoryScreen = lazy(() => import('./screens/StockPurchaseHistoryScreen'))
+const StockPurchaseDetailScreen = lazy(() => import('./screens/StockPurchaseDetailScreen'))
 const NewSaleScreen = lazy(() => import('./screens/NewSaleScreen'))
 const NewDebtScreen = lazy(() => import('./screens/NewDebtScreen'))
 const PendingOrdersScreen = lazy(() => import('./screens/PendingOrdersScreen'))
@@ -136,6 +138,7 @@ export default function App() {
     location.pathname.startsWith('/customer')
     || location.pathname.startsWith('/orders/new')
     || /^\/orders\/.+/.test(location.pathname)
+    || location.pathname.startsWith('/inventory-purchase-history')
 
   if (loading) {
     return (
@@ -273,6 +276,24 @@ export default function App() {
               element={
                 <RequireOwner title="Inventory Investment">
                   <InventoryInvestmentScreen />
+                </RequireOwner>
+              }
+            />
+
+            <Route
+              path="/inventory-purchase-history"
+              element={
+                <RequireOwner title="Stock Purchase History">
+                  <StockPurchaseHistoryScreen />
+                </RequireOwner>
+              }
+            />
+
+            <Route
+              path="/inventory-purchase-history/:id"
+              element={
+                <RequireOwner title="Stock Purchase Details">
+                  <StockPurchaseDetailScreen />
                 </RequireOwner>
               }
             />
