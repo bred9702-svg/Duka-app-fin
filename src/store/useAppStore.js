@@ -358,15 +358,6 @@ signIn: async (data) => {
   return result
 },
 
-completeOnboarding: () => {
-  set((s) => {
-    if (!s.session) return {}
-    const session = { ...s.session, isOnboarded: true }
-    localStorage.setItem('duka-session', JSON.stringify(session))
-    return { session }
-  })
-},
-
 updateShopProfile: async (profile, logoFile = null) => {
   const currentSession = get().session
   if (!currentSession?.shopId || !currentSession?.authUserId) {
@@ -674,16 +665,22 @@ bootstrap: async () => {
       const expectedProfit = Number(result.expectedProfit) || 0
       const productsById = new Map((result.products || []).map((product) => [product.id, product]))
 
-      set((s) => ({
-        products: s.products.map((product) =>
-          productsById.has(product.id)
-            ? { ...product, ...productsById.get(product.id) }
-            : product
-        ),
-        transactions: linkedTransactionId
-          ? s.transactions
-          : [result.transaction, ...s.transactions],
-      }))
+      set((s) => {
+        const existingIds = new Set(s.products.map((product) => product.id))
+        return {
+          products: [
+            ...s.products.map((product) =>
+              productsById.has(product.id)
+                ? { ...product, ...productsById.get(product.id) }
+                : product
+            ),
+            ...(result.products || []).filter((product) => !existingIds.has(product.id)),
+          ],
+          transactions: linkedTransactionId
+            ? s.transactions
+            : [result.transaction, ...s.transactions],
+        }
+      })
 
       if (linkedTransactionId) {
         // This purchase completes an existing Cash Out → Expense → Stock
@@ -905,7 +902,11 @@ bootstrap: async () => {
   addOpeningStockFromCatalog: async (items) => {
     const result = await dbAddCatalogOpeningStock(items)
     const created = result?.products || []
-    set((s) => ({ products: [...s.products, ...created] }))
+    set((s) => {
+      const session = s.session ? { ...s.session, isOnboarded: true } : s.session
+      if (session) localStorage.setItem('duka-session', JSON.stringify(session))
+      return { products: [...s.products, ...created], session }
+    })
     return result
   },
 }))

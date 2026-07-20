@@ -69,6 +69,9 @@ export default function InventoryInvestmentScreen() {
   const products = useAppStore((s) => s.products)
   const transactions = useAppStore((s) => s.transactions)
   const recordPurchase = useAppStore((s) => s.recordPurchase)
+  const catalogProducts = useAppStore((s) => s.catalogProducts)
+  const catalogLoading = useAppStore((s) => s.catalogLoading)
+  const searchCatalog = useAppStore((s) => s.searchCatalog)
   const writeBlocked = useAppStore((s) => s.writeBlocked)
   const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
 
@@ -77,6 +80,7 @@ export default function InventoryInvestmentScreen() {
   const [notes, setNotes] = useState('')
 
   const [query, setQuery] = useState('')
+  const [catalogResultQuery, setCatalogResultQuery] = useState('')
   const [showCreateProduct, setShowCreateProduct] = useState(false)
   const [items, setItems] = useState([])
 
@@ -93,14 +97,44 @@ export default function InventoryInvestmentScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [summary])
 
-  const suggestions = useMemo(() => {
+  useEffect(() => {
+    const normalizedQuery = query.trim()
+    if (!normalizedQuery) {
+      setCatalogResultQuery('')
+      return
+    }
+    setCatalogResultQuery('')
+    const timer = setTimeout(() => {
+      searchCatalog(normalizedQuery)
+        .then(() => setCatalogResultQuery(normalizedQuery))
+        .catch(() => setError('Could not search the Dukwise Catalog. Please try again.'))
+    }, 260)
+    return () => clearTimeout(timer)
+  }, [query, searchCatalog])
+
+  const shopSuggestions = useMemo(() => {
     if (!query.trim()) return []
     const q = query.toLowerCase()
-    const addedIds = new Set(items.map((i) => i.productId))
+    const addedIds = new Set(items.map((i) => i.productId).filter(Boolean))
     return products
       .filter((p) => !addedIds.has(p.id) && p.name.toLowerCase().includes(q))
       .slice(0, 5)
   }, [query, products, items])
+
+  const catalogSuggestions = useMemo(() => {
+    if (!query.trim() || catalogResultQuery !== query.trim()) return []
+    const stockedVariants = new Set(products.map((product) => product.catalog_variant_id).filter(Boolean))
+    const addedVariants = new Set(items.map((item) => item.catalogVariantId).filter(Boolean))
+    return catalogProducts
+      .map((product) => ({
+        ...product,
+        variants: product.variants.filter((variant) =>
+          !stockedVariants.has(variant.id) && !addedVariants.has(variant.id)
+        ),
+      }))
+      .filter((product) => product.variants.length > 0)
+      .slice(0, 8)
+  }, [query, catalogResultQuery, catalogProducts, products, items])
 
   function addProduct(product) {
     if (writeBlocked) {
@@ -112,6 +146,7 @@ export default function InventoryInvestmentScreen() {
     setItems((prev) => [
       ...prev,
       {
+        itemKey: `product-${product.id}`,
         productId: product.id,
         name: product.name,
         unitPrice: product.unit_price || 0,
@@ -123,14 +158,36 @@ export default function InventoryInvestmentScreen() {
     setQuery('')
   }
 
-  function updateItem(productId, field, value) {
+  function formatCatalogVariant(variant) {
+    const value = Number(variant.volumeValue)
+    const size = Number.isInteger(value) ? value : value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
+    return `${size}${variant.volumeUnit}${variant.packageType === 'Bottle' ? '' : ` · ${variant.packageType}`}`
+  }
+
+  function addCatalogVariant(product, variant) {
+    if (writeBlocked) {
+      setError(trialEndedMessage)
+      return
+    }
+    const format = formatCatalogVariant(variant)
+    setError('')
+    setItems((prev) => [...prev, {
+      itemKey: `catalog-${variant.id}`,
+      catalogVariantId: variant.id,
+      name: `${product.name} ${format}`,
+      unitPrice: '', originalPrice: '', purchasePrice: '', quantity: '',
+    }])
+    setQuery('')
+  }
+
+  function updateItem(itemKey, field, value) {
     setItems((prev) =>
-      prev.map((it) => (it.productId === productId ? { ...it, [field]: value } : it))
+      prev.map((it) => (it.itemKey === itemKey ? { ...it, [field]: value } : it))
     )
   }
 
-  function removeItem(productId) {
-    setItems((prev) => prev.filter((it) => it.productId !== productId))
+  function removeItem(itemKey) {
+    setItems((prev) => prev.filter((it) => it.itemKey !== itemKey))
   }
 
   const validItems = items.filter(
@@ -161,7 +218,7 @@ export default function InventoryInvestmentScreen() {
 
     try {
       const payloadItems = validItems.map((it) => ({
-        productId: it.productId,
+        ...(it.productId ? { productId: it.productId } : { catalogVariantId: it.catalogVariantId }),
         name: it.name,
         unitPrice: Number(it.unitPrice),
         purchasePrice: Number(it.purchasePrice),
@@ -372,14 +429,15 @@ export default function InventoryInvestmentScreen() {
             />
           </div>
 
-          {suggestions.length > 0 && (
+          {(shopSuggestions.length > 0 || catalogSuggestions.length > 0) && (
             <div style={{
               position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
               background: 'var(--card-elevated-bg)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
               border: '1px solid var(--card-elevated-border)', borderRadius: 12, overflow: 'hidden',
               boxShadow: 'var(--card-shadow)',
             }}>
-              {suggestions.map((p) => (
+              {shopSuggestions.length > 0 && <p style={{ padding: '8px 12px 5px', fontSize: 8, fontWeight: 700, color: 'var(--text-low)', letterSpacing: '.08em' }}>YOUR INVENTORY</p>}
+              {shopSuggestions.map((p) => (
                 <div
                   key={p.id}
                   onClick={() => addProduct(p)}
@@ -393,10 +451,24 @@ export default function InventoryInvestmentScreen() {
                   <span style={{ fontSize: 10, color: 'var(--text-low)' }}>Stock: {p.stock_current ?? 0}</span>
                 </div>
               ))}
+              {catalogSuggestions.length > 0 && <p style={{ padding: '8px 12px 5px', fontSize: 8, fontWeight: 700, color: '#F0A93D', letterSpacing: '.08em', borderTop: shopSuggestions.length ? '1px solid var(--glass-border)' : 0 }}>DUKWISE CATALOG · NEW FOR YOUR SHOP</p>}
+              {catalogSuggestions.map((product) => (
+                <div key={product.id} style={{ padding: '9px 12px', borderBottom: '1px solid var(--glass-border)' }}>
+                  <p style={{ fontSize: 12, fontWeight: 650, color: 'var(--text-hi)' }}>{product.name}</p>
+                  <p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 2 }}>{product.brand} · Choose a format</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
+                    {product.variants.map((variant) => (
+                      <button key={variant.id} type="button" onClick={() => addCatalogVariant(product, variant)} style={{ padding: '7px 9px', borderRadius: 9, border: '1px solid rgba(240,169,61,.28)', background: 'rgba(240,169,61,.09)', color: '#F0A93D', fontSize: 10, fontWeight: 650, cursor: 'pointer' }}>
+                        {formatCatalogVariant(variant)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {query.trim() && suggestions.length === 0 && (
+          {query.trim() && catalogResultQuery === query.trim() && !catalogLoading && shopSuggestions.length === 0 && catalogSuggestions.length === 0 && (
             <div style={{
               position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 20,
               background: 'var(--card-elevated-bg)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
@@ -445,11 +517,11 @@ export default function InventoryInvestmentScreen() {
               const revenue = (Number(item.unitPrice) || 0) * qty
               const profit = revenue - investment
               return (
-                <GlassCard key={item.productId}>
+                <GlassCard key={item.itemKey}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>{item.name}</p>
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.itemKey)}
                       style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
                     >
                       <Icon name="trash" size={14} color="#FF6B5B" />
@@ -463,7 +535,7 @@ export default function InventoryInvestmentScreen() {
                         type="number"
                         inputMode="decimal"
                         value={item.purchasePrice}
-                        onChange={(e) => updateItem(item.productId, 'purchasePrice', e.target.value)}
+                        onChange={(e) => updateItem(item.itemKey, 'purchasePrice', e.target.value)}
                         placeholder="0"
                         style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: '#F0A93D', fontFamily: 'var(--font-display)' }}
                       />
@@ -474,7 +546,7 @@ export default function InventoryInvestmentScreen() {
                         type="number"
                         inputMode="decimal"
                         value={item.unitPrice}
-                        onChange={(e) => updateItem(item.productId, 'unitPrice', e.target.value)}
+                        onChange={(e) => updateItem(item.itemKey, 'unitPrice', e.target.value)}
                         placeholder="0"
                         style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: '#5FD97A', fontFamily: 'var(--font-display)' }}
                       />
@@ -485,7 +557,7 @@ export default function InventoryInvestmentScreen() {
                         type="number"
                         inputMode="numeric"
                         value={item.quantity}
-                        onChange={(e) => updateItem(item.productId, 'quantity', e.target.value)}
+                        onChange={(e) => updateItem(item.itemKey, 'quantity', e.target.value)}
                         placeholder="0"
                         style={{ width: '100%', background: 'var(--faint-fill)', border: '1px solid var(--faint-border)', borderRadius: 8, padding: '7px 8px', fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', fontFamily: 'var(--font-display)' }}
                       />

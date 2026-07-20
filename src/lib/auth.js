@@ -75,7 +75,11 @@ async function getContext() {
     { target_shop_id: data.shop.id }
   )
   if (entitlementsError) throw entitlementsError
-  return { ...data, entitlements }
+  const { data: inventorySetupCompleted, error: inventorySetupError } = await supabase.rpc(
+    'get_inventory_setup_status'
+  )
+  if (inventorySetupError) throw inventorySetupError
+  return { ...data, entitlements, inventorySetupCompleted: inventorySetupCompleted === true }
 }
 
 async function getInactiveEmployeeMembership(userId) {
@@ -92,7 +96,7 @@ async function getInactiveEmployeeMembership(userId) {
   return data
 }
 
-function toSession(user, context, isOnboarded = true) {
+function toSession(user, context) {
   const { profile, membership, shop, subscription, entitlements } = context
   const effectivePlan = entitlements?.plan || subscription?.plan || 'free'
   const effectiveStatus = entitlements?.status || subscription?.status || 'free'
@@ -111,7 +115,7 @@ function toSession(user, context, isOnboarded = true) {
     isPro: entitlements?.is_pro === true,
     entitlements: entitlements?.features || {},
     subscriptionAmountKes: entitlements?.amount_kes || 2999,
-    isOnboarded,
+    isOnboarded: membership.role === 'employee' || context.inventorySetupCompleted === true,
   }
 }
 
@@ -141,7 +145,7 @@ async function ensureContext(user, { role, inviteCode } = {}) {
     created = true
   }
   if (!context) throw new Error('No active Duka shop is linked to this account.')
-  return { createdShop: created && effectiveRole === 'owner', session: toSession(user, context, effectiveRole === 'employee' ? true : !created) }
+  return { createdShop: created && effectiveRole === 'owner', session: toSession(user, context) }
 }
 
 export async function signInAccount({ email, password, role, inviteCode }) {
@@ -157,7 +161,7 @@ export async function restoreAccount() {
   if (!data.session?.user) return null
   const user = data.session.user
   const context = await getContext()
-  if (context) return { createdShop: false, session: toSession(user, context, true) }
+  if (context) return { createdShop: false, session: toSession(user, context) }
 
   // Owners can safely finish their own shop creation after email confirmation.
   // Employees must explicitly sign in before a one-use invitation is consumed.

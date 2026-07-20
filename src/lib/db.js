@@ -61,7 +61,7 @@ export async function recordStockPurchase({
   notes = null,
   linkedTransactionId = null,
 }) {
-  const { data, error } = await supabase.rpc('record_stock_purchase_atomic', {
+  const { data, error } = await supabase.rpc('record_inventory_purchase_atomic', {
     purchase_items: items,
     supplier_name: supplier || null,
     purchased_on: purchaseDate || new Date().toISOString().slice(0, 10),

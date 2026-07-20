@@ -6,22 +6,12 @@ import StaggerContainer from '../../components/animation/StaggerContainer'
 
 export default function InitialInventorySetupScreen() {
   const navigate = useNavigate()
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
   const session = useAppStore((s) => s.session)
-
-  function goToInventoryPurchase() {
-    completeOnboarding()
-    navigate('/inventory-investment', { state: { fromOnboarding: true } })
-  }
 
   function goToDukwiseCatalog() {
     navigate('/catalog-inventory', { state: { fromOnboarding: true } })
   }
 
-  function skipForNow() {
-    completeOnboarding()
-    navigate('/')
-  }
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '20px 20px 32px', position: 'relative' }}>
@@ -60,38 +50,12 @@ export default function InitialInventorySetupScreen() {
             <Icon name="chevronRight" size={16} color="var(--text-low)" />
           </div>
 
-          <div
-            onClick={goToInventoryPurchase}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px',
-              borderRadius: 14, marginBottom: 10, cursor: 'pointer',
-              background: 'linear-gradient(160deg, rgba(240,169,61,0.10), rgba(255,255,255,0.02))',
-              border: '1px solid rgba(240,169,61,0.20)',
-            }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(240,169,61,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon name="package" size={19} color="#F0A93D" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>Record a new stock purchase</p>
-              <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2 }}>Use this only for stock you are buying now</p>
-            </div>
-            <Icon name="chevronRight" size={16} color="var(--text-low)" />
-          </div>
         </StaggerContainer>
 
         <FadeIn delay={220} duration={280} y={10}>
-          <button
-            onClick={skipForNow}
-            style={{
-              width: '100%', marginTop: 8, padding: '13px', borderRadius: 12,
-              border: '1px solid var(--glass-border)', background: 'var(--glass-fill-soft)',
-              cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
-              color: 'var(--text-mid)',
-            }}
-          >
-            Skip for now
-          </button>
+          <p style={{ marginTop: 12, padding: '11px 12px', borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--glass-fill-soft)', fontSize: 10, lineHeight: 1.5, color: 'var(--text-low)', textAlign: 'center' }}>
+            Add at least one stocked format to enter your dashboard. Your existing stock does not create a Cash Out or expense.
+          </p>
         </FadeIn>
       </div>
     </div>

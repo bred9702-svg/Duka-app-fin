@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Icon from '../../components/ui/Icon'
 import GlassCard from '../../components/ui/Card'
 import CatalogBulkEditor from '../../components/inventory/CatalogBulkEditor'
@@ -13,12 +13,10 @@ function formatVariant(variant) {
 
 export default function CatalogInventorySetupScreen() {
   const navigate = useNavigate()
-  const location = useLocation()
   const catalogProducts = useAppStore((s) => s.catalogProducts)
   const catalogLoading = useAppStore((s) => s.catalogLoading)
   const searchCatalog = useAppStore((s) => s.searchCatalog)
   const addOpeningStockFromCatalog = useAppStore((s) => s.addOpeningStockFromCatalog)
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
 
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState(null)
@@ -35,7 +33,7 @@ export default function CatalogInventorySetupScreen() {
 
   const selectedItems = useMemo(() => Object.values(selected), [selected])
   const completeItems = selectedItems.filter((item) =>
-    Number(item.quantity) >= 0 && Number(item.costPrice) >= 0 && Number(item.unitPrice) > 0
+    Number(item.quantity) > 0 && Number(item.costPrice) > 0 && Number(item.unitPrice) > 0
   )
   const canSave = selectedItems.length > 0 && completeItems.length === selectedItems.length && !saving
 
@@ -86,7 +84,6 @@ export default function CatalogInventorySetupScreen() {
         unitPrice: Number(item.unitPrice),
         stockAlert: 5,
       })))
-      if (location.state?.fromOnboarding) completeOnboarding()
       navigate('/', { replace: true })
     } catch (saveError) {
       console.error('Catalog opening inventory failed:', saveError)
