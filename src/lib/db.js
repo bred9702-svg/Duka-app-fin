@@ -157,7 +157,7 @@ export async function createDebtSale({ items, customerId }) {
 
 export async function getPendingOrders() {
   const { data, error } = await supabase.from('pending_orders').select(`
-    *, customer:customers(id,name,phone,is_provisional,provisional_order_id),
+    *, customer:customers!pending_orders_customer_id_fkey(id,name,phone,is_provisional,provisional_order_id),
     items:pending_order_items(id,product_id,product_name,quantity,unit_price,cost_price),
     payments:pending_order_payments(id,amount,method,transaction_id,created_at)
   `).order('created_at', { ascending: false })
