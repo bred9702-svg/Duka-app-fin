@@ -37,6 +37,23 @@ export async function searchProducts(query) {
   return data
 }
 
+export async function searchDukwiseCatalog(query = '', limit = 60) {
+  const { data, error } = await supabase.rpc('search_dukwise_catalog', {
+    search_query: query.trim(),
+    result_limit: limit,
+  })
+  if (error) throw error
+  return Array.isArray(data) ? data : []
+}
+
+export async function addCatalogOpeningStock(items) {
+  const { data, error } = await supabase.rpc('add_catalog_opening_stock', {
+    p_items: items,
+  })
+  if (error) throw error
+  return data
+}
+
 export async function recordStockPurchase({
   items,
   supplier = null,

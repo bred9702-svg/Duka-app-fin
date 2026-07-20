@@ -14,6 +14,10 @@ export default function InitialInventorySetupScreen() {
     navigate('/inventory-investment', { state: { fromOnboarding: true } })
   }
 
+  function goToDukwiseCatalog() {
+    navigate('/catalog-inventory', { state: { fromOnboarding: true } })
+  }
+
   function skipForNow() {
     completeOnboarding()
     navigate('/')
@@ -38,6 +42,25 @@ export default function InitialInventorySetupScreen() {
 
         <StaggerContainer step={70}>
           <div
+            onClick={goToDukwiseCatalog}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '14px',
+              borderRadius: 14, marginBottom: 10, cursor: 'pointer',
+              background: 'linear-gradient(160deg, rgba(95,217,122,0.10), rgba(255,255,255,0.02))',
+              border: '1px solid rgba(95,217,122,0.24)',
+            }}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(95,217,122,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon name="search" size={19} color="#5FD97A" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>Add existing stock from Dukwise Catalog</p>
+              <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2 }}>Select products, formats, prices and quantities quickly</p>
+            </div>
+            <Icon name="chevronRight" size={16} color="var(--text-low)" />
+          </div>
+
+          <div
             onClick={goToInventoryPurchase}
             style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '14px',
@@ -50,8 +73,8 @@ export default function InitialInventorySetupScreen() {
               <Icon name="package" size={19} color="#F0A93D" />
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>Record your first purchase</p>
-              <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2 }}>Add products and stock quantities</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-hi)' }}>Record a new stock purchase</p>
+              <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2 }}>Use this only for stock you are buying now</p>
             </div>
             <Icon name="chevronRight" size={16} color="var(--text-low)" />
           </div>

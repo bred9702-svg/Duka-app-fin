@@ -19,6 +19,8 @@ import {
   convertPendingOrderToDebt as dbConvertPendingOrderToDebt,
   cancelPendingOrder as dbCancelPendingOrder,
   addProduct,
+  searchDukwiseCatalog as dbSearchDukwiseCatalog,
+  addCatalogOpeningStock as dbAddCatalogOpeningStock,
 } from '../lib/db'
 import {
   registerOwnerAccount,
@@ -187,6 +189,8 @@ const useAppStore = create((set, get) => ({
   pendingOrders: [],
   customers: [],
   products: [],
+  catalogProducts: [],
+  catalogLoading: false,
   todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
   // Render a real loading screen on the very first React frame while the
   // persisted Supabase session and shop data are being restored.
@@ -416,6 +420,8 @@ signOut: async () => {
     pendingOrders: [],
     customers: [],
     products: [],
+    catalogProducts: [],
+    catalogLoading: false,
     todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
     loading: false,
     error: null,
@@ -448,6 +454,8 @@ bootstrap: async () => {
           pendingOrders: [],
           customers: [],
           products: [],
+          catalogProducts: [],
+          catalogLoading: false,
           todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
           loading: false,
         })
@@ -881,6 +889,24 @@ bootstrap: async () => {
       console.error('Create product error:', err)
       throw err
     }
+  },
+
+  searchCatalog: async (query = '') => {
+    set({ catalogLoading: true })
+    try {
+      const catalogProducts = await dbSearchDukwiseCatalog(query)
+      set({ catalogProducts })
+      return catalogProducts
+    } finally {
+      set({ catalogLoading: false })
+    }
+  },
+
+  addOpeningStockFromCatalog: async (items) => {
+    const result = await dbAddCatalogOpeningStock(items)
+    const created = result?.products || []
+    set((s) => ({ products: [...s.products, ...created] }))
+    return result
   },
 }))
 

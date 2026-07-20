@@ -45,6 +45,7 @@ const SplashScreen = lazy(() => import('./screens/onboarding/SplashScreen'))
 const WelcomeScreen = lazy(() => import('./screens/onboarding/WelcomeScreen'))
 const OwnerRegistrationScreen = lazy(() => import('./screens/onboarding/OwnerRegistrationScreen'))
 const InitialInventorySetupScreen = lazy(() => import('./screens/onboarding/InitialInventorySetupScreen'))
+const CatalogInventorySetupScreen = lazy(() => import('./screens/onboarding/CatalogInventorySetupScreen'))
 const SignInScreen = lazy(() => import('./screens/onboarding/SignInScreen'))
 
 function LoadingScreen() {
@@ -112,7 +113,7 @@ export default function App() {
     }
   }, [session?.authUserId, session?.shopId])
 
-  const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/sign-in']
+  const ONBOARDING_PATHS = ['/splash', '/welcome', '/register', '/setup-inventory', '/catalog-inventory', '/sign-in']
   const isOnboardingRoute = ONBOARDING_PATHS.some((p) => location.pathname.startsWith(p))
 
   // Frontend-only auth guard: no valid, onboarded session and not already
@@ -176,6 +177,14 @@ export default function App() {
             <Route path="/welcome" element={<WelcomeScreen />} />
             <Route path="/register" element={<OwnerRegistrationScreen />} />
             <Route path="/setup-inventory" element={<InitialInventorySetupScreen />} />
+            <Route
+              path="/catalog-inventory"
+              element={
+                <RequireOwner title="Opening Inventory">
+                  <CatalogInventorySetupScreen />
+                </RequireOwner>
+              }
+            />
             <Route path="/sign-in" element={<SignInScreen />} />
 
             <Route path="/" element={<HomeScreen />} />
