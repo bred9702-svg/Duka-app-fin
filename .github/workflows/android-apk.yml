@@ -99,7 +99,7 @@ jobs:
       - name: Upload signed Dukwise test APK
         uses: actions/upload-artifact@v4
         with:
-          name: dukwise-android-signed-test-v0.3.2
+          name: dukwise-android-signed-test-v0.4.0
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

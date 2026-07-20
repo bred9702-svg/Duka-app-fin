@@ -1,8 +1,8 @@
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
 
-export const APP_VERSION = '0.3.2'
-export const ANDROID_VERSION_CODE = 3
+export const APP_VERSION = '0.4.0'
+export const ANDROID_VERSION_CODE = 4
 
 const VERSION_MANIFEST_URL = 'https://duka-app-fin.vercel.app/app-version.json'
 
