@@ -21,6 +21,9 @@ const DukaAIScreen = lazy(() => import('./screens/DukaAIScreen'))
 const InventoryInvestmentScreen = lazy(() => import('./screens/InventoryInvestmentScreen'))
 const NewSaleScreen = lazy(() => import('./screens/NewSaleScreen'))
 const NewDebtScreen = lazy(() => import('./screens/NewDebtScreen'))
+const PendingOrdersScreen = lazy(() => import('./screens/PendingOrdersScreen'))
+const NewPendingOrderScreen = lazy(() => import('./screens/NewPendingOrderScreen'))
+const PendingOrderDetailScreen = lazy(() => import('./screens/PendingOrderDetailScreen'))
 const InventoryInsightsScreen = lazy(() => import('./screens/InventoryInsightsScreen'))
 const InsightsScreen = lazy(() => import('./screens/InsightsScreen'))
 const MeScreen = lazy(() => import('./screens/MeScreen'))
@@ -130,6 +133,8 @@ export default function App() {
     location.pathname.startsWith('/classify') ||
     location.pathname.startsWith('/new-debt') ||
     location.pathname.startsWith('/customer')
+    || location.pathname.startsWith('/orders/new')
+    || /^\/orders\/.+/.test(location.pathname)
 
   if (loading) {
     return (
@@ -272,6 +277,10 @@ export default function App() {
               path="/new-debt"
               element={<NewDebtScreen />}
             />
+
+            <Route path="/orders" element={<PendingOrdersScreen />} />
+            <Route path="/orders/new" element={<NewPendingOrderScreen />} />
+            <Route path="/orders/:id" element={<PendingOrderDetailScreen />} />
 
             <Route
               path="/me"

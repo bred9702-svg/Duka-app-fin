@@ -63,8 +63,11 @@ export default function NewSaleScreen() {
   const products = useAppStore((s) => s.products)
   const customers = useAppStore((s) => s.customers)
   const transactions = useAppStore((s) => s.transactions)
+  const pendingOrders = useAppStore((s) => s.pendingOrders)
   const addCustomer = useAppStore((s) => s.addCustomer)
   const completeSale = useAppStore((s) => s.completeSale)
+  const recordPendingOrderPayment = useAppStore((s) => s.recordPendingOrderPayment)
+  const finalizePendingOrder = useAppStore((s) => s.finalizePendingOrder)
   const writeBlocked = useAppStore((s) => s.writeBlocked)
   const trialEndedMessage = useAppStore((s) => s.trialEndedMessage)
   const session = useAppStore((s) => s.session)
@@ -83,6 +86,8 @@ export default function NewSaleScreen() {
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [isWalkInCustomer, setIsWalkInCustomer] = useState(true)
+  const [selectedPendingOrderId, setSelectedPendingOrderId] = useState(null)
   const [addingCustomer, setAddingCustomer] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
   const [newCustomerPhone, setNewCustomerPhone] = useState('')
@@ -128,7 +133,7 @@ export default function NewSaleScreen() {
     const q = query.toLowerCase()
     const inCartIds = new Set(cart.map((c) => c.productId))
     return products
-      .filter((p) => (p.stock_current || 0) > 0 && !inCartIds.has(p.id) && p.name.toLowerCase().includes(q))
+      .filter((p) => ((p.stock_current || 0) - (p.reserved_stock || 0)) > 0 && !inCartIds.has(p.id) && p.name.toLowerCase().includes(q))
       .slice(0, 5)
   }, [query, products, cart, isLinkedCashInPayment])
 
@@ -146,7 +151,7 @@ export default function NewSaleScreen() {
         unitPrice: product.unit_price || 0,
         costPrice: product.cost_price || 0,
         quantity: 1,
-        stock: product.stock_current || 0,
+        stock: (product.stock_current || 0) - (product.reserved_stock || 0),
       },
     ])
     setQuery('')
@@ -171,11 +176,15 @@ export default function NewSaleScreen() {
   const grandTotal = cart.reduce((a, it) => a + it.unitPrice * it.quantity, 0)
   const difference = paymentAmount !== null ? paymentAmount - grandTotal : null
 
-  const hasCustomer = !!selectedCustomer || (addingCustomer && newCustomerName.trim())
+  const hasCustomer = isWalkInCustomer || !!selectedCustomer || (addingCustomer && newCustomerName.trim())
+  const selectedPendingOrder = pendingOrders.find((order) => order.id === selectedPendingOrderId) || null
+  const pendingBalance = selectedPendingOrder
+    ? Number(selectedPendingOrder.total_amount) - Number(selectedPendingOrder.paid_amount)
+    : 0
   const canSave =
     isLinkedCashInPayment &&
-    cart.length > 0 &&
-    hasCustomer &&
+    ((selectedPendingOrder && Number(paymentAmount) > 0 && Number(paymentAmount) <= pendingBalance) ||
+      (cart.length > 0 && hasCustomer)) &&
     !saving &&
     !writeBlocked
 
@@ -196,6 +205,22 @@ export default function NewSaleScreen() {
     setSaving(true)
 
     try {
+      if (selectedPendingOrder) {
+        const updatedOrder = await recordPendingOrderPayment({
+          orderId: selectedPendingOrder.id,
+          amount: Number(paymentAmount),
+          method: linkedTransaction?.source === 'mpesa' ? 'mpesa' : 'cash',
+          transactionId: linkedTransactionId,
+        })
+        if (updatedOrder.status === 'paid') await finalizePendingOrder(selectedPendingOrder.id)
+        setResult({
+          grandTotal: Number(selectedPendingOrder.total_amount),
+          totalQuantity: (selectedPendingOrder.items || []).reduce((sum, item) => sum + item.quantity, 0),
+          itemCount: (selectedPendingOrder.items || []).length,
+        })
+        return
+      }
+
       const items = cart.map((it) => ({
         productId: it.productId,
         name: it.name,
@@ -204,9 +229,9 @@ export default function NewSaleScreen() {
         quantity: it.quantity,
       }))
 
-      let customerId = selectedCustomer?.id || null
+      let customerId = isWalkInCustomer ? null : selectedCustomer?.id || null
 
-      if (!customerId && addingCustomer && newCustomerName.trim()) {
+      if (!isWalkInCustomer && !customerId && addingCustomer && newCustomerName.trim()) {
         const customer = await addCustomer({
           name: newCustomerName.trim(),
           phone: newCustomerPhone.trim() || null,
@@ -329,7 +354,68 @@ export default function NewSaleScreen() {
           </GlassCard>
         )}
 
+        {pendingOrders.some((order) => ['awaiting_payment', 'partially_paid'].includes(order.status)) && (
+          <>
+            <SectionTitle>Pending order</SectionTitle>
+            <select
+              value={selectedPendingOrderId || ''}
+              onChange={(event) => {
+                setSelectedPendingOrderId(event.target.value || null)
+                if (event.target.value) setCart([])
+              }}
+              style={inputStyle}
+            >
+              <option value="">This is a new sale</option>
+              {pendingOrders.filter((order) => ['awaiting_payment', 'partially_paid'].includes(order.status)).map((order) => {
+                const balance = Number(order.total_amount) - Number(order.paid_amount)
+                return <option key={order.id} value={order.id}>Order #{order.order_number} · Balance {fmtKES(balance)} KES</option>
+              })}
+            </select>
+            {selectedPendingOrder && Number(paymentAmount) > pendingBalance && (
+              <p style={{ fontSize: 10, color: '#FF6B5B', marginTop: 6 }}>Payment exceeds this order's balance.</p>
+            )}
+          </>
+        )}
+
         <SectionTitle>Customer</SectionTitle>
+        <button
+          type="button"
+          onClick={() => {
+            setIsWalkInCustomer(true)
+            setSelectedCustomer(null)
+            setAddingCustomer(false)
+            setCustomerQuery('')
+            setNewCustomerName('')
+            setNewCustomerPhone('')
+          }}
+          disabled={!isLinkedCashInPayment}
+          style={{
+            width: '100%', marginBottom: 8, padding: '11px 12px',
+            borderRadius: 12, cursor: isLinkedCashInPayment ? 'pointer' : 'default',
+            display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+            background: isWalkInCustomer ? 'rgba(95,217,122,.14)' : 'var(--glass-fill-soft)',
+            border: isWalkInCustomer ? '1px solid rgba(95,217,122,.55)' : '1px solid var(--glass-border)',
+            opacity: isLinkedCashInPayment ? 1 : 0.45,
+          }}
+        >
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: isWalkInCustomer ? 'rgba(95,217,122,.16)' : 'var(--faint-fill)',
+          }}>
+            <Icon name="users" size={16} color={isWalkInCustomer ? '#5FD97A' : 'var(--text-low)'} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-hi)', margin: 0 }}>
+              Walk-in customer
+            </p>
+            <p style={{ fontSize: 10, color: 'var(--text-low)', margin: '2px 0 0' }}>
+              Customer details are not required.
+            </p>
+          </div>
+          {isWalkInCustomer && <Icon name="circleCheck" size={18} color="#5FD97A" />}
+        </button>
+
         <div style={{ position: 'relative', marginBottom: 8 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
@@ -361,6 +447,7 @@ export default function NewSaleScreen() {
             <div
               key={customer.id}
               onClick={() => {
+                setIsWalkInCustomer(false)
                 setSelectedCustomer(customer)
                 setCustomerQuery(customer.name)
                 setAddingCustomer(false)
@@ -394,6 +481,7 @@ export default function NewSaleScreen() {
             }
 
             setAddingCustomer((open) => !open)
+            setIsWalkInCustomer(false)
             setSelectedCustomer(null)
           }}
           disabled={!isLinkedCashInPayment}
@@ -471,7 +559,7 @@ export default function NewSaleScreen() {
                 >
                   <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{p.name}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-low)' }}>
-                    {fmtKES(p.unit_price)} KES · Stock: {p.stock_current}
+                    {fmtKES(p.unit_price)} KES · Available: {(p.stock_current || 0) - (p.reserved_stock || 0)}
                   </span>
                 </div>
               ))}
@@ -657,7 +745,7 @@ export default function NewSaleScreen() {
             opacity: canSave ? 1 : 0.4, transition: 'opacity 200ms ease',
           }}
         >
-          {saving ? 'Saving...' : 'Confirm Sale'}
+          {saving ? 'Saving...' : selectedPendingOrder ? 'Apply payment to order' : 'Confirm Sale'}
         </button>
       </div>
     </div>

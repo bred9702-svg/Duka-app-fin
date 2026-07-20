@@ -105,6 +105,57 @@ export async function createDebtSale({ items, customerId }) {
   return data
 }
 
+// ── PENDING ORDERS ───────────────────────────────────────────
+
+export async function getPendingOrders() {
+  const { data, error } = await supabase.from('pending_orders').select(`
+    *, customer:customers(id,name,phone),
+    items:pending_order_items(id,product_id,product_name,quantity,unit_price,cost_price),
+    payments:pending_order_payments(id,amount,method,transaction_id,created_at)
+  `).order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export async function createPendingOrder({ items, customerId = null }) {
+  const { data, error } = await supabase.rpc('create_pending_order_atomic', {
+    order_items: items, target_customer_id: customerId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function recordPendingOrderPayment({ orderId, amount, method, transactionId = null }) {
+  const { data, error } = await supabase.rpc('record_pending_order_payment_atomic', {
+    target_order_id: orderId, payment_amount: amount, payment_method: method,
+    target_transaction_id: transactionId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function finalizePendingOrder(orderId) {
+  const { data, error } = await supabase.rpc('finalize_pending_order_sale_atomic', { target_order_id: orderId })
+  if (error) throw error
+  return data
+}
+
+export async function convertPendingOrderToDebt(orderId, customerId) {
+  const { data, error } = await supabase.rpc('convert_pending_order_to_debt_atomic', {
+    target_order_id: orderId, target_customer_id: customerId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function cancelPendingOrder(orderId, reason = null) {
+  const { data, error } = await supabase.rpc('cancel_pending_order_atomic', {
+    target_order_id: orderId, cancel_reason: reason,
+  })
+  if (error) throw error
+  return data
+}
+
 // ── TRANSACTIONS ──────────────────────────────────────────────
 
 export async function getTransactions(limit = 50) {

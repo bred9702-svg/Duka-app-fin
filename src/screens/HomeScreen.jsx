@@ -129,9 +129,9 @@ export default function HomeScreen() {
               </p>
             )}
           </div>
-          <div className="glass-card" style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Icon name="bottle" size={17} color="#F0A93D" />
-          </div>
+          <button onClick={() => navigate('/me')} aria-label="Open shop profile" className="glass-card" style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', color: '#F0A93D' }}>
+            <Icon name="store" size={17} color="#F0A93D" />
+          </button>
         </div>
 
         {/* Message contextuel */}

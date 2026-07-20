@@ -28,10 +28,10 @@ const TABS = [
     label: 'Debts',
   },
   {
-    id: 'me',
-    path: '/me',
-    icon: 'settings',
-    label: 'Me',
+    id: 'orders',
+    path: '/orders',
+    icon: 'receiptOff',
+    label: 'Orders',
   },
 ]
 
@@ -41,6 +41,7 @@ export default function BottomNav() {
 
   const transactions = useAppStore((s) => s.transactions)
   const session = useAppStore((s) => s.session)
+  const pendingOrders = useAppStore((s) => s.pendingOrders)
 
   const visibleTabs = session?.role === 'employee'
     ? TABS.filter((tab) => tab.id !== 'insights')
@@ -142,6 +143,9 @@ export default function BottomNav() {
                       }}
                     />
                   )}
+                {tab.id === 'orders' && pendingOrders.some((order) => ['awaiting_payment', 'partially_paid', 'paid'].includes(order.status)) && (
+                  <span style={{ position: 'absolute', top: -2, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#F0A93D' }} />
+                )}
               </div>
 
               <span

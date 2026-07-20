@@ -12,6 +12,12 @@ import {
   recordStockPurchase as dbRecordStockPurchase,
   completeSalePayment,
   createDebtSale as dbCreateDebtSale,
+  getPendingOrders,
+  createPendingOrder as dbCreatePendingOrder,
+  recordPendingOrderPayment as dbRecordPendingOrderPayment,
+  finalizePendingOrder as dbFinalizePendingOrder,
+  convertPendingOrderToDebt as dbConvertPendingOrderToDebt,
+  cancelPendingOrder as dbCancelPendingOrder,
   addProduct,
 } from '../lib/db'
 import {
@@ -178,6 +184,7 @@ function getSessionUserAttribution(session = {}) {
 
 const useAppStore = create((set, get) => ({
   transactions: [],
+  pendingOrders: [],
   customers: [],
   products: [],
   todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
@@ -406,6 +413,7 @@ signOut: async () => {
     inAppNotifications: [],
     notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
     transactions: [],
+    pendingOrders: [],
     customers: [],
     products: [],
     todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
@@ -437,6 +445,7 @@ bootstrap: async () => {
       if (!session) {
         set({
           transactions: [],
+          pendingOrders: [],
           customers: [],
           products: [],
           todayStats: { income: 0, expenses: 0, profit: 0, unclassified: 0 },
@@ -459,13 +468,15 @@ bootstrap: async () => {
           return loadBusinessPreferences()
         }),
       ])
-        .then(([transactions, customers, products, todayStats, businessPreferences]) => {
+        .then(async ([transactions, customers, products, todayStats, businessPreferences]) => {
+          const pendingOrders = await getPendingOrders().catch(() => [])
           // Ignore a late response if the user signed out or changed shops.
           if (get().session?.shopId !== session.shopId) return
 
           saveBusinessPreferences(businessPreferences)
           set({
             transactions,
+            pendingOrders,
             customers,
             products,
             todayStats,
@@ -815,6 +826,49 @@ bootstrap: async () => {
       console.error('Complete sale error:', err)
       throw err
     }
+  },
+
+  refreshPendingOrders: async () => {
+    const pendingOrders = await getPendingOrders()
+    set({ pendingOrders })
+    return pendingOrders
+  },
+
+  createPendingOrder: async ({ items, customerId = null }) => {
+    const order = await dbCreatePendingOrder({ items, customerId })
+    await Promise.all([get().refreshPendingOrders(), getProducts().then((products) => set({ products }))])
+    return order
+  },
+
+  recordPendingOrderPayment: async (payload) => {
+    const order = await dbRecordPendingOrderPayment(payload)
+    await get().refreshPendingOrders()
+    return order
+  },
+
+  finalizePendingOrder: async (orderId) => {
+    const order = await dbFinalizePendingOrder(orderId)
+    await Promise.all([
+      get().refreshPendingOrders(), getProducts().then((products) => set({ products })),
+      getTransactions(50).then((transactions) => set({ transactions })), get().refreshTodayStats(),
+    ])
+    return order
+  },
+
+  convertPendingOrderToDebt: async (orderId, customerId) => {
+    const result = await dbConvertPendingOrderToDebt(orderId, customerId)
+    await Promise.all([
+      get().refreshPendingOrders(), getProducts().then((products) => set({ products })),
+      getTransactions(50).then((transactions) => set({ transactions })),
+      getCustomers().then((customers) => set({ customers })), get().refreshTodayStats(),
+    ])
+    return result
+  },
+
+  cancelPendingOrder: async (orderId, reason = null) => {
+    const order = await dbCancelPendingOrder(orderId, reason)
+    await Promise.all([get().refreshPendingOrders(), getProducts().then((products) => set({ products }))])
+    return order
   },
 
      createProduct: async (data) => {

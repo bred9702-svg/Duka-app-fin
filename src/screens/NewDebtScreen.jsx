@@ -85,7 +85,7 @@ export default function NewDebtScreen() {
     if (!q) return []
     const inCart = new Set(cart.map((item) => item.productId))
     return products
-      .filter((p) => (p.stock_current || 0) > 0 && !inCart.has(p.id) && p.name.toLowerCase().includes(q))
+      .filter((p) => ((p.stock_current || 0) - (p.reserved_stock || 0)) > 0 && !inCart.has(p.id) && p.name.toLowerCase().includes(q))
       .slice(0, 5)
   }, [products, productQuery, cart])
 
@@ -102,7 +102,7 @@ export default function NewDebtScreen() {
         unitPrice: product.unit_price || 0,
         costPrice: product.cost_price || 0,
         quantity: 1,
-        stock: product.stock_current || 0,
+        stock: (product.stock_current || 0) - (product.reserved_stock || 0),
       },
     ])
     setProductQuery('')
@@ -245,7 +245,7 @@ export default function NewDebtScreen() {
               {productMatches.map((product) => (
                 <div key={product.id} onClick={() => addToCart(product)} style={dropdownRowStyle}>
                   <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-hi)' }}>{product.name}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-low)' }}>{fmtKES(product.unit_price)} KES · Stock: {product.stock_current}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-low)' }}>{fmtKES(product.unit_price)} KES · Available: {(product.stock_current || 0) - (product.reserved_stock || 0)}</span>
                 </div>
               ))}
             </div>
