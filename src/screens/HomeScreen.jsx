@@ -289,7 +289,9 @@ export default function HomeScreen() {
                       ? () => navigate(`/classify/${t.id}`)
                       : linkedOrder
                         ? () => navigate(`/orders/${linkedOrder.id}`)
-                        : undefined}
+                        : t.operation_type === 'debt' && t.customer_id
+                          ? () => navigate(`/customer/${t.customer_id}`)
+                          : undefined}
                   />
                 )
               })()

@@ -268,7 +268,11 @@ export default function TransactionsScreen() {
                   order={linkedOrder}
                   customers={customers}
                   delay={i * 0.03}
-                  onClick={linkedOrder ? () => navigate(`/orders/${linkedOrder.id}`) : undefined}
+                  onClick={linkedOrder
+                    ? () => navigate(`/orders/${linkedOrder.id}`)
+                    : t.operation_type === 'debt' && t.customer_id
+                      ? () => navigate(`/customer/${t.customer_id}`)
+                      : undefined}
                 />
               )
             })}

@@ -39,9 +39,17 @@ export default function PendingOrderDetailScreen() {
       <FadeIn duration={280} y={10}>
         <div style={{ ...hero, borderColor: `${statusColor}42` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              onClick={order.customer ? () => navigate(`/customer/${order.customer.id}`) : undefined}
+              role={order.customer ? 'button' : undefined}
+              tabIndex={order.customer ? 0 : undefined}
+              onKeyDown={order.customer ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') navigate(`/customer/${order.customer.id}`)
+              } : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: order.customer ? 'pointer' : 'default' }}
+            >
               {order.customer ? <Avatar name={order.customer.name} color="blue" size={40} /> : <div style={walkIn}><Icon name="users" size={18} color="#F0A93D" /></div>}
-              <div><p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-hi)' }}>{order.customer?.name || 'Walk-in customer'}</p><p style={muted}>Created {new Date(order.created_at).toLocaleString()}</p></div>
+              <div><p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: order.customer ? '#5B9FF0' : 'var(--text-hi)' }}>{order.customer?.name || 'Walk-in customer'}</p><p style={muted}>{order.customer ? 'View customer profile · ' : ''}Created {new Date(order.created_at).toLocaleString()}</p></div>
             </div>
             <span style={{ padding: '6px 8px', borderRadius: 999, background: `${statusColor}18`, color: statusColor, fontSize: 8, fontWeight: 700 }}>{statusLabel}</span>
           </div>

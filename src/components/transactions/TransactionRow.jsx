@@ -12,6 +12,7 @@ export default function TransactionRow({
   const isMpesa = txn.source === 'mpesa'
   const isClassified = txn.classified
   const opType = txn.operation_type
+  const isDebt = isClassified && opType === 'debt'
 
   let barColor = '#F0A93D'
   let iconName = isMpesa ? 'phone' : 'cash'
@@ -269,10 +270,10 @@ opacity: .65,
             fontSize: 14,
             fontWeight: 700,
             letterSpacing: '-.02em',
-            color: isIn ? '#5FD97A' : '#FF6B5B',
+            color: isDebt ? '#5B9FF0' : isIn ? '#5FD97A' : '#FF6B5B',
           }}
         >
-          {(isIn ? '+' : '-') + fmtKES(txn.amount)}
+          {isDebt ? `${fmtKES(txn.amount)} owed` : (isIn ? '+' : '-') + fmtKES(txn.amount)}
         </div>
 
         {!isClassified && (
