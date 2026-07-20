@@ -7,6 +7,7 @@ import StaggerContainer from '../components/animation/StaggerContainer'
 import { fmtKES } from '../utils/formatters'
 
 const OPEN = new Set(['awaiting_payment', 'partially_paid', 'paid'])
+const PAGE_SIZE = 10
 const STATUS = {
   awaiting_payment: { label: 'Awaiting payment', color: '#F0A93D', bg: 'rgba(240,169,61,.12)' },
   partially_paid: { label: 'Partially paid', color: '#5B9FF0', bg: 'rgba(91,159,240,.12)' },
@@ -20,9 +21,50 @@ export default function PendingOrdersScreen() {
   const navigate = useNavigate()
   const orders = useAppStore((s) => s.pendingOrders)
   const [tab, setTab] = useState('open')
+  const [search, setSearch] = useState('')
+  const [dateFilter, setDateFilter] = useState('all')
+  const [customDate, setCustomDate] = useState('')
+  const [page, setPage] = useState(1)
   const openCount = orders.filter((o) => OPEN.has(o.status)).length
   const outstanding = orders.filter((o) => OPEN.has(o.status)).reduce((sum, o) => sum + Number(o.total_amount) - Number(o.paid_amount), 0)
-  const visible = useMemo(() => orders.filter((o) => tab === 'open' ? OPEN.has(o.status) : !OPEN.has(o.status)), [orders, tab])
+  const historyOrders = useMemo(() => orders.filter((order) => !OPEN.has(order.status)), [orders])
+  const filteredHistory = useMemo(() => {
+    const query = search.trim().toLowerCase().replace(/^order\s*#?\s*/, '')
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const selectedDate = customDate ? new Date(`${customDate}T00:00:00`) : null
+
+    return historyOrders.filter((order) => {
+      const created = new Date(order.created_at)
+      let matchesDate = true
+      if (dateFilter === 'today') matchesDate = created >= todayStart
+      if (dateFilter === 'yesterday') {
+        const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+        matchesDate = created >= yesterdayStart && created < todayStart
+      }
+      if (dateFilter === '7days') {
+        const sevenDaysAgo = new Date(todayStart); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+        matchesDate = created >= sevenDaysAgo
+      }
+      if (dateFilter === 'custom' && selectedDate) {
+        const nextDate = new Date(selectedDate); nextDate.setDate(nextDate.getDate() + 1)
+        matchesDate = created >= selectedDate && created < nextDate
+      }
+
+      if (!matchesDate || !query) return matchesDate
+      const searchable = [
+        String(order.order_number || ''),
+        order.customer?.name,
+        ...(order.items || []).map((item) => item.product_name),
+      ].filter(Boolean).join(' ').toLowerCase()
+      return searchable.includes(query)
+    })
+  }, [historyOrders, search, dateFilter, customDate])
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const visible = tab === 'open'
+    ? orders.filter((order) => OPEN.has(order.status))
+    : filteredHistory.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   return (
     <div style={{ flex: 1, width: '100%', padding: '16px 14px 100px', position: 'relative' }}>
@@ -59,9 +101,18 @@ export default function PendingOrdersScreen() {
 
         <div style={tabsWrap}>
           {[['open', `Open${openCount ? ` · ${openCount}` : ''}`], ['history', 'History']].map(([value, label]) => (
-            <button key={value} onClick={() => setTab(value)} style={{ ...tabButton, ...(tab === value ? activeTab : {}) }}>{label}</button>
+            <button key={value} onClick={() => { setTab(value); setPage(1) }} style={{ ...tabButton, ...(tab === value ? activeTab : {}) }}>{label}</button>
           ))}
         </div>
+
+        {tab === 'history' && <div style={filterPanel}>
+          <div style={searchBox}><Icon name="search" size={14} color="var(--text-low)" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search order, customer or product..." style={searchInput} /></div>
+          <div style={filterChips}>{[
+            ['all', 'All'], ['today', 'Today'], ['yesterday', 'Yesterday'], ['7days', 'Last 7 days'], ['custom', 'Choose date'],
+          ].map(([value, label]) => <button key={value} onClick={() => { setDateFilter(value); setPage(1) }} style={{ ...filterChip, ...(dateFilter === value ? activeFilterChip : {}) }}>{label}</button>)}</div>
+          {dateFilter === 'custom' && <input type="date" value={customDate} onChange={(event) => { setCustomDate(event.target.value); setPage(1) }} style={dateInput} />}
+          <p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 8 }}>{filteredHistory.length} receipt{filteredHistory.length === 1 ? '' : 's'} found</p>
+        </div>}
 
         {visible.length === 0 ? (
           <FadeIn duration={300} y={8}>
@@ -73,8 +124,9 @@ export default function PendingOrdersScreen() {
             </div>
           </FadeIn>
         ) : (
-          <StaggerContainer step={55}>
-            {visible.map((order) => {
+          <>
+            <StaggerContainer step={55}>
+              {visible.map((order) => {
               const balance = Number(order.total_amount) - Number(order.paid_amount)
               const status = STATUS[order.status] || STATUS.cancelled
               const progress = Math.min(100, Number(order.paid_amount) / Number(order.total_amount) * 100 || 0)
@@ -100,8 +152,14 @@ export default function PendingOrdersScreen() {
                   </div>
                 </button>
               )
-            })}
-          </StaggerContainer>
+              })}
+            </StaggerContainer>
+            {tab === 'history' && filteredHistory.length > PAGE_SIZE && <div style={pagination}>
+              <button disabled={safePage === 1} onClick={() => setPage((current) => Math.max(1, current - 1))} style={{ ...pageButton, opacity: safePage === 1 ? .35 : 1 }}><Icon name="arrowLeft" size={13} /> Previous</button>
+              <div style={{ textAlign: 'center' }}><p style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700, color: 'var(--text-hi)' }}>{safePage} / {totalPages}</p><p style={{ fontSize: 8, color: 'var(--text-low)', marginTop: 2 }}>{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredHistory.length)} of {filteredHistory.length}</p></div>
+              <button disabled={safePage === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} style={{ ...pageButton, opacity: safePage === totalPages ? .35 : 1 }}>Next <Icon name="chevronRight" size={13} /></button>
+            </div>}
+          </>
         )}
       </div>
     </div>
@@ -119,3 +177,12 @@ const activeTab = { background: 'rgba(240,169,61,.11)', border: '1px solid rgba(
 const emptyCard = { minHeight: 260, padding: '52px 20px', textAlign: 'center', borderRadius: 16, background: 'linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.012))', border: '1px solid var(--glass-border)' }
 const emptyIcon = { width: 54, height: 54, margin: '0 auto', borderRadius: 17, background: 'rgba(255,255,255,.035)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 const orderCard = { width: '100%', textAlign: 'left', padding: 13, marginBottom: 9, borderRadius: 15, border: '1px solid var(--glass-border)', background: 'linear-gradient(150deg,rgba(255,255,255,.045),rgba(255,255,255,.016))', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', boxShadow: '0 10px 25px rgba(0,0,0,.12)', cursor: 'pointer' }
+const filterPanel = { padding: 10, marginBottom: 12, borderRadius: 14, border: '1px solid var(--glass-border)', background: 'linear-gradient(150deg,rgba(255,255,255,.04),rgba(255,255,255,.014))' }
+const searchBox = { display: 'flex', alignItems: 'center', gap: 7, padding: '9px 10px', borderRadius: 10, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)' }
+const searchInput = { flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 10 }
+const filterChips = { display: 'flex', gap: 5, marginTop: 8, overflowX: 'auto', paddingBottom: 2 }
+const filterChip = { flexShrink: 0, padding: '7px 9px', borderRadius: 999, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-low)', fontSize: 8, fontWeight: 700, cursor: 'pointer' }
+const activeFilterChip = { border: '1px solid rgba(240,169,61,.45)', background: 'rgba(240,169,61,.12)', color: '#F0A93D' }
+const dateInput = { width: '100%', marginTop: 8, padding: '9px 10px', borderRadius: 10, border: '1px solid rgba(240,169,61,.3)', background: 'var(--faint-fill)', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 10, colorScheme: 'dark' }
+const pagination = { display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, marginTop: 10, padding: 9, borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--glass-fill-soft)' }
+const pageButton = { padding: 8, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 8, fontWeight: 700, cursor: 'pointer' }

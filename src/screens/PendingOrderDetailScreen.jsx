@@ -6,6 +6,7 @@ import Icon from '../components/ui/Icon'
 import FadeIn from '../components/animation/FadeIn'
 import Avatar from '../components/ui/Avatar'
 import { fmtKES } from '../utils/formatters'
+import { downloadOrderReceipt, shareOrPrintOrderReceipt } from '../lib/orderReceiptPdf'
 
 const STATUS = {
   awaiting_payment: ['Awaiting payment', '#F0A93D'], partially_paid: ['Partially paid', '#5B9FF0'],
@@ -18,8 +19,9 @@ export default function PendingOrderDetailScreen() {
   const order = useAppStore((s) => s.pendingOrders.find((o) => o.id === id)); const customers = useAppStore((s) => s.customers)
   const record = useAppStore((s) => s.recordPendingOrderPayment); const finalize = useAppStore((s) => s.finalizePendingOrder)
   const convert = useAppStore((s) => s.convertPendingOrderToDebt); const cancel = useAppStore((s) => s.cancelPendingOrder)
+  const session = useAppStore((s) => s.session)
   const [amount, setAmount] = useState(''); const [method, setMethod] = useState('cash')
-  const [customerId, setCustomerId] = useState(order?.customer_id || ''); const [customerQuery, setCustomerQuery] = useState(''); const [showCustomers, setShowCustomers] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(null)
+  const [customerId, setCustomerId] = useState(order?.customer_id || ''); const [customerQuery, setCustomerQuery] = useState(''); const [showCustomers, setShowCustomers] = useState(false); const [busy, setBusy] = useState(false); const [receiptBusy, setReceiptBusy] = useState(false); const [receiptNote, setReceiptNote] = useState(null); const [error, setError] = useState(null)
   const selectedCustomer = customers.find((customer) => customer.id === customerId) || null
   const customerMatches = useMemo(() => {
     const query = customerQuery.trim().toLowerCase()
@@ -64,6 +66,16 @@ export default function PendingOrderDetailScreen() {
       <div style={summaryCard}><Metric label="Order total" value={order.total_amount} color="var(--text-hi)" /><Metric label="Paid" value={order.paid_amount} color="#5FD97A" /><Metric label="Balance" value={balance} color="#F0A93D" /></div>
 
       {(order.payments || []).length > 0 && <><SectionTitle>Payment history</SectionTitle><div style={glassCard}>{order.payments.map((payment, index) => <div key={payment.id} style={{ ...line, borderBottom: index < order.payments.length - 1 ? '1px solid var(--glass-border)' : 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><div style={{ ...productIcon, background: 'rgba(95,217,122,.10)' }}><Icon name={payment.method === 'mpesa' ? 'phone' : 'cash'} size={14} color="#5FD97A" /></div><div><p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-hi)', textTransform: 'capitalize' }}>{payment.method}</p><p style={muted}>{new Date(payment.created_at).toLocaleString()}</p></div></div><b style={{ color: '#5FD97A', fontSize: 11 }}>+{fmtKES(payment.amount)} KES</b></div>)}</div></>}
+
+      <SectionTitle>Receipt</SectionTitle>
+      <div style={receiptCard}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}><div style={productIcon}><Icon name="receiptOff" size={15} color="#F0A93D" /></div><div><p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-hi)' }}>PDF sales receipt</p><p style={muted}>Download, print or share this order.</p></div></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+          <button disabled={receiptBusy} onClick={() => { try { downloadOrderReceipt(order, session?.shopName); setReceiptNote('PDF downloaded successfully.') } catch (pdfError) { setError(pdfError.message || 'Could not create the PDF.') } }} style={receiptSecondary}><Icon name="package" size={13} /> Download PDF</button>
+          <button disabled={receiptBusy} onClick={async () => { setReceiptBusy(true); setReceiptNote(null); try { const result = await shareOrPrintOrderReceipt(order, session?.shopName); setReceiptNote(result === 'shared' ? 'Receipt shared successfully.' : result === 'opened' ? 'PDF opened. Use the print option to print it.' : 'PDF downloaded successfully.') } catch (pdfError) { if (pdfError?.name !== 'AbortError') setError(pdfError.message || 'Could not share the PDF.') } finally { setReceiptBusy(false) } }} style={receiptPrimary}><Icon name="phone" size={13} /> {receiptBusy ? 'Preparing...' : 'Print / Share'}</button>
+        </div>
+        {receiptNote && <p style={{ fontSize: 9, color: '#5FD97A', marginTop: 8 }}>{receiptNote}</p>}
+      </div>
 
       {open && order.status !== 'paid' && <ActionCard icon="cash" title="Record payment" subtitle={`${fmtKES(balance)} KES remaining`}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 105px', gap: 7 }}><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={`Up to ${fmtKES(balance)}`} style={input} /><div style={methodToggle}>{['cash', 'mpesa'].map((value) => <button key={value} onClick={() => setMethod(value)} style={{ ...methodButton, ...(method === value ? selectedMethod : {}) }}>{value === 'cash' ? 'Cash' : 'M-Pesa'}</button>)}</div></div>
@@ -117,6 +129,9 @@ const customerPanel = { marginTop: 7, padding: 6, borderRadius: 12, border: '1px
 const customerSearch = { display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', marginBottom: 4, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)' }
 const customerSearchInput = { flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 11 }
 const customerRow = { width: '100%', padding: 8, border: 0, borderBottom: '1px solid var(--glass-border)', borderRadius: 8, background: 'transparent', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }
+const receiptCard = { padding: 12, borderRadius: 14, border: '1px solid rgba(240,169,61,.18)', background: 'linear-gradient(145deg,rgba(240,169,61,.08),rgba(255,255,255,.018))' }
+const receiptSecondary = { padding: 9, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 9, fontWeight: 700, cursor: 'pointer' }
+const receiptPrimary = { ...receiptSecondary, border: '1px solid rgba(255,255,255,.3)', background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506' }
 const methodToggle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 2, border: '1px solid var(--glass-border)', borderRadius: 10, background: 'rgba(255,255,255,.02)' }
 const methodButton = { padding: 7, border: 0, borderRadius: 7, background: 'transparent', color: 'var(--text-low)', fontSize: 8, fontWeight: 700 }; const selectedMethod = { background: 'rgba(240,169,61,.14)', color: '#F0A93D' }
 const primary = { width: '100%', padding: 11, marginTop: 8, border: '1px solid rgba(255,255,255,.3)', borderRadius: 10, background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506', fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700 }
