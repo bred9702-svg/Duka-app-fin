@@ -23,6 +23,7 @@ export default function PendingOrdersScreen() {
   const [tab, setTab] = useState('open')
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('all')
+  const [debtFilter, setDebtFilter] = useState('all')
   const [customDate, setCustomDate] = useState('')
   const [page, setPage] = useState(1)
   const openCount = orders.filter((o) => OPEN.has(o.status)).length
@@ -51,16 +52,19 @@ export default function PendingOrdersScreen() {
         matchesDate = created >= selectedDate && created < nextDate
       }
 
-      if (!matchesDate || !query) return matchesDate
+      const matchesDebt = debtFilter !== 'unidentified'
+        || (order.status === 'converted_to_debt' && order.customer?.is_provisional)
+      if (!matchesDate || !matchesDebt || !query) return matchesDate && matchesDebt
       const searchable = [
         String(order.order_number || ''),
         order.customer?.name,
+        order.customer?.is_provisional ? 'walk-in unidentified debt' : null,
         order.seller_name,
         ...(order.items || []).map((item) => item.product_name),
       ].filter(Boolean).join(' ').toLowerCase()
       return searchable.includes(query)
     })
-  }, [historyOrders, search, dateFilter, customDate])
+  }, [historyOrders, search, dateFilter, customDate, debtFilter])
   const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
   const visible = tab === 'open'
@@ -111,6 +115,7 @@ export default function PendingOrdersScreen() {
           <div style={filterChips}>{[
             ['all', 'All'], ['today', 'Today'], ['yesterday', 'Yesterday'], ['7days', 'Last 7 days'], ['custom', 'Choose date'],
           ].map(([value, label]) => <button key={value} onClick={() => { setDateFilter(value); setPage(1) }} style={{ ...filterChip, ...(dateFilter === value ? activeFilterChip : {}) }}>{label}</button>)}</div>
+          <button type="button" onClick={() => { setDebtFilter((value) => value === 'unidentified' ? 'all' : 'unidentified'); setPage(1) }} style={{ ...unidentifiedFilter, ...(debtFilter === 'unidentified' ? activeUnidentifiedFilter : {}) }}><Icon name="users" size={12} color={debtFilter === 'unidentified' ? '#FFB85C' : 'var(--text-low)'} /> Unidentified debts</button>
           {dateFilter === 'custom' && <input type="date" value={customDate} onChange={(event) => { setCustomDate(event.target.value); setPage(1) }} style={dateInput} />}
           <p style={{ fontSize: 9, color: 'var(--text-low)', marginTop: 8 }}>{filteredHistory.length} receipt{filteredHistory.length === 1 ? '' : 's'} found</p>
         </div>}
@@ -140,7 +145,7 @@ export default function PendingOrdersScreen() {
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--text-hi)' }}>Order #{order.order_number}</p>
-                        <p style={{ fontSize: 10, color: 'var(--text-low)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.customer?.name || 'Walk-in customer'} · {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p style={{ fontSize: 10, color: order.customer?.is_provisional ? '#FFB85C' : 'var(--text-low)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.customer?.name || 'Walk-in customer'} · {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                         <p style={{ fontSize: 8, color: '#5B9FF0', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sold by {order.seller_name || 'Shop team member'}{order.seller_role ? ` · ${order.seller_role === 'owner' ? 'Owner' : 'Employee'}` : ''}</p>
                       </div>
                     </div>
@@ -185,6 +190,8 @@ const searchInput = { flex: 1, minWidth: 0, border: 0, outline: 0, background: '
 const filterChips = { display: 'flex', gap: 5, marginTop: 8, overflowX: 'auto', paddingBottom: 2 }
 const filterChip = { flexShrink: 0, padding: '7px 9px', borderRadius: 999, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-low)', fontSize: 8, fontWeight: 700, cursor: 'pointer' }
 const activeFilterChip = { border: '1px solid rgba(240,169,61,.45)', background: 'rgba(240,169,61,.12)', color: '#F0A93D' }
+const unidentifiedFilter = { width: '100%', marginTop: 7, padding: 8, borderRadius: 10, border: '1px solid var(--glass-border)', background: 'transparent', color: 'var(--text-low)', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: 'pointer' }
+const activeUnidentifiedFilter = { border: '1px solid rgba(255,184,92,.4)', background: 'rgba(255,184,92,.10)', color: '#FFB85C' }
 const dateInput = { width: '100%', marginTop: 8, padding: '9px 10px', borderRadius: 10, border: '1px solid rgba(240,169,61,.3)', background: 'var(--faint-fill)', color: 'var(--text-hi)', fontFamily: 'inherit', fontSize: 10, colorScheme: 'dark' }
 const pagination = { display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, marginTop: 10, padding: 9, borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--glass-fill-soft)' }
 const pageButton = { padding: 8, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 8, fontWeight: 700, cursor: 'pointer' }

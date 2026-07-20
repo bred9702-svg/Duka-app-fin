@@ -19,14 +19,18 @@ export default function PendingOrderDetailScreen() {
   const order = useAppStore((s) => s.pendingOrders.find((o) => o.id === id)); const customers = useAppStore((s) => s.customers)
   const record = useAppStore((s) => s.recordPendingOrderPayment); const finalize = useAppStore((s) => s.finalizePendingOrder)
   const convert = useAppStore((s) => s.convertPendingOrderToDebt); const cancel = useAppStore((s) => s.cancelPendingOrder)
+  const addCustomer = useAppStore((s) => s.addCustomer); const identifyCustomer = useAppStore((s) => s.identifyPendingOrderCustomer)
   const session = useAppStore((s) => s.session)
   const [amount, setAmount] = useState(''); const [method, setMethod] = useState('cash')
   const [customerId, setCustomerId] = useState(order?.customer_id || ''); const [customerQuery, setCustomerQuery] = useState(''); const [showCustomers, setShowCustomers] = useState(false); const [busy, setBusy] = useState(false); const [receiptBusy, setReceiptBusy] = useState(false); const [receiptNote, setReceiptNote] = useState(null); const [error, setError] = useState(null)
+  const [addingCustomer, setAddingCustomer] = useState(false); const [newCustomerName, setNewCustomerName] = useState(''); const [newCustomerPhone, setNewCustomerPhone] = useState('')
+  const [identifyName, setIdentifyName] = useState(''); const [identifyPhone, setIdentifyPhone] = useState('')
   const selectedCustomer = customers.find((customer) => customer.id === customerId) || null
   const customerMatches = useMemo(() => {
     const query = customerQuery.trim().toLowerCase()
-    if (!query) return customers.slice(0, 8)
-    return customers.filter((customer) => [customer.name, customer.phone, customer.mpesa_name]
+    const identified = customers.filter((customer) => !customer.is_provisional)
+    if (!query) return identified.slice(0, 8)
+    return identified.filter((customer) => [customer.name, customer.phone, customer.mpesa_name]
       .filter(Boolean).some((value) => value.toLowerCase().includes(query))).slice(0, 8)
   }, [customers, customerQuery])
   if (!order) return <div style={{ padding: 24, color: 'var(--text-low)' }}>Order not found.</div>
@@ -34,6 +38,15 @@ export default function PendingOrderDetailScreen() {
   const [statusLabel, statusColor] = STATUS[order.status] || STATUS.cancelled
   const progress = Math.min(100, Number(order.paid_amount) / Number(order.total_amount) * 100 || 0)
   async function act(fn) { setBusy(true); setError(null); try { await fn() } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function createAndSelectCustomer() {
+    if (!newCustomerName.trim()) return
+    await act(async () => {
+      const customer = await addCustomer({ name: newCustomerName.trim(), phone: newCustomerPhone.trim() || null })
+      if (!customer?.id) throw new Error('Could not create customer.')
+      setCustomerId(customer.id); setCustomerQuery(customer.name); setAddingCustomer(false)
+      setNewCustomerName(''); setNewCustomerPhone('')
+    })
+  }
 
   return <div style={{ flex: 1, width: '100%', padding: '16px 14px 42px', position: 'relative' }}>
     <div className="bg-blob" style={{ width: 190, height: 190, top: -70, right: -60, background: `${statusColor}20` }} />
@@ -51,7 +64,7 @@ export default function PendingOrderDetailScreen() {
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: order.customer ? 'pointer' : 'default' }}
             >
               {order.customer ? <Avatar name={order.customer.name} color="blue" size={40} /> : <div style={walkIn}><Icon name="users" size={18} color="#F0A93D" /></div>}
-              <div><p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: order.customer ? '#5B9FF0' : 'var(--text-hi)' }}>{order.customer?.name || 'Walk-in customer'}</p><p style={muted}>{order.customer ? 'View customer profile · ' : ''}Created {new Date(order.created_at).toLocaleString()}</p></div>
+              <div><p style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: order.customer ? '#5B9FF0' : 'var(--text-hi)' }}>{order.customer?.name || 'Walk-in customer'}</p><p style={muted}>{order.customer?.is_provisional ? 'Identity not recorded · ' : order.customer ? 'View customer profile · ' : ''}Created {new Date(order.created_at).toLocaleString()}</p></div>
             </div>
             <span style={{ padding: '6px 8px', borderRadius: 999, background: `${statusColor}18`, color: statusColor, fontSize: 8, fontWeight: 700 }}>{statusLabel}</span>
           </div>
@@ -85,7 +98,7 @@ export default function PendingOrderDetailScreen() {
 
       {order.status === 'paid' && <div style={completeCard}><div style={completeIcon}><Icon name="circleCheck" size={22} color="#5FD97A" /></div><div style={{ flex: 1 }}><p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-hi)' }}>Payment complete</p><p style={muted}>Finalize this order and deduct reserved stock.</p></div><button disabled={busy} onClick={() => act(async () => { await finalize(id); navigate('/orders') })} style={completeButton}>Complete sale</button></div>}
 
-      {['awaiting_payment', 'partially_paid'].includes(order.status) && <ActionCard icon="userDollar" title="Convert balance to debt" subtitle="A saved customer is required">
+      {['awaiting_payment', 'partially_paid'].includes(order.status) && <ActionCard icon="userDollar" title="Convert balance to debt" subtitle="Choose a customer or keep this debt unidentified">
         <button type="button" onClick={() => setShowCustomers((visible) => !visible)} style={{ ...customerSelector, borderColor: showCustomers ? 'rgba(240,169,61,.55)' : 'var(--glass-border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             {selectedCustomer ? <Avatar name={selectedCustomer.name} color="blue" size={32} /> : <div style={smallCustomerIcon}><Icon name="users" size={14} color="#F0A93D" /></div>}
@@ -102,8 +115,21 @@ export default function PendingOrderDetailScreen() {
             })}
             {!customerMatches.length && <p style={{ padding: 13, textAlign: 'center', fontSize: 10, color: 'var(--text-low)' }}>No customer found</p>}
           </div>
+          <button type="button" onClick={() => { setAddingCustomer(true); setShowCustomers(false) }} style={newCustomerTrigger}><Icon name="plus" size={13} color="#F0A93D" /> New customer</button>
+        </div>}
+        {addingCustomer && <div style={inlineCustomerCard}>
+          <input value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Customer name" style={input} />
+          <input value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="Phone (optional)" style={{ ...input, marginTop: 7 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}><button type="button" onClick={() => setAddingCustomer(false)} style={secondaryAction}>Cancel</button><button type="button" disabled={busy || !newCustomerName.trim()} onClick={createAndSelectCustomer} style={primary}>Save customer</button></div>
         </div>}
         <button disabled={busy || !customerId} onClick={() => act(async () => { await convert(id, customerId); navigate('/orders') })} style={debtButton}>Convert {fmtKES(balance)} KES to debt</button>
+        {!order.customer_id && <button disabled={busy} onClick={() => act(async () => { await convert(id, null); navigate(`/orders/${id}`, { replace: true }) })} style={unidentifiedDebtButton}><Icon name="users" size={13} color="#FFB85C" /> Keep as unidentified debt</button>}
+      </ActionCard>}
+
+      {order.status === 'converted_to_debt' && order.customer?.is_provisional && <ActionCard icon="users" title="Identify customer" subtitle="Update this receipt when the customer returns">
+        <input value={identifyName} onChange={(event) => setIdentifyName(event.target.value)} placeholder="Customer name" style={input} />
+        <input value={identifyPhone} onChange={(event) => setIdentifyPhone(event.target.value)} placeholder="Phone (optional)" style={{ ...input, marginTop: 7 }} />
+        <button disabled={busy || !identifyName.trim()} onClick={() => act(async () => { await identifyCustomer(id, { name: identifyName.trim(), phone: identifyPhone.trim() || null }); setIdentifyName(''); setIdentifyPhone('') })} style={{ ...primary, opacity: identifyName.trim() && !busy ? 1 : .4 }}>{busy ? 'Saving...' : 'Save customer identity'}</button>
       </ActionCard>}
 
       {order.status === 'awaiting_payment' && Number(order.paid_amount) === 0 && <button disabled={busy} onClick={() => act(async () => { await cancel(id, 'Cancelled by shop'); navigate('/orders') })} style={cancelButton}><Icon name="x" size={14} color="#FF6B5B" /> Cancel this order</button>}
@@ -138,6 +164,10 @@ const methodToggle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, 
 const methodButton = { padding: 7, border: 0, borderRadius: 7, background: 'transparent', color: 'var(--text-low)', fontSize: 8, fontWeight: 700 }; const selectedMethod = { background: 'rgba(240,169,61,.14)', color: '#F0A93D' }
 const primary = { width: '100%', padding: 11, marginTop: 8, border: '1px solid rgba(255,255,255,.3)', borderRadius: 10, background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506', fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700 }
 const debtButton = { ...primary, background: 'linear-gradient(135deg,#FFCB85,#E99A3C)' }
+const unidentifiedDebtButton = { width: '100%', padding: 10, marginTop: 7, borderRadius: 10, border: '1px solid rgba(255,184,92,.28)', background: 'rgba(255,184,92,.07)', color: '#FFB85C', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }
+const newCustomerTrigger = { width: '100%', padding: 9, border: 0, background: 'transparent', color: '#F0A93D', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }
+const inlineCustomerCard = { marginTop: 7, padding: 9, borderRadius: 11, border: '1px solid rgba(240,169,61,.22)', background: 'rgba(240,169,61,.06)' }
+const secondaryAction = { padding: 9, marginTop: 8, borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-mid)', fontSize: 9, fontWeight: 700 }
 const completeCard = { display: 'flex', alignItems: 'center', gap: 9, padding: 12, marginTop: 12, borderRadius: 15, border: '1px solid rgba(95,217,122,.25)', background: 'linear-gradient(145deg,rgba(95,217,122,.10),rgba(255,255,255,.018))' }
 const completeIcon = { width: 40, height: 40, borderRadius: 13, background: 'rgba(95,217,122,.13)', display: 'flex', alignItems: 'center', justifyContent: 'center' }; const completeButton = { padding: '9px 10px', border: 0, borderRadius: 9, background: '#5FD97A', color: '#102016', fontSize: 9, fontWeight: 700 }
 const cancelButton = { width: '100%', padding: 11, marginTop: 12, borderRadius: 11, border: '1px solid rgba(255,107,91,.24)', background: 'rgba(255,107,91,.06)', color: '#FF6B5B', fontSize: 10, fontWeight: 700, display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }

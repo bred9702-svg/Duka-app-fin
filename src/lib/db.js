@@ -157,7 +157,7 @@ export async function createDebtSale({ items, customerId }) {
 
 export async function getPendingOrders() {
   const { data, error } = await supabase.from('pending_orders').select(`
-    *, customer:customers(id,name,phone),
+    *, customer:customers(id,name,phone,is_provisional,provisional_order_id),
     items:pending_order_items(id,product_id,product_name,quantity,unit_price,cost_price),
     payments:pending_order_payments(id,amount,method,transaction_id,created_at)
   `).order('created_at', { ascending: false })
@@ -189,8 +189,25 @@ export async function finalizePendingOrder(orderId) {
 }
 
 export async function convertPendingOrderToDebt(orderId, customerId) {
+  if (!customerId) {
+    const { data, error } = await supabase.rpc('convert_pending_order_to_provisional_debt_atomic', {
+      target_order_id: orderId,
+    })
+    if (error) throw error
+    return data
+  }
   const { data, error } = await supabase.rpc('convert_pending_order_to_debt_atomic', {
     target_order_id: orderId, target_customer_id: customerId,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function identifyProvisionalOrderCustomer(orderId, { name, phone = null }) {
+  const { data, error } = await supabase.rpc('identify_provisional_order_customer', {
+    target_order_id: orderId,
+    customer_name: name,
+    customer_phone: phone || null,
   })
   if (error) throw error
   return data

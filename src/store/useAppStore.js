@@ -17,6 +17,7 @@ import {
   recordPendingOrderPayment as dbRecordPendingOrderPayment,
   finalizePendingOrder as dbFinalizePendingOrder,
   convertPendingOrderToDebt as dbConvertPendingOrderToDebt,
+  identifyProvisionalOrderCustomer as dbIdentifyProvisionalOrderCustomer,
   cancelPendingOrder as dbCancelPendingOrder,
   addProduct,
   searchDukwiseCatalog as dbSearchDukwiseCatalog,
@@ -600,6 +601,7 @@ bootstrap: async () => {
       return saved
     } catch (err) {
       console.error('Add customer error:', err)
+      throw err
     }
   },
 
@@ -867,6 +869,16 @@ bootstrap: async () => {
       get().refreshPendingOrders(), getProducts().then((products) => set({ products })),
       getTransactions(50).then((transactions) => set({ transactions })),
       getCustomers().then((customers) => set({ customers })), get().refreshTodayStats(),
+    ])
+    return result
+  },
+
+  identifyPendingOrderCustomer: async (orderId, customer) => {
+    const result = await dbIdentifyProvisionalOrderCustomer(orderId, customer)
+    await Promise.all([
+      get().refreshPendingOrders(),
+      getCustomers().then((customers) => set({ customers })),
+      getTransactions(50).then((transactions) => set({ transactions })),
     ])
     return result
   },

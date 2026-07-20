@@ -13,10 +13,14 @@ export default function NewPendingOrderScreen() {
   const products = useAppStore((s) => s.products)
   const customers = useAppStore((s) => s.customers)
   const create = useAppStore((s) => s.createPendingOrder)
+  const addCustomer = useAppStore((s) => s.addCustomer)
   const [query, setQuery] = useState('')
   const [cart, setCart] = useState([])
   const [customerId, setCustomerId] = useState(null)
   const [showCustomers, setShowCustomers] = useState(false)
+  const [addingCustomer, setAddingCustomer] = useState(false)
+  const [newCustomerName, setNewCustomerName] = useState('')
+  const [newCustomerPhone, setNewCustomerPhone] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const selectedCustomer = customers.find((c) => c.id === customerId)
@@ -35,6 +39,16 @@ export default function NewPendingOrderScreen() {
     setQuery('')
   }
   function changeQty(id, delta) { setCart((items) => items.map((item) => item.productId === id ? { ...item, quantity: Math.max(1, Math.min(item.available, item.quantity + delta)) } : item)) }
+  async function createCustomer() {
+    if (!newCustomerName.trim()) return
+    setSaving(true); setError(null)
+    try {
+      const customer = await addCustomer({ name: newCustomerName.trim(), phone: newCustomerPhone.trim() || null })
+      if (!customer?.id) throw new Error('Could not create customer.')
+      setCustomerId(customer.id); setAddingCustomer(false); setShowCustomers(false)
+      setNewCustomerName(''); setNewCustomerPhone('')
+    } catch (e) { setError(e.message || 'Could not create customer.') } finally { setSaving(false) }
+  }
   async function save() {
     setSaving(true); setError(null)
     try {
@@ -66,9 +80,16 @@ export default function NewPendingOrderScreen() {
           </button>
           {showCustomers && <div style={dropdown}>
             <button onClick={() => { setCustomerId(null); setShowCustomers(false) }} style={customerRow}><div style={walkInIcon}><Icon name="users" size={14} color="#F0A93D" /></div><span>Walk-in customer</span>{!customerId && <Icon name="circleCheck" size={15} color="#5FD97A" />}</button>
-            {customers.slice(0, 8).map((customer) => <button key={customer.id} onClick={() => { setCustomerId(customer.id); setShowCustomers(false) }} style={customerRow}><Avatar name={customer.name} color="blue" size={30} /><span style={{ flex: 1, textAlign: 'left' }}>{customer.name}</span>{customerId === customer.id && <Icon name="circleCheck" size={15} color="#5FD97A" />}</button>)}
+            <button onClick={() => { setAddingCustomer(true); setShowCustomers(false) }} style={{ ...customerRow, color: '#F0A93D', fontWeight: 700 }}><div style={walkInIcon}><Icon name="plus" size={14} color="#F0A93D" /></div><span>New customer</span></button>
+            {customers.filter((customer) => !customer.is_provisional).slice(0, 8).map((customer) => <button key={customer.id} onClick={() => { setCustomerId(customer.id); setShowCustomers(false) }} style={customerRow}><Avatar name={customer.name} color="blue" size={30} /><span style={{ flex: 1, textAlign: 'left' }}>{customer.name}</span>{customerId === customer.id && <Icon name="circleCheck" size={15} color="#5FD97A" />}</button>)}
           </div>}
         </div>
+        {addingCustomer && <div style={newCustomerCard}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}><p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-hi)' }}>New customer</p><button type="button" onClick={() => setAddingCustomer(false)} style={removeButton}><Icon name="x" size={12} color="var(--text-low)" /></button></div>
+          <input value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Customer name" style={customerInput} />
+          <input value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="Phone (optional)" style={{ ...customerInput, marginTop: 7 }} />
+          <button type="button" disabled={!newCustomerName.trim() || saving} onClick={createCustomer} style={{ ...saveCustomerButton, opacity: newCustomerName.trim() && !saving ? 1 : .4 }}>{saving ? 'Saving...' : 'Save customer'}</button>
+        </div>}
 
         <SectionLabel>Products</SectionLabel>
         <div style={{ position: 'relative' }}>
@@ -98,6 +119,9 @@ const selectionCard = { width: '100%', padding: 11, borderRadius: 13, border: '1
 const walkInIcon = { width: 34, height: 34, borderRadius: 11, background: 'rgba(240,169,61,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }
 const dropdown = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 30, padding: 6, borderRadius: 13, background: 'var(--card-elevated-bg)', border: '1px solid var(--card-elevated-border)', boxShadow: 'var(--card-shadow)', maxHeight: 260, overflowY: 'auto' }
 const customerRow = { width: '100%', padding: 8, border: 0, borderBottom: '1px solid var(--glass-border)', background: 'transparent', display: 'flex', alignItems: 'center', gap: 9, color: 'var(--text-hi)', fontSize: 11, cursor: 'pointer' }
+const newCustomerCard = { marginTop: 8, padding: 11, borderRadius: 13, border: '1px solid rgba(240,169,61,.24)', background: 'linear-gradient(150deg,rgba(240,169,61,.08),rgba(255,255,255,.018))' }
+const customerInput = { width: '100%', padding: '10px 11px', borderRadius: 10, border: '1px solid var(--glass-border)', background: 'var(--faint-fill)', color: 'var(--text-hi)', fontSize: 11, outline: 0 }
+const saveCustomerButton = { width: '100%', padding: 10, marginTop: 8, border: '1px solid rgba(255,255,255,.3)', borderRadius: 10, background: 'linear-gradient(135deg,#FFC56B,#F0A93D)', color: '#211506', fontSize: 10, fontWeight: 700 }
 const searchBox = { display: 'flex', alignItems: 'center', gap: 8, padding: '11px 12px', borderRadius: 13, background: 'var(--glass-fill-soft)', border: '1px solid var(--glass-border)' }
 const searchInput = { flex: 1, border: 0, outline: 0, background: 'transparent', color: 'var(--text-hi)', fontSize: 12, fontFamily: 'inherit' }
 const productDropdown = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 25, borderRadius: 13, overflow: 'hidden', background: 'var(--card-elevated-bg)', border: '1px solid var(--card-elevated-border)', boxShadow: 'var(--card-shadow)' }
